@@ -19,6 +19,8 @@ try:
         TokenClaims,
         ViewerRole,
         oauth2_auth,
+        require_role,
+        require_scope,
     )
 
     __all__.extend([
@@ -30,6 +32,8 @@ try:
         "AdminRole",
         "EditorRole",
         "ViewerRole",
+        "require_role",
+        "require_scope",
     ])
 except ImportError:
     # OAuth dependencies not installed
