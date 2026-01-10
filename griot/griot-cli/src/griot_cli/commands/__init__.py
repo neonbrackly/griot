@@ -9,6 +9,6 @@ NO BUSINESS LOGIC should be implemented here.
 """
 from __future__ import annotations
 
-from griot_cli.commands import diff, lint, manifest, mock, pull, push, validate
+from griot_cli.commands import diff, lint, manifest, mock, pull, push, report, residency, validate
 
-__all__ = ["validate", "lint", "diff", "mock", "manifest", "push", "pull"]
+__all__ = ["validate", "lint", "diff", "mock", "manifest", "push", "pull", "report", "residency"]
