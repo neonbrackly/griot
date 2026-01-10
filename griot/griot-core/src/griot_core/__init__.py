@@ -93,9 +93,11 @@ __all__ = [
     "AnalyticsReport",
     "AIReadinessReport",
     "AuditReport",
+    "ReadinessReport",
     "generate_analytics_report",
     "generate_ai_readiness_report",
     "generate_audit_report",
+    "generate_readiness_report",
 ]
 
 # Core classes
@@ -172,7 +174,9 @@ from griot_core.reports import (
     AIReadinessReport,
     AnalyticsReport,
     AuditReport,
+    ReadinessReport,
     generate_ai_readiness_report,
     generate_analytics_report,
     generate_audit_report,
+    generate_readiness_report,
 )
