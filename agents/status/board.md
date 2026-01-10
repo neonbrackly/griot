@@ -1,7 +1,7 @@
 # Griot Implementation Status Board
 
-> **Last Updated:** 2026-01-10 by orchestrator (review #2)
-> **Current Phase:** 2 (Compliance) - In Progress
+> **Last Updated:** 2026-01-10 by orchestrator (review #3)
+> **Current Phase:** 2 (Compliance) & 3 (Runtime) - In Progress
 > **Next Review:** 2026-01-17
 
 ---
@@ -68,17 +68,17 @@
 
 | Task ID | Task | Agent | Priority | Status | Dependencies | Requirement |
 |---------|------|-------|----------|--------|--------------|-------------|
-| T-070 | RuntimeValidator class | enforce | High | 📋 Ready | T-010 | FR-ENF-001 |
-| T-071 | validate() method with registry integration | enforce | High | ⏳ Waiting | T-070 | FR-ENF-001 |
-| T-072 | validate_local() method | enforce | High | ⏳ Waiting | T-070 | FR-ENF-001 |
-| T-073 | Contract caching | enforce | Medium | ⏳ Waiting | T-071 | — |
-| T-074 | GriotValidateOperator (Airflow) | enforce | High | ⏳ Waiting | T-070 | FR-ENF-002 |
-| T-075 | GriotFreshnessSensor (Airflow) | enforce | Medium | ⏳ Waiting | T-074 | — |
-| T-076 | GriotResource (Dagster) | enforce | High | ⏳ Waiting | T-070 | — |
-| T-077 | @griot_asset decorator (Dagster) | enforce | Medium | ⏳ Waiting | T-076 | — |
-| T-078 | validate_task (Prefect) | enforce | Medium | ⏳ Waiting | T-070 | — |
-| T-079 | Residency enforcement | enforce | High | ⏳ Waiting | T-047 ✅, T-070 | FR-ENF-008 |
-| T-080 | Masking verification | enforce | High | ⏳ Waiting | T-044 ✅, T-070 | FR-ENF-009 |
+| T-070 | RuntimeValidator class | enforce | High | ✅ Done | T-010 | FR-ENF-001 |
+| T-071 | validate() method with registry integration | enforce | High | ✅ Done | T-070 | FR-ENF-001 |
+| T-072 | validate_local() method | enforce | High | ✅ Done | T-070 | FR-ENF-001 |
+| T-073 | Contract caching | enforce | Medium | ✅ Done | T-071 | — |
+| T-074 | GriotValidateOperator (Airflow) | enforce | High | ✅ Done | T-070 | FR-ENF-002 |
+| T-075 | GriotFreshnessSensor (Airflow) | enforce | Medium | ✅ Done | T-074 | — |
+| T-076 | GriotResource (Dagster) | enforce | High | ✅ Done | T-070 | — |
+| T-077 | @griot_asset decorator (Dagster) | enforce | Medium | ✅ Done | T-076 | — |
+| T-078 | validate_task (Prefect) | enforce | Medium | ✅ Done | T-070 | — |
+| T-079 | Residency enforcement | enforce | High | 📋 Ready | T-047 ✅, T-070 ✅ | FR-ENF-008 |
+| T-080 | Masking verification | enforce | High | 📋 Ready | T-044 ✅, T-070 ✅ | FR-ENF-009 |
 | T-090 | FastAPI app structure | registry | High | ✅ Done | None | — |
 | T-091 | Health endpoint | registry | High | ✅ Done | T-090 | — |
 | T-092 | Contract CRUD endpoints | registry | High | ✅ Done | T-090, T-006 | — |
@@ -128,7 +128,7 @@
 |-------|------|--------|----------|------------------|
 | 1 | Foundation | ✅ Complete | 100% | GriotModel, Field, validate(), CLI commands |
 | 2 | Compliance | 🟡 In Progress | 63% | PII (✅), Residency (✅), Reports (2/4) |
-| 3 | Runtime | 🟡 In Progress | 55% | Enforce (pending), Registry API (✅) |
+| 3 | Runtime | 🟡 In Progress | 73% | Enforce core (✅), Registry API (✅), Orchestrators (✅) |
 | 4 | UI | 🟡 In Progress | 70% | Hub core pages (✅), Dashboards (pending) |
 
 ---
@@ -151,6 +151,8 @@ Tasks waiting on other agents to complete dependencies.
 - T-062 (`griot report ai`) - T-052 complete
 - T-064 (`griot residency check`) - T-047 complete
 - T-050 (AuditReport) - dependencies T-045, T-047, T-048 all complete
+- T-079 (Residency enforcement) - T-070 complete, ready for enforce agent
+- T-080 (Masking verification) - T-070 complete, ready for enforce agent
 
 ---
 
@@ -232,6 +234,15 @@ Completed work awaiting review/merge.
 
 | Task ID | Task | Agent | Completed | Approved |
 |---------|------|-------|-----------|----------|
+| T-070 | RuntimeValidator class | enforce | 2026-01-10 | ✅ |
+| T-071 | validate() with registry integration | enforce | 2026-01-10 | ✅ |
+| T-072 | validate_local() method | enforce | 2026-01-10 | ✅ |
+| T-073 | Contract caching (TTL-based) | enforce | 2026-01-10 | ✅ |
+| T-074 | GriotValidateOperator (Airflow) | enforce | 2026-01-10 | ✅ |
+| T-075 | GriotFreshnessSensor (Airflow) | enforce | 2026-01-10 | ✅ |
+| T-076 | GriotResource (Dagster) | enforce | 2026-01-10 | ✅ |
+| T-077 | @griot_asset decorator (Dagster) | enforce | 2026-01-10 | ✅ |
+| T-078 | validate_task (Prefect) | enforce | 2026-01-10 | ✅ |
 | T-090 | FastAPI app structure | registry | 2026-01-10 | ✅ |
 | T-091 | Health endpoint | registry | 2026-01-10 | ✅ |
 | T-092 | Contract CRUD endpoints | registry | 2026-01-10 | ✅ |
@@ -281,7 +292,8 @@ See `status/requests/` for full details.
 | **Hub Alpha** | Week 5 | Core pages functional | ✅ Complete |
 | **Privacy Alpha** | Week 6 | PII, residency, lineage working | ✅ Complete |
 | **Phase 2 Complete** | Week 8 | PII, residency, all reports working | 🟡 In Progress (63%) |
-| **Phase 3 Complete** | Week 12 | Enforce + Registry working | 🟡 In Progress (55%) |
+| **Enforce Alpha** | Week 10 | RuntimeValidator + orchestrators working | ✅ Complete |
+| **Phase 3 Complete** | Week 12 | Enforce + Registry working | 🟡 In Progress (73%) |
 | **Phase 4 Complete** | Week 16 | Hub functional | 🟡 In Progress (70%) |
 
 ---
@@ -426,11 +438,24 @@ See `status/requests/` for full details.
 - Fixed T-050 status: dependencies met, now Ready for core agent
 - Unblocked CLI tasks: T-061, T-062, T-064
 
+### 2026-01-10 (orchestrator - review #3)
+- **REVIEWED AND APPROVED** Enforce agent work (T-070 through T-078)
+- **Enforce Alpha milestone achieved** - RuntimeValidator + all orchestrator integrations complete
+- Phase 3 now at **73%** (was 55%)
+- 9 new tasks completed by enforce agent:
+  - T-070: RuntimeValidator class with registry integration and caching
+  - T-071-073: validate(), validate_local(), contract caching
+  - T-074-075: Airflow integrations (GriotValidateOperator, GriotFreshnessSensor)
+  - T-076-077: Dagster integrations (GriotResource, @griot_asset decorator)
+  - T-078: Prefect integration (validate_task)
+- Unblocked: T-079 (Residency enforcement), T-080 (Masking verification)
+- Files created: griot-enforce/src/griot_enforce/*.py (validator, airflow/, dagster/, prefect/)
+
 ### Next Priorities (Updated)
-1. **core**: Complete T-050 (AuditReport) - dependencies ready, high priority
+1. **core**: Complete T-050 (AuditReport) - dependencies ready, critical for unblocking T-060, T-102
 2. **core**: Complete T-053 (CombinedReport) - after T-050
-3. **cli**: Complete T-061, T-062, T-064 (report commands now unblocked)
-4. **enforce**: Start T-070 (RuntimeValidator) - critical path
+3. **enforce**: Complete T-079 (Residency enforcement), T-080 (Masking verification) - now unblocked
+4. **cli**: Complete T-061, T-062, T-064 (report commands now unblocked)
 5. **registry**: Complete T-097, T-098, T-100, T-101
 6. **quality**: Increase test coverage to >90% for griot-core
 
