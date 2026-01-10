@@ -1,0 +1,18 @@
+# Sphinx documentation dependencies
+
+# Core Sphinx
+sphinx>=7.0.0
+
+# Theme
+furo>=2024.1.0
+
+# Extensions
+myst-parser>=2.0.0
+sphinx-copybutton>=0.5.0
+sphinx-design>=0.5.0
+
+# For type hints support
+sphinx-autodoc-typehints>=1.25.0
+
+# For API doc generation
+sphinx-autobuild>=2024.0.0

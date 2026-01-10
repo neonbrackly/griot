@@ -8,3 +8,13 @@ wheels/
 
 # Virtual environments
 .venv
+
+# Documentation build artifacts
+docs/_build/
+docs/api-reference/generated/
+
+# Coverage artifacts
+.coverage
+coverage.xml
+htmlcov/
+test-output.xml
