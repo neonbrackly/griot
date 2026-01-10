@@ -17,8 +17,12 @@ if TYPE_CHECKING:
 __all__ = [
     "AnalyticsReport",
     "AIReadinessReport",
+    "AuditReport",
+    "ReadinessReport",
     "generate_analytics_report",
     "generate_ai_readiness_report",
+    "generate_audit_report",
+    "generate_readiness_report",
 ]
 
 
@@ -632,5 +636,258 @@ def generate_ai_readiness_report(model: type[GriotModel]) -> AIReadinessReport:
         context_lines.append(f"... and {total_fields - 10} more fields")
 
     report.suggested_context = "\n".join(context_lines)
+
+    return report
+
+
+@dataclass
+class AuditReport:
+    """Compliance and privacy audit report for a data contract."""
+
+    contract_name: str
+    generated_at: str
+    version: str = "1.0"
+    compliance_score: float = 0.0
+    compliance_grade: str = "F"
+    compliance_status: str = "non_compliant"
+    pii_field_count: int = 0
+    pii_fields: list[dict[str, Any]] = dataclass_field(default_factory=list)
+    pii_categories: dict[str, int] = dataclass_field(default_factory=dict)
+    sensitive_field_count: int = 0
+    residency_configured: bool = False
+    residency_compliant: bool = False
+    default_region: str | None = None
+    residency_violations: list[str] = dataclass_field(default_factory=list)
+    region_distribution: dict[str, list[str]] = dataclass_field(default_factory=dict)
+    fields_with_legal_basis: int = 0
+    legal_basis_distribution: dict[str, int] = dataclass_field(default_factory=dict)
+    consent_coverage: float = 0.0
+    fields_with_masking: int = 0
+    masking_strategies: dict[str, list[str]] = dataclass_field(default_factory=dict)
+    unprotected_pii: list[str] = dataclass_field(default_factory=list)
+    fields_with_retention: int = 0
+    retention_policies: dict[str, str] = dataclass_field(default_factory=dict)
+    lineage_configured: bool = False
+    data_sources: list[str] = dataclass_field(default_factory=list)
+    data_consumers: list[str] = dataclass_field(default_factory=list)
+    data_owner: str | None = None
+    data_steward: str | None = None
+    gdpr_ready: bool = False
+    ccpa_ready: bool = False
+    hipaa_ready: bool = False
+    regulatory_gaps: list[str] = dataclass_field(default_factory=list)
+    critical_issues: list[str] = dataclass_field(default_factory=list)
+    warnings: list[str] = dataclass_field(default_factory=list)
+    recommendations: list[str] = dataclass_field(default_factory=list)
+
+    def to_dict(self) -> dict[str, Any]:
+        """Convert report to dictionary."""
+        return {
+            "report_type": "audit",
+            "contract_name": self.contract_name,
+            "generated_at": self.generated_at,
+            "compliance": {"score": self.compliance_score, "grade": self.compliance_grade, "status": self.compliance_status},
+            "pii_inventory": {"field_count": self.pii_field_count, "fields": self.pii_fields, "categories": self.pii_categories},
+            "residency": {"configured": self.residency_configured, "compliant": self.residency_compliant},
+            "lineage": {"configured": self.lineage_configured, "sources": self.data_sources, "consumers": self.data_consumers},
+            "regulatory": {"gdpr_ready": self.gdpr_ready, "ccpa_ready": self.ccpa_ready, "hipaa_ready": self.hipaa_ready},
+            "issues": {"critical": self.critical_issues, "warnings": self.warnings},
+            "recommendations": self.recommendations,
+        }
+
+    def to_json(self, indent: int = 2) -> str:
+        return json.dumps(self.to_dict(), indent=indent)
+
+    def to_markdown(self) -> str:
+        lines = [f"# Audit Report: {self.contract_name}", "", f"**Score: {self.compliance_score:.1f}/100** ({self.compliance_grade})", ""]
+        lines.append(f"- PII Fields: {self.pii_field_count}")
+        lines.append(f"- GDPR Ready: {'Yes' if self.gdpr_ready else 'No'}")
+        lines.append(f"- CCPA Ready: {'Yes' if self.ccpa_ready else 'No'}")
+        return "\n".join(lines)
+
+
+@dataclass
+class ReadinessReport:
+    """Combined readiness report for a data contract."""
+
+    contract_name: str
+    generated_at: str
+    version: str = "1.0"
+    overall_score: float = 0.0
+    overall_grade: str = "F"
+    readiness_status: str = "not_ready"
+    data_quality_score: float = 0.0
+    ai_readiness_score: float = 0.0
+    compliance_score: float = 0.0
+    total_fields: int = 0
+    documented_fields: int = 0
+    constrained_fields: int = 0
+    pii_fields: int = 0
+    has_primary_key: bool = False
+    has_lineage: bool = False
+    has_residency: bool = False
+    gdpr_ready: bool = False
+    ccpa_ready: bool = False
+    analytics_report: AnalyticsReport | None = None
+    ai_report: AIReadinessReport | None = None
+    audit_report: AuditReport | None = None
+    top_recommendations: list[str] = dataclass_field(default_factory=list)
+    critical_issues: list[str] = dataclass_field(default_factory=list)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "report_type": "readiness",
+            "contract_name": self.contract_name,
+            "overall": {"score": self.overall_score, "grade": self.overall_grade, "status": self.readiness_status},
+            "scores": {"data_quality": self.data_quality_score, "ai_readiness": self.ai_readiness_score, "compliance": self.compliance_score},
+            "indicators": {"has_primary_key": self.has_primary_key, "has_lineage": self.has_lineage, "gdpr_ready": self.gdpr_ready},
+            "recommendations": self.top_recommendations,
+        }
+
+    def to_json(self, indent: int = 2) -> str:
+        return json.dumps(self.to_dict(), indent=indent)
+
+    def to_markdown(self) -> str:
+        return f"# Readiness Report: {self.contract_name}\n\n**Score: {self.overall_score:.1f}/100** ({self.overall_grade})\n"
+
+
+def _score_to_grade(score: float) -> str:
+    if score >= 90: return "A"
+    if score >= 80: return "B"
+    if score >= 70: return "C"
+    if score >= 60: return "D"
+    return "F"
+
+
+def generate_audit_report(model: type[GriotModel]) -> AuditReport:
+    """Generate a compliance audit report for a GriotModel."""
+    report = AuditReport(contract_name=model.__name__, generated_at=datetime.now().isoformat())
+
+    if len(model._griot_fields) == 0:
+        report.critical_issues.append("No fields defined")
+        return report
+
+    pii_inventory = model.pii_inventory()
+    report.pii_field_count = len(pii_inventory)
+    report.pii_fields = [
+        {"field": fi.name, "category": fi.pii_category.value if fi.pii_category else None}
+        for fi in pii_inventory
+    ]
+
+    for fi in pii_inventory:
+        if fi.pii_category:
+            cat = fi.pii_category.value
+            report.pii_categories[cat] = report.pii_categories.get(cat, 0) + 1
+        if fi.sensitivity_level and fi.sensitivity_level.value in ["confidential", "restricted"]:
+            report.sensitive_field_count += 1
+        if fi.legal_basis:
+            report.fields_with_legal_basis += 1
+        if fi.masking_strategy and fi.masking_strategy.value != "none":
+            report.fields_with_masking += 1
+        else:
+            report.unprotected_pii.append(fi.name)
+
+    lineage = model.get_lineage_config()
+    if lineage:
+        report.lineage_configured = True
+        report.data_owner = lineage.data_owner
+        report.data_sources = [s.name for s in lineage.sources]
+
+    residency = model.get_residency_config()
+    if residency:
+        report.residency_configured = True
+
+    # GDPR readiness
+    gdpr_score = 0
+    if report.pii_field_count == 0 or report.fields_with_legal_basis == report.pii_field_count:
+        gdpr_score += 1
+    if report.pii_field_count == 0 or report.fields_with_masking == report.pii_field_count:
+        gdpr_score += 1
+    if report.lineage_configured:
+        gdpr_score += 1
+    report.gdpr_ready = gdpr_score >= 2
+
+    # CCPA readiness
+    ccpa_score = 0
+    if report.pii_categories:
+        ccpa_score += 1
+    if report.pii_field_count == 0 or report.fields_with_masking > 0:
+        ccpa_score += 1
+    if report.lineage_configured:
+        ccpa_score += 1
+    report.ccpa_ready = ccpa_score >= 2
+
+    # HIPAA
+    has_health = any(c in ["health", "medical_record", "biometric"] for c in report.pii_categories)
+    report.hipaa_ready = not has_health or (report.fields_with_masking > 0 and report.lineage_configured)
+
+    # Compliance score
+    pii_score = 100.0
+    if report.pii_field_count > 0:
+        legal_pct = (report.fields_with_legal_basis / report.pii_field_count) * 100
+        mask_pct = (report.fields_with_masking / report.pii_field_count) * 100
+        pii_score = (legal_pct + mask_pct) / 2
+
+    lineage_score = 100.0 if report.lineage_configured else 30.0
+    reg_score = ((100 if report.gdpr_ready else 0) + (100 if report.ccpa_ready else 0)) / 2
+
+    report.compliance_score = pii_score * 0.4 + lineage_score * 0.2 + reg_score * 0.4
+    report.compliance_grade = _score_to_grade(report.compliance_score)
+    report.compliance_status = "compliant" if report.compliance_score >= 80 else ("partial" if report.compliance_score >= 60 else "non_compliant")
+
+    if report.unprotected_pii:
+        report.critical_issues.append(f"{len(report.unprotected_pii)} PII fields lack masking")
+        report.recommendations.append("Add masking strategies to all PII fields")
+    if not report.lineage_configured:
+        report.recommendations.append("Configure data lineage for audit compliance")
+
+    return report
+
+
+def generate_readiness_report(model: type[GriotModel]) -> ReadinessReport:
+    """Generate a comprehensive readiness report combining all assessments."""
+    analytics = generate_analytics_report(model)
+    ai = generate_ai_readiness_report(model)
+    audit = generate_audit_report(model)
+
+    report = ReadinessReport(
+        contract_name=model.__name__,
+        generated_at=datetime.now().isoformat(),
+        analytics_report=analytics,
+        ai_report=ai,
+        audit_report=audit,
+    )
+
+    report.total_fields = analytics.total_fields
+    report.documented_fields = analytics.documented_fields
+    report.constrained_fields = analytics.fields_with_constraints
+    report.pii_fields = audit.pii_field_count
+    report.has_primary_key = analytics.primary_key is not None
+    report.has_lineage = audit.lineage_configured
+    report.has_residency = audit.residency_configured
+    report.gdpr_ready = audit.gdpr_ready
+    report.ccpa_ready = audit.ccpa_ready
+
+    # Data quality score
+    if analytics.total_fields > 0:
+        doc_pct = (analytics.documented_fields / analytics.total_fields) * 100
+        const_pct = (analytics.fields_with_constraints / analytics.total_fields) * 100
+        report.data_quality_score = doc_pct * 0.5 + const_pct * 0.3 + (20 if report.has_primary_key else 0)
+
+    report.ai_readiness_score = ai.readiness_score
+    report.compliance_score = audit.compliance_score
+
+    report.overall_score = report.data_quality_score * 0.3 + report.ai_readiness_score * 0.35 + report.compliance_score * 0.35
+    report.overall_grade = _score_to_grade(report.overall_score)
+    report.readiness_status = "ready" if report.overall_score >= 80 else ("partial" if report.overall_score >= 60 else "not_ready")
+
+    report.critical_issues = audit.critical_issues.copy()
+    seen: set[str] = set()
+    for rec in analytics.recommendations + audit.recommendations:
+        if rec not in seen:
+            report.top_recommendations.append(rec)
+            seen.add(rec)
+            if len(report.top_recommendations) >= 5:
+                break
 
     return report
