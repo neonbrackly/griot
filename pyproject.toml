@@ -9,10 +9,16 @@ dependencies = [
 ]
 
 [tool.uv.workspace]
-members = [
-    "griot/griot-core",
-    "griot/griot-registry",
-]
+members = ["griot-cli", "griot-core", "griot-enforce", "griot-registry"]
+
+[project.optional-dependencies]
+cli = ["griot-cli"]
+enforce = ["griot-enforce"]
+registry = ["griot-registry"]
+all = ["griot-core", "griot-cli", "griot-enforce", "griot-registry"]
 
 [tool.uv.sources]
 griot-core = { workspace = true }
+griot-cli = { workspace = true }
+griot-enforce = { workspace = true }
+griot-registry = { workspace = true }
