@@ -45,13 +45,20 @@ from __future__ import annotations
 
 __version__ = "0.1.0"
 
-# Core validator
-from griot_enforce.validator import RuntimeValidationError, RuntimeValidator
+# Core validator and exceptions
+from griot_enforce.validator import (
+    MaskingViolationError,
+    ResidencyViolationError,
+    RuntimeValidationError,
+    RuntimeValidator,
+)
 
 __all__ = [
     "__version__",
     "RuntimeValidator",
     "RuntimeValidationError",
+    "ResidencyViolationError",
+    "MaskingViolationError",
 ]
 
 

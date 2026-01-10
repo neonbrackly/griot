@@ -27,15 +27,19 @@ from griot_enforce.prefect.tasks import (
     griot_check_residency,
     griot_validate,
     griot_validate_local,
+    griot_verify_masking,
     validate_local_task,
     validate_task,
+    verify_masking_task,
 )
 
 __all__ = [
     "validate_task",
     "validate_local_task",
     "check_residency_task",
+    "verify_masking_task",
     "griot_validate",
     "griot_validate_local",
     "griot_check_residency",
+    "griot_verify_masking",
 ]

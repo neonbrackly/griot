@@ -62,8 +62,20 @@ class GriotResource:
                 data: pd.DataFrame | list[dict[str, Any]],
                 version: str | None = None,
                 fail_on_error: bool = True,
+                verify_masking: bool = False,
+                environment: str | None = None,
             ) -> Any:
-                """Validate data against a contract from registry."""
+                """
+                Validate data against a contract from registry.
+
+                Args:
+                    contract_id: Contract ID in registry.
+                    data: DataFrame or list of dicts to validate.
+                    version: Specific contract version.
+                    fail_on_error: Raise on validation failure (default: True).
+                    verify_masking: Verify PII masking (default: False).
+                    environment: Environment name for masking checks.
+                """
                 from griot_enforce.validator import RuntimeValidator
 
                 validator = RuntimeValidator(
@@ -77,6 +89,8 @@ class GriotResource:
                     data,
                     version=version,
                     fail_on_error=fail_on_error,
+                    verify_masking=verify_masking,
+                    environment=environment,
                 )
 
             def validate_local(
@@ -113,16 +127,69 @@ class GriotResource:
             def check_residency(
                 self,
                 contract_id: str,
-                region: str,
+                region: str | None = None,
+                destination: str | None = None,
                 version: str | None = None,
+                fail_on_violation: bool = False,
             ) -> dict[str, Any]:
-                """Check if data can be stored in a given region."""
+                """
+                Check if data can be stored in a given region.
+
+                FR-ENF-008: Block writes to non-compliant regions.
+
+                Args:
+                    contract_id: Contract ID in registry.
+                    region: Explicit region to check.
+                    destination: Cloud URI to auto-detect region from.
+                    version: Specific contract version.
+                    fail_on_violation: Raise on violation (default: False).
+                """
                 from griot_enforce.validator import RuntimeValidator
 
                 validator = RuntimeValidator(
                     registry_url=self.registry_url,
                     api_key=self.api_key,
                 )
-                return validator.check_residency(contract_id, region, version)
+                return validator.check_residency(
+                    contract_id,
+                    region=region,
+                    destination=destination,
+                    version=version,
+                    fail_on_violation=fail_on_violation,
+                )
+
+            def verify_masking(
+                self,
+                contract_id: str,
+                data: pd.DataFrame | list[dict[str, Any]],
+                version: str | None = None,
+                environment: str | None = None,
+                fail_on_violation: bool = False,
+            ) -> dict[str, Any]:
+                """
+                Verify that PII fields are properly masked.
+
+                FR-ENF-009: Verify PII is masked in non-prod environments.
+
+                Args:
+                    contract_id: Contract ID in registry.
+                    data: Data to check for masking compliance.
+                    version: Specific contract version.
+                    environment: Environment name for conditional enforcement.
+                    fail_on_violation: Raise on violation (default: False).
+                """
+                from griot_enforce.validator import RuntimeValidator
+
+                validator = RuntimeValidator(
+                    registry_url=self.registry_url,
+                    api_key=self.api_key,
+                )
+                return validator.verify_masking(
+                    contract_id,
+                    data,
+                    version=version,
+                    environment=environment,
+                    fail_on_violation=fail_on_violation,
+                )
 
         return _GriotResource(**kwargs)

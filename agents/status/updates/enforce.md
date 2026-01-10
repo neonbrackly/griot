@@ -4,6 +4,53 @@
 
 ---
 
+## Session: 2026-01-10 (Update 3)
+
+### Completed Tasks
+- **T-079**: Residency enforcement (FR-ENF-008) - COMPLETE
+  - Enhanced `check_residency()` with destination URI auto-detection
+  - Supports AWS S3, Azure Blob, GCP GCS URI patterns
+  - Added `fail_on_violation` parameter to raise `ResidencyViolationError`
+  - Added `GriotResidencyOperator` for Airflow
+  - Updated Dagster GriotResource with enhanced check_residency method
+  - Updated Prefect `check_residency_task` with destination parameter
+
+- **T-080**: Masking verification (FR-ENF-009) - COMPLETE
+  - Added `verify_masking` parameter to `validate()` method
+  - Added `_verify_masking_internal()` helper method
+  - Enhanced `verify_masking()` with `fail_on_violation` parameter
+  - Environment-aware: skips verification in production
+  - Added `MaskingViolationError` exception class
+  - Updated Airflow GriotValidateOperator with verify_masking/environment params
+  - Updated Dagster GriotResource with verify_masking method
+  - Added Prefect `verify_masking_task`
+
+### New Exception Classes
+- `ResidencyViolationError` - for data residency violations
+- `MaskingViolationError` - for PII masking violations
+
+### Files Modified
+- `griot-enforce/src/griot_enforce/__init__.py` - Export new exceptions
+- `griot-enforce/src/griot_enforce/validator.py` - Enhanced check_residency, verify_masking, new exceptions
+- `griot-enforce/src/griot_enforce/airflow/__init__.py` - Export GriotResidencyOperator
+- `griot-enforce/src/griot_enforce/airflow/operators.py` - Added GriotResidencyOperator, updated GriotValidateOperator
+- `griot-enforce/src/griot_enforce/dagster/resources.py` - Enhanced methods
+- `griot-enforce/src/griot_enforce/prefect/__init__.py` - Export verify_masking_task
+- `griot-enforce/src/griot_enforce/prefect/tasks.py` - Enhanced tasks, added verify_masking_task
+
+### Branch
+- Working in: `master` (per updated CLAUDE.md)
+
+### Notes
+- All enforce tasks (T-070-T-080) now complete
+- Cloud URI region detection supports:
+  - AWS S3: bucket naming convention and endpoint patterns
+  - Azure Blob: region indicators in URLs
+  - GCP GCS: region hints in bucket names (limited without API)
+- Ready for orchestrator review
+
+---
+
 ## Session: 2026-01-10 (Update 2)
 
 ### Completed Tasks

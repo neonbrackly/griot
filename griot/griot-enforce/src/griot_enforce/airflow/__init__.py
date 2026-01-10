@@ -18,10 +18,11 @@ Example:
         max_age_minutes=60,
     )
 """
-from griot_enforce.airflow.operators import GriotValidateOperator
+from griot_enforce.airflow.operators import GriotResidencyOperator, GriotValidateOperator
 from griot_enforce.airflow.sensors import GriotFreshnessSensor
 
 __all__ = [
     "GriotValidateOperator",
+    "GriotResidencyOperator",
     "GriotFreshnessSensor",
 ]

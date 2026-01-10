@@ -12,6 +12,7 @@ if TYPE_CHECKING:
 
 __all__ = [
     "GriotValidateOperator",
+    "GriotResidencyOperator",
 ]
 
 
@@ -35,7 +36,7 @@ class GriotValidateOperator:
     """
 
     # Airflow template fields for Jinja rendering
-    template_fields: Sequence[str] = ("data_path", "contract_id", "version")
+    template_fields: Sequence[str] = ("data_path", "contract_id", "version", "environment")
     template_ext: Sequence[str] = ()
     ui_color = "#e4f0e8"
     ui_fgcolor = "#000000"
@@ -50,6 +51,8 @@ class GriotValidateOperator:
         version: str | None = None,
         fail_on_error: bool = True,
         error_threshold: float | None = None,
+        verify_masking: bool = False,
+        environment: str | None = None,
         **kwargs: Any,
     ) -> None:
         """
@@ -63,6 +66,8 @@ class GriotValidateOperator:
             version: Specific contract version.
             fail_on_error: Fail task on validation error (default: True).
             error_threshold: Fail only if error_rate exceeds threshold.
+            verify_masking: Verify PII masking in non-prod environments (default: False).
+            environment: Environment name (e.g., "staging", "dev") for masking checks.
             **kwargs: Additional BaseOperator arguments.
         """
         try:
@@ -98,7 +103,7 @@ class GriotValidateOperator:
 
         # Create a dynamic class that inherits from both
         class _GriotValidateOperator(BaseOperator):
-            template_fields: Sequence[str] = ("data_path", "contract_id", "version")
+            template_fields: Sequence[str] = ("data_path", "contract_id", "version", "environment")
             template_ext: Sequence[str] = ()
             ui_color = "#e4f0e8"
             ui_fgcolor = "#000000"
@@ -112,6 +117,8 @@ class GriotValidateOperator:
                 version: str | None = None,
                 fail_on_error: bool = True,
                 error_threshold: float | None = None,
+                verify_masking: bool = False,
+                environment: str | None = None,
                 **op_kwargs: Any,
             ) -> None:
                 super().__init__(**op_kwargs)
@@ -121,6 +128,8 @@ class GriotValidateOperator:
                 self.version = version
                 self.fail_on_error = fail_on_error
                 self.error_threshold = error_threshold
+                self.verify_masking = verify_masking
+                self.environment = environment
 
             def execute(self, context: Context) -> dict[str, Any]:
                 """Execute the validation operator."""
@@ -137,13 +146,25 @@ class GriotValidateOperator:
                 # Load data from path
                 data = self._load_data(self.data_path)
 
-                # Validate (don't fail yet - we check threshold first)
+                # Validate with optional masking verification (don't fail yet)
                 result = validator.validate(
                     self.contract_id,
                     data,
                     version=self.version,
                     fail_on_error=False,
+                    verify_masking=self.verify_masking,
+                    environment=self.environment,
                 )
+
+                # Check masking violations first (FR-ENF-009)
+                if self.verify_masking and self.fail_on_error:
+                    masking_result = getattr(result, "masking_result", None)
+                    if masking_result and not masking_result.get("compliant", True):
+                        violations = masking_result.get("violations", [])
+                        raise AirflowException(
+                            f"Masking verification failed for contract '{self.contract_id}' "
+                            f"with {len(violations)} violations"
+                        )
 
                 # Check error threshold
                 if self.error_threshold is not None:
@@ -208,3 +229,104 @@ class GriotValidateOperator:
                     raise ValueError(f"Unsupported file format: {suffix}")
 
         return _GriotValidateOperator(**kwargs)
+
+
+class GriotResidencyOperator:
+    """
+    Airflow operator for checking data residency compliance.
+
+    FR-ENF-008: Block writes to non-compliant regions.
+
+    Example:
+        from griot_enforce.airflow import GriotResidencyOperator
+
+        check_residency = GriotResidencyOperator(
+            task_id="check_residency",
+            contract_id="customer-profile",
+            destination="{{ params.output_path }}",  # Auto-detects region from S3 URI
+        )
+
+        extract >> check_residency >> load_to_s3
+    """
+
+    template_fields: Sequence[str] = ("contract_id", "version", "destination", "region")
+    template_ext: Sequence[str] = ()
+    ui_color = "#f0e4e8"
+    ui_fgcolor = "#000000"
+
+    def __new__(cls, **kwargs: Any) -> Any:
+        """Create operator instance inheriting from Airflow BaseOperator."""
+        try:
+            from airflow.models import BaseOperator
+        except ImportError:
+            raise ImportError(
+                "apache-airflow is required for Airflow operators. "
+                "Install with: pip install griot-enforce[airflow]"
+            )
+
+        class _GriotResidencyOperator(BaseOperator):
+            template_fields: Sequence[str] = ("contract_id", "version", "destination", "region")
+            template_ext: Sequence[str] = ()
+            ui_color = "#f0e4e8"
+            ui_fgcolor = "#000000"
+
+            def __init__(
+                self,
+                *,
+                contract_id: str,
+                destination: str | None = None,
+                region: str | None = None,
+                registry_url: str | None = None,
+                version: str | None = None,
+                fail_on_violation: bool = True,
+                **op_kwargs: Any,
+            ) -> None:
+                """
+                Initialize GriotResidencyOperator.
+
+                Args:
+                    contract_id: Contract ID in registry.
+                    destination: Cloud URI to auto-detect region (e.g., s3://bucket-eu-west-1/).
+                    region: Explicit region to check (used if destination not provided).
+                    registry_url: Registry URL (or from env var).
+                    version: Specific contract version.
+                    fail_on_violation: Fail task on residency violation (default: True).
+                """
+                super().__init__(**op_kwargs)
+                self.contract_id = contract_id
+                self.destination = destination
+                self.region = region
+                self.registry_url = registry_url
+                self.version = version
+                self.fail_on_violation = fail_on_violation
+
+            def execute(self, context: Context) -> dict[str, Any]:
+                """Execute the residency check operator."""
+                from airflow.exceptions import AirflowException
+
+                from griot_enforce.validator import RuntimeValidator
+
+                validator = RuntimeValidator(
+                    registry_url=self.registry_url,
+                    report_results=False,
+                )
+
+                try:
+                    result = validator.check_residency(
+                        contract_id=self.contract_id,
+                        region=self.region,
+                        destination=self.destination,
+                        version=self.version,
+                        fail_on_violation=self.fail_on_violation,
+                    )
+                except Exception as e:
+                    if self.fail_on_violation:
+                        raise AirflowException(str(e)) from e
+                    result = {
+                        "compliant": False,
+                        "error": str(e),
+                    }
+
+                return result
+
+        return _GriotResidencyOperator(**kwargs)
