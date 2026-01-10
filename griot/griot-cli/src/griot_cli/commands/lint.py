@@ -3,7 +3,7 @@
 Check a contract for quality issues.
 
 SDK Method: GriotModel.lint()
-Status: Blocked - waiting on core T-012 (contract linting)
+Status: Complete
 """
 from __future__ import annotations
 
@@ -57,7 +57,7 @@ def lint(
       griot lint contracts/ --strict
     """
     try:
-        from griot_core import GriotModel
+        from griot_core import GriotModel, Severity
     except ImportError:
         echo_error("griot-core is not installed. Install with: pip install griot-core")
         sys.exit(2)
@@ -78,9 +78,13 @@ def lint(
             model = GriotModel.from_yaml(contract)
             all_issues = model.lint()
 
-        # Filter by severity
-        severity_order = {"error": 0, "warning": 1, "info": 2}
-        min_level = severity_order.get(min_severity, 2)
+        # Filter by severity (Severity is an enum)
+        severity_order = {
+            Severity.ERROR: 0,
+            Severity.WARNING: 1,
+            Severity.INFO: 2,
+        }
+        min_level = {"error": 0, "warning": 1, "info": 2}.get(min_severity, 2)
         filtered_issues = [
             issue
             for issue in all_issues
@@ -91,8 +95,8 @@ def lint(
         format_lint_issues(filtered_issues, format=OutputFormat(format))
 
         # Determine exit code
-        has_errors = any(i.severity == "error" for i in filtered_issues)
-        has_warnings = any(i.severity == "warning" for i in filtered_issues)
+        has_errors = any(i.severity == Severity.ERROR for i in filtered_issues)
+        has_warnings = any(i.severity == Severity.WARNING for i in filtered_issues)
 
         if has_errors:
             sys.exit(1)

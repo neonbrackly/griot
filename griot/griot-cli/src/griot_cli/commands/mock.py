@@ -3,7 +3,7 @@
 Generate synthetic mock data conforming to a contract.
 
 SDK Method: GriotModel.mock()
-Status: Blocked - waiting on core T-013 (mock generation)
+Status: Complete
 """
 from __future__ import annotations
 

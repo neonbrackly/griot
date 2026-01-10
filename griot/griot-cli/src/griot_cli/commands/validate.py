@@ -3,7 +3,7 @@
 Validate data against a contract definition.
 
 SDK Method: GriotModel.validate()
-Status: Blocked - waiting on core T-010 (validation engine)
+Status: Complete
 """
 from __future__ import annotations
 
@@ -95,10 +95,15 @@ def validate(
         # Determine exit code
         if not result.passed:
             sys.exit(1)
-        elif fail_on_warning and result.warnings:
-            sys.exit(1)
-        else:
-            sys.exit(0)
+        elif fail_on_warning:
+            # Check for warning-severity errors
+            from griot_core import Severity
+            has_warnings = any(
+                e.severity == Severity.WARNING for e in result.errors
+            )
+            if has_warnings:
+                sys.exit(1)
+        sys.exit(0)
 
     except FileNotFoundError as e:
         echo_error(f"File not found: {e}")

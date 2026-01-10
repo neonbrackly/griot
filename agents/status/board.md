@@ -1,7 +1,7 @@
 # Griot Implementation Status Board
 
-> **Last Updated:** 2026-01-10 by orchestrator (review)
-> **Current Phase:** 1 (Foundation) → Transitioning to Phase 2
+> **Last Updated:** 2026-01-10 by core (Phase 2 implementation)
+> **Current Phase:** 2 (Compliance) - In Progress
 > **Next Review:** 2026-01-17
 
 ---
@@ -40,29 +40,29 @@
 | T-036 | CLI output formatting (table, json, github) | cli | Medium | ✅ Done | T-030 | NFR-CLI-002 |
 | T-037 | CLI configuration handling | cli | Medium | ✅ Done | T-030 | — |
 
-### Phase 2 - Compliance (Current - Starting)
+### Phase 2 - Compliance (Current - In Progress)
 
 | Task ID | Task | Agent | Priority | Status | Dependencies | Requirement |
 |---------|------|-------|----------|--------|--------------|-------------|
-| T-040 | PIICategory enum | core | High | 📋 Ready | None | FR-SDK-008 |
-| T-041 | SensitivityLevel enum | core | High | 📋 Ready | None | FR-SDK-008 |
-| T-042 | MaskingStrategy enum | core | High | 📋 Ready | None | FR-SDK-008 |
-| T-043 | LegalBasis enum | core | Medium | 📋 Ready | None | FR-SDK-008 |
-| T-044 | PII Field metadata support | core | High | ⏳ Waiting | T-040, T-041, T-042 | FR-SDK-008 |
-| T-045 | pii_inventory() function | core | High | ⏳ Waiting | T-044 | FR-SDK-010 |
-| T-046 | ResidencyConfig class | core | High | 📋 Ready | None | FR-SDK-011 |
-| T-047 | check_residency() method | core | High | ⏳ Waiting | T-046 | FR-SDK-011 |
-| T-048 | LineageConfig class | core | Medium | 📋 Ready | None | FR-SDK-012 |
-| T-049 | Source, Transformation, Consumer classes | core | Medium | ⏳ Waiting | T-048 | FR-SDK-012 |
+| T-040 | PIICategory enum | core | High | ✅ Done | None | FR-SDK-008 |
+| T-041 | SensitivityLevel enum | core | High | ✅ Done | None | FR-SDK-008 |
+| T-042 | MaskingStrategy enum | core | High | ✅ Done | None | FR-SDK-008 |
+| T-043 | LegalBasis enum | core | Medium | ✅ Done | None | FR-SDK-008 |
+| T-044 | PII Field metadata support | core | High | ✅ Done | T-040, T-041, T-042 | FR-SDK-008 |
+| T-045 | pii_inventory() function | core | High | ✅ Done | T-044 | FR-SDK-010 |
+| T-046 | ResidencyConfig class | core | High | ✅ Done | None | FR-SDK-011 |
+| T-047 | check_residency() method | core | High | ✅ Done | T-046 | FR-SDK-011 |
+| T-048 | LineageConfig class | core | Medium | ✅ Done | None | FR-SDK-012 |
+| T-049 | Source, Transformation, Consumer classes | core | Medium | ✅ Done | T-048 | FR-SDK-012 |
 | T-050 | AuditReport generator | core | High | ⏳ Waiting | T-045, T-047, T-048 | FR-SDK-013 |
-| T-051 | AnalyticsReport generator | core | High | 📋 Ready | None | FR-SDK-014 |
-| T-052 | AIReadinessReport generator | core | High | 📋 Ready | None | FR-SDK-016 |
+| T-051 | AnalyticsReport generator | core | High | ✅ Done | None | FR-SDK-014 |
+| T-052 | AIReadinessReport generator | core | High | ✅ Done | None | FR-SDK-016 |
 | T-053 | ReadinessReport (combined) generator | core | Medium | ⏳ Waiting | T-050, T-051, T-052 | FR-SDK-017 |
 | T-060 | `griot report audit` command | cli | High | 🚫 Blocked | T-050 | FR-CLI-010 |
-| T-061 | `griot report analytics` command | cli | High | 🚫 Blocked | T-051 | FR-CLI-010 |
-| T-062 | `griot report ai` command | cli | High | 🚫 Blocked | T-052 | FR-CLI-010 |
+| T-061 | `griot report analytics` command | cli | High | 📋 Ready | T-051 | FR-CLI-010 |
+| T-062 | `griot report ai` command | cli | High | 📋 Ready | T-052 | FR-CLI-010 |
 | T-063 | `griot report all` command | cli | Medium | 🚫 Blocked | T-053 | FR-CLI-010 |
-| T-064 | `griot residency check` command | cli | High | 🚫 Blocked | T-047 | FR-CLI-011 |
+| T-064 | `griot residency check` command | cli | High | 📋 Ready | T-047 | FR-CLI-011 |
 
 ### Phase 3 - Runtime (In Progress)
 
@@ -166,7 +166,13 @@ Completed work awaiting review/merge.
 
 | Task | Agent | PR | Reviewer | Submitted |
 |------|-------|----|----------|-----------|
-| *All items reviewed and approved* | — | — | — | — |
+| T-031: griot validate command | cli | — | orchestrator | 2026-01-10 |
+| T-032: griot lint command | cli | — | orchestrator | 2026-01-10 |
+| T-033: griot diff command | cli | — | orchestrator | 2026-01-10 |
+| T-034: griot mock command | cli | — | orchestrator | 2026-01-10 |
+| T-035: griot manifest command | cli | — | orchestrator | 2026-01-10 |
+| T-110: griot push command | cli | — | orchestrator | 2026-01-10 |
+| T-111: griot pull command | cli | — | orchestrator | 2026-01-10 |
 
 ---
 
@@ -247,7 +253,7 @@ See `status/requests/` for full details.
 | Milestone | Target | Criteria | Status |
 |-----------|--------|----------|--------|
 | **Core Alpha** | Week 2 | GriotModel, Field, validate() working | ✅ Complete |
-| **CLI Alpha** | Week 3 | `griot validate` command working | 🟡 Ready (needs integration) |
+| **CLI Alpha** | Week 3 | `griot validate` command working | ✅ Complete |
 | **Phase 1 Complete** | Week 4 | All Phase 1 tasks done, >90% core coverage | ✅ Complete |
 | **Registry Alpha** | Week 5 | CRUD endpoints working | ✅ Complete |
 | **Hub Alpha** | Week 5 | Core pages functional | ✅ Complete |
@@ -286,7 +292,19 @@ See `status/requests/` for full details.
 - Quality agent should start: T-020
 - CLI agent can start: T-030
 
-### 2026-01-10 (cli)
+### 2026-01-10 (cli) - Session 2
+- Completed T-031: griot validate command - full integration with griot-core SDK
+- Completed T-032: griot lint command - severity filtering, strict mode
+- Completed T-033: griot diff command - breaking change detection
+- Completed T-034: griot mock command - CSV/JSON/Parquet output
+- Completed T-035: griot manifest command - json_ld/markdown/llm_context formats
+- Completed T-110: griot push command - registry API integration
+- Completed T-111: griot pull command - registry API integration
+- Updated output.py to handle Severity enum properly
+- All CLI commands now functional with griot-core SDK
+- Remaining CLI tasks (T-060-65) blocked on core Phase 2 (report generators)
+
+### 2026-01-10 (cli) - Session 1
 - Completed T-030: CLI scaffolding with Click app
 - Completed T-036: Output formatting (table, json, github formats)
 - Completed T-037: Configuration handling (file discovery, env vars)
