@@ -92,7 +92,9 @@ def _format_validation_table(result: Any, max_errors: int, file: TextIO) -> None
 
         for i, error in enumerate(result.errors[:max_errors]):
             row_info = f"[row {error.row}]" if error.row is not None else "[schema]"
-            severity_color = "red" if error.severity == "error" else "yellow"
+            # Handle both enum and string severity
+            severity_str = getattr(error.severity, "value", str(error.severity)).lower()
+            severity_color = "red" if severity_str == "error" else "yellow"
             click.echo(
                 f"  {row_info} "
                 + click.style(error.field, bold=True)
@@ -116,7 +118,9 @@ def _format_validation_github(result: Any, max_errors: int, file: TextIO) -> Non
     """Format validation result as GitHub Actions annotations."""
     for error in result.errors[:max_errors]:
         # GitHub Actions workflow command format
-        level = "error" if error.severity == "error" else "warning"
+        # Handle both enum and string severity
+        severity_str = getattr(error.severity, "value", str(error.severity)).lower()
+        level = "error" if severity_str == "error" else "warning"
         message = f"{error.field}: {error.message}"
         if error.row is not None:
             message = f"Row {error.row} - {message}"
@@ -153,16 +157,18 @@ def _format_lint_table(issues: list[Any], file: TextIO) -> None:
     click.echo("-" * 80, file=file)
 
     for issue in issues:
+        # Handle both enum and string severity
+        severity_str = getattr(issue.severity, "value", str(issue.severity)).lower()
         severity_color = {
             "error": "red",
             "warning": "yellow",
             "info": "blue",
-        }.get(issue.severity, "white")
+        }.get(severity_str, "white")
 
         field_info = f" ({issue.field})" if issue.field else ""
         click.echo(
             click.style(f"[{issue.code}]", bold=True)
-            + click.style(f" [{issue.severity}]", fg=severity_color)
+            + click.style(f" [{severity_str}]", fg=severity_color)
             + field_info
             + f": {issue.message}",
             file=file,
@@ -175,9 +181,11 @@ def _format_lint_json(issues: list[Any], file: TextIO) -> None:
     """Format lint issues as JSON."""
     output = []
     for issue in issues:
+        # Handle both enum and string severity
+        severity_str = getattr(issue.severity, "value", str(issue.severity)).lower()
         item = {
             "code": issue.code,
-            "severity": issue.severity,
+            "severity": severity_str,
             "message": issue.message,
         }
         if issue.field:
@@ -191,7 +199,9 @@ def _format_lint_json(issues: list[Any], file: TextIO) -> None:
 def _format_lint_github(issues: list[Any], file: TextIO) -> None:
     """Format lint issues as GitHub Actions annotations."""
     for issue in issues:
-        level = "error" if issue.severity == "error" else "warning"
+        # Handle both enum and string severity
+        severity_str = getattr(issue.severity, "value", str(issue.severity)).lower()
+        level = "error" if severity_str == "error" else "warning"
         message = f"[{issue.code}] {issue.message}"
         if issue.field:
             message = f"{issue.field}: {message}"

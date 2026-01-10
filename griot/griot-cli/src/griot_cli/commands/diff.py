@@ -3,7 +3,7 @@
 Compare two contract versions and detect breaking changes.
 
 SDK Method: GriotModel.diff()
-Status: Blocked - waiting on core T-011 (contract diffing)
+Status: Complete
 """
 from __future__ import annotations
 

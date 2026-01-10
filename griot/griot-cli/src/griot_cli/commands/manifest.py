@@ -3,7 +3,7 @@
 Export contract metadata for AI/LLM consumption.
 
 SDK Method: GriotModel.to_manifest()
-Status: Blocked - waiting on core T-014 (manifest generation)
+Status: Complete
 """
 from __future__ import annotations
 

@@ -3,7 +3,7 @@
 Pull a contract from the Griot Registry.
 
 SDK Method: Registry API call
-Status: Blocked - waiting on registry T-092 (CRUD endpoints)
+Status: Complete
 """
 from __future__ import annotations
 
