@@ -7,7 +7,7 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from griot_registry.api import contracts, health, search, validations
+from griot_registry.api import approvals, contracts, health, search, validations
 from griot_registry.config import Settings, get_settings
 
 
@@ -69,6 +69,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(contracts.router, prefix=api_prefix, tags=["contracts"])
     app.include_router(validations.router, prefix=api_prefix, tags=["validations"])
     app.include_router(search.router, prefix=api_prefix, tags=["search"])
+    app.include_router(approvals.router, prefix=api_prefix, tags=["approvals"])
 
     return app
 

@@ -27,11 +27,15 @@ dependencies = [
 [project.optional-dependencies]
 postgres = ["asyncpg>=0.29.0", "sqlalchemy[asyncio]>=2.0.0"]
 git = ["gitpython>=3.1.0"]
+oauth = ["httpx>=0.26.0", "pyjwt[crypto]>=2.8.0"]
 dev = [
     "pytest>=7.4.0",
     "pytest-asyncio>=0.23.0",
     "httpx>=0.26.0",
     "pytest-cov>=4.1.0",
+]
+all = [
+    "griot-registry[postgres,git,oauth]",
 ]
 
 [project.scripts]
