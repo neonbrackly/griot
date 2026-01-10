@@ -257,3 +257,193 @@ export interface SearchParams extends ListParams {
   q: string;
   field?: string;
 }
+
+// =============================================================================
+// PII & PRIVACY (Phase 2)
+// =============================================================================
+
+export type PIICategory =
+  | 'direct_identifier'
+  | 'quasi_identifier'
+  | 'sensitive'
+  | 'non_pii';
+
+export type SensitivityLevel = 'public' | 'internal' | 'confidential' | 'restricted';
+
+export type MaskingStrategy =
+  | 'none'
+  | 'redact'
+  | 'hash'
+  | 'tokenize'
+  | 'encrypt'
+  | 'generalize'
+  | 'pseudonymize';
+
+export type LegalBasis =
+  | 'consent'
+  | 'contract'
+  | 'legal_obligation'
+  | 'vital_interests'
+  | 'public_task'
+  | 'legitimate_interests';
+
+export interface PIIFieldInfo {
+  field_name: string;
+  contract_id: string;
+  pii_category: PIICategory;
+  sensitivity_level: SensitivityLevel;
+  masking_strategy: MaskingStrategy;
+  legal_basis?: LegalBasis;
+  retention_days?: number;
+}
+
+// =============================================================================
+// RESIDENCY
+// =============================================================================
+
+export type Region =
+  | 'us'
+  | 'eu'
+  | 'uk'
+  | 'apac'
+  | 'latam'
+  | 'mea'
+  | 'global';
+
+export interface ResidencyRequirement {
+  region: Region;
+  required: boolean;
+  allowed_regions: Region[];
+  restricted_regions: Region[];
+}
+
+export interface ResidencyStatus {
+  contract_id: string;
+  field_name?: string;
+  current_region: Region;
+  required_region: Region;
+  compliant: boolean;
+  violation_reason?: string;
+}
+
+// =============================================================================
+// REPORTS
+// =============================================================================
+
+// Audit Report (T-050 / FR-SDK-013)
+export interface PIIInventoryItem {
+  contract_id: string;
+  contract_name: string;
+  field_name: string;
+  pii_category: PIICategory;
+  sensitivity_level: SensitivityLevel;
+  masking_strategy: MaskingStrategy;
+  legal_basis?: LegalBasis;
+  retention_days?: number;
+}
+
+export interface ResidencyCheck {
+  contract_id: string;
+  region: Region;
+  compliant: boolean;
+  fields_checked: number;
+  violations: ResidencyStatus[];
+}
+
+export interface AuditReport {
+  generated_at: string;
+  contract_count: number;
+  field_count: number;
+  pii_inventory: PIIInventoryItem[];
+  pii_by_category: Record<PIICategory, number>;
+  pii_by_sensitivity: Record<SensitivityLevel, number>;
+  residency_checks: ResidencyCheck[];
+  residency_compliance_rate: number;
+  legal_basis_coverage: Record<LegalBasis, number>;
+  retention_policy_coverage: number;
+}
+
+// Analytics Report (T-051 / FR-SDK-014)
+export interface ContractMetrics {
+  contract_id: string;
+  contract_name: string;
+  field_count: number;
+  validation_count: number;
+  pass_rate: number;
+  avg_error_rate: number;
+  last_validation?: string;
+}
+
+export interface FieldUsageMetrics {
+  field_name: string;
+  contract_count: number;
+  avg_null_rate: number;
+  type_distribution: Record<FieldType, number>;
+}
+
+export interface AnalyticsReport {
+  generated_at: string;
+  total_contracts: number;
+  total_fields: number;
+  total_validations: number;
+  overall_pass_rate: number;
+  contract_metrics: ContractMetrics[];
+  field_usage: FieldUsageMetrics[];
+  validations_by_day: { date: string; count: number; pass_rate: number }[];
+  top_failing_contracts: { contract_id: string; fail_count: number }[];
+  top_error_types: { constraint: string; count: number }[];
+}
+
+// AI Readiness Report (T-052 / FR-SDK-016)
+export interface AIReadinessScore {
+  overall_score: number; // 0-100
+  documentation_score: number;
+  semantic_coverage_score: number;
+  data_quality_score: number;
+  consistency_score: number;
+}
+
+export interface SemanticCoverage {
+  fields_with_description: number;
+  fields_with_unit: number;
+  fields_with_aggregation: number;
+  fields_with_glossary_term: number;
+  total_fields: number;
+}
+
+export interface ContractAIReadiness {
+  contract_id: string;
+  contract_name: string;
+  score: AIReadinessScore;
+  semantic_coverage: SemanticCoverage;
+  recommendations: string[];
+}
+
+export interface AIReadinessReport {
+  generated_at: string;
+  overall_score: AIReadinessScore;
+  semantic_coverage: SemanticCoverage;
+  contracts: ContractAIReadiness[];
+  top_recommendations: string[];
+  readiness_by_contract: { contract_id: string; score: number }[];
+}
+
+// Combined Readiness Report (T-053 / FR-SDK-017)
+export interface ReadinessReport {
+  generated_at: string;
+  audit: AuditReport;
+  analytics: AnalyticsReport;
+  ai_readiness: AIReadinessReport;
+  overall_health_score: number;
+}
+
+// =============================================================================
+// REPORT PARAMETERS
+// =============================================================================
+
+export interface ReportParams {
+  contract_ids?: string[];
+  from_date?: string;
+  to_date?: string;
+  include_details?: boolean;
+}

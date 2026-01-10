@@ -21,6 +21,13 @@ import type {
   SearchParams,
   HealthResponse,
   ApiError,
+  AuditReport,
+  AnalyticsReport,
+  AIReadinessReport,
+  ReadinessReport,
+  ReportParams,
+  ResidencyStatus,
+  Region,
 } from './types';
 
 // =============================================================================
@@ -198,6 +205,47 @@ class ApiClient {
   async search(params: SearchParams): Promise<SearchResults> {
     const query = this.buildQueryString(params);
     return this.request<SearchResults>(`/search${query}`);
+  }
+
+  // ===========================================================================
+  // REPORTS (T-102)
+  // ===========================================================================
+
+  async getAuditReport(params: ReportParams = {}): Promise<AuditReport> {
+    const query = this.buildQueryString(params);
+    return this.request<AuditReport>(`/reports/audit${query}`);
+  }
+
+  async getAnalyticsReport(params: ReportParams = {}): Promise<AnalyticsReport> {
+    const query = this.buildQueryString(params);
+    return this.request<AnalyticsReport>(`/reports/analytics${query}`);
+  }
+
+  async getAIReadinessReport(params: ReportParams = {}): Promise<AIReadinessReport> {
+    const query = this.buildQueryString(params);
+    return this.request<AIReadinessReport>(`/reports/ai-readiness${query}`);
+  }
+
+  async getReadinessReport(params: ReportParams = {}): Promise<ReadinessReport> {
+    const query = this.buildQueryString(params);
+    return this.request<ReadinessReport>(`/reports/readiness${query}`);
+  }
+
+  // ===========================================================================
+  // RESIDENCY
+  // ===========================================================================
+
+  async checkResidency(
+    contractId: string,
+    region: Region
+  ): Promise<ResidencyStatus[]> {
+    return this.request<ResidencyStatus[]>(
+      `/contracts/${encodeURIComponent(contractId)}/residency?region=${encodeURIComponent(region)}`
+    );
+  }
+
+  async getResidencyMap(): Promise<Record<Region, string[]>> {
+    return this.request<Record<Region, string[]>>('/residency/map');
   }
 }
 

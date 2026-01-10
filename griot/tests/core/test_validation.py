@@ -725,3 +725,268 @@ class TestFormatValidators:
         # Valid hostname
         errors = validate_value("api.example.com", field_info, row=0)
         assert not any(e.constraint == "format" for e in errors)
+
+
+# =============================================================================
+# ADDITIONAL FORMAT VALIDATOR TESTS
+# =============================================================================
+
+
+class TestAdditionalFormatValidators:
+    """Additional tests for format validators."""
+
+    def test_ipv6_format_valid(self) -> None:
+        """Test valid IPv6 format validation."""
+
+        class IPv6Model(GriotModel):
+            ip: str = Field(description="IP", format="ipv6")
+
+        field_info = IPv6Model.get_field("ip")
+        assert field_info is not None
+
+        # Valid IPv6 addresses
+        valid_ipv6s = [
+            "2001:0db8:85a3:0000:0000:8a2e:0370:7334",
+            "2001:db8::1",
+            "::1",
+            "fe80::1",
+        ]
+        for ip in valid_ipv6s:
+            errors = validate_value(ip, field_info, row=0)
+            assert not any(e.constraint == "format" for e in errors), f"Failed for {ip}"
+
+    def test_ipv6_format_invalid(self) -> None:
+        """Test invalid IPv6 format validation."""
+
+        class IPv6Model(GriotModel):
+            ip: str = Field(description="IP", format="ipv6")
+
+        field_info = IPv6Model.get_field("ip")
+        assert field_info is not None
+
+        # Invalid IPv6
+        invalid_ipv6s = [
+            "not-an-ip",
+            "192.168.1.1",  # This is IPv4
+            "gggg::",  # Invalid hex
+            "12345::1",  # Too many digits in segment
+        ]
+        for ip in invalid_ipv6s:
+            errors = validate_value(ip, field_info, row=0)
+            assert any(e.constraint == "format" for e in errors), f"Should fail for {ip}"
+
+    def test_ipv4_format_non_numeric(self) -> None:
+        """Test IPv4 format with non-numeric segments."""
+
+        class IPv4Model(GriotModel):
+            ip: str = Field(description="IP", format="ipv4")
+
+        field_info = IPv4Model.get_field("ip")
+        assert field_info is not None
+
+        # Non-numeric segments
+        errors = validate_value("abc.def.ghi.jkl", field_info, row=0)
+        assert any(e.constraint == "format" for e in errors)
+
+    def test_ipv4_format_wrong_segment_count(self) -> None:
+        """Test IPv4 format with wrong number of segments."""
+
+        class IPv4Model(GriotModel):
+            ip: str = Field(description="IP", format="ipv4")
+
+        field_info = IPv4Model.get_field("ip")
+        assert field_info is not None
+
+        # Too few segments
+        errors = validate_value("192.168.1", field_info, row=0)
+        assert any(e.constraint == "format" for e in errors)
+
+    def test_datetime_with_timezone_offset(self) -> None:
+        """Test datetime format with timezone offset."""
+
+        class DatetimeModel(GriotModel):
+            dt: str = Field(description="Datetime", format="datetime")
+
+        field_info = DatetimeModel.get_field("dt")
+        assert field_info is not None
+
+        # Datetime with timezone offset
+        valid_datetimes = [
+            "2025-01-10T12:30:45+00:00",
+            "2025-01-10T12:30:45.123Z",
+            "2025-01-10T12:30:45.123456",
+        ]
+        for dt in valid_datetimes:
+            errors = validate_value(dt, field_info, row=0)
+            # These should all pass
+            format_errors = [e for e in errors if e.constraint == "format"]
+            assert len(format_errors) == 0, f"Failed for {dt}"
+
+    def test_datetime_invalid(self) -> None:
+        """Test invalid datetime formats."""
+
+        class DatetimeModel(GriotModel):
+            dt: str = Field(description="Datetime", format="datetime")
+
+        field_info = DatetimeModel.get_field("dt")
+        assert field_info is not None
+
+        # Invalid datetime
+        errors = validate_value("not-a-datetime", field_info, row=0)
+        assert any(e.constraint == "format" for e in errors)
+
+    def test_hostname_too_long(self) -> None:
+        """Test hostname format with too long value."""
+
+        class HostnameModel(GriotModel):
+            host: str = Field(description="Hostname", format="hostname")
+
+        field_info = HostnameModel.get_field("host")
+        assert field_info is not None
+
+        # Too long hostname (> 253 characters)
+        long_hostname = "a" * 254 + ".com"
+        errors = validate_value(long_hostname, field_info, row=0)
+        assert any(e.constraint == "format" for e in errors)
+
+    def test_hostname_invalid_format(self) -> None:
+        """Test hostname format with invalid characters."""
+
+        class HostnameModel(GriotModel):
+            host: str = Field(description="Hostname", format="hostname")
+
+        field_info = HostnameModel.get_field("host")
+        assert field_info is not None
+
+        # Invalid hostname (starts with hyphen)
+        errors = validate_value("-invalid.com", field_info, row=0)
+        assert any(e.constraint == "format" for e in errors)
+
+
+# =============================================================================
+# EDGE CASE VALIDATION TESTS
+# =============================================================================
+
+
+class TestValidationEdgeCases:
+    """Tests for validation edge cases."""
+
+    def test_validate_float_with_int_constraint(self) -> None:
+        """Test validating float value against integer constraints."""
+
+        class FloatModel(GriotModel):
+            value: float = Field(description="Value", ge=0.0, le=100.0)
+
+        field_info = FloatModel.get_field("value")
+        assert field_info is not None
+
+        # Valid float
+        errors = validate_value(50.5, field_info, row=0)
+        assert len(errors) == 0
+
+        # Invalid (above max)
+        errors = validate_value(100.1, field_info, row=0)
+        assert any(e.constraint == "le" for e in errors)
+
+    def test_validate_boolean_field(self) -> None:
+        """Test validating boolean field."""
+
+        class BoolModel(GriotModel):
+            flag: bool = Field(description="Flag")
+
+        field_info = BoolModel.get_field("flag")
+        assert field_info is not None
+
+        # Valid boolean
+        errors = validate_value(True, field_info, row=0)
+        assert len(errors) == 0
+
+        errors = validate_value(False, field_info, row=0)
+        assert len(errors) == 0
+
+        # Invalid type
+        errors = validate_value("true", field_info, row=0)
+        assert any(e.constraint == "type" for e in errors)
+
+    def test_validate_list_field(self) -> None:
+        """Test validating array/list field."""
+
+        class ListModel(GriotModel):
+            items: list = Field(description="Items")
+
+        field_info = ListModel.get_field("items")
+        assert field_info is not None
+
+        # Valid list
+        errors = validate_value([1, 2, 3], field_info, row=0)
+        assert len(errors) == 0
+
+        # Invalid type (not a list)
+        errors = validate_value("not-a-list", field_info, row=0)
+        assert any(e.constraint == "type" for e in errors)
+
+    def test_validate_dict_field(self) -> None:
+        """Test validating object/dict field."""
+
+        class DictModel(GriotModel):
+            data: dict = Field(description="Data")
+
+        field_info = DictModel.get_field("data")
+        assert field_info is not None
+
+        # Valid dict
+        errors = validate_value({"key": "value"}, field_info, row=0)
+        assert len(errors) == 0
+
+        # Invalid type (not a dict)
+        errors = validate_value([1, 2, 3], field_info, row=0)
+        assert any(e.constraint == "type" for e in errors)
+
+    def test_validate_single_row_function(self) -> None:
+        """Test validate_single_row function directly."""
+        valid_row = {
+            "customer_id": "CUST-000001",
+            "email": "test@example.com",
+            "age": 30,
+            "status": "active",
+        }
+        errors = validate_single_row(Customer, valid_row)
+        assert len(errors) == 0
+
+        invalid_row = {
+            "customer_id": "INVALID",
+            "email": "not-email",
+            "age": -5,
+            "status": "unknown",
+        }
+        errors = validate_single_row(Customer, invalid_row)
+        assert len(errors) > 0
+
+    def test_validate_data_with_single_dict(self) -> None:
+        """Test validate_data with a single dict instead of list."""
+        data = {
+            "customer_id": "CUST-000001",
+            "email": "test@example.com",
+            "age": 30,
+            "status": "active",
+        }
+        result = validate_data(Customer, data)
+        assert result.passed is True
+        assert result.row_count == 1
+
+    def test_multiple_of_with_float(self) -> None:
+        """Test multiple_of constraint with float values."""
+
+        class FloatMultipleModel(GriotModel):
+            value: float = Field(description="Value", multiple_of=0.5)
+
+        field_info = FloatMultipleModel.get_field("value")
+        assert field_info is not None
+
+        # Valid (1.5 is multiple of 0.5)
+        errors = validate_value(1.5, field_info, row=0)
+        assert not any(e.constraint == "multiple_of" for e in errors)
+
+        # Invalid (1.3 is not multiple of 0.5)
+        errors = validate_value(1.3, field_info, row=0)
+        assert any(e.constraint == "multiple_of" for e in errors)

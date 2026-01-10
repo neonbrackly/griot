@@ -26,7 +26,18 @@ from typing import (
     get_type_hints,
 )
 
-from griot_core.types import AggregationType, DataType, FieldFormat
+from griot_core.types import (
+    AggregationType,
+    DataRegion,
+    DataType,
+    FieldFormat,
+    LegalBasis,
+    LineageConfig,
+    MaskingStrategy,
+    PIICategory,
+    ResidencyConfig,
+    SensitivityLevel,
+)
 
 if TYPE_CHECKING:
     from griot_core.validation import ValidationResult
@@ -74,6 +85,26 @@ class FieldInfo:
     aggregation: AggregationType | None = None
     glossary_term: str | None = None
 
+    # PII/Privacy metadata (FR-SDK-008)
+    pii_category: PIICategory | None = None
+    sensitivity_level: SensitivityLevel | None = None
+    masking_strategy: MaskingStrategy | None = None
+    legal_basis: LegalBasis | None = None
+    retention_days: int | None = None
+    consent_required: bool = False
+
+    @property
+    def is_pii(self) -> bool:
+        """Check if this field contains PII."""
+        return self.pii_category is not None and self.pii_category != PIICategory.NONE
+
+    @property
+    def is_sensitive(self) -> bool:
+        """Check if this field is classified as sensitive."""
+        if self.sensitivity_level is None:
+            return False
+        return self.sensitivity_level >= SensitivityLevel.CONFIDENTIAL
+
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary representation."""
         result: dict[str, Any] = {
@@ -115,6 +146,20 @@ class FieldInfo:
             result["aggregation"] = self.aggregation.value
         if self.glossary_term:
             result["glossary_term"] = self.glossary_term
+
+        # PII metadata
+        if self.pii_category and self.pii_category != PIICategory.NONE:
+            result["pii_category"] = self.pii_category.value
+        if self.sensitivity_level:
+            result["sensitivity_level"] = self.sensitivity_level.value
+        if self.masking_strategy and self.masking_strategy != MaskingStrategy.NONE:
+            result["masking_strategy"] = self.masking_strategy.value
+        if self.legal_basis and self.legal_basis != LegalBasis.NONE:
+            result["legal_basis"] = self.legal_basis.value
+        if self.retention_days is not None:
+            result["retention_days"] = self.retention_days
+        if self.consent_required:
+            result["consent_required"] = True
 
         return result
 
@@ -182,6 +227,13 @@ class Field:
         "unit",
         "aggregation",
         "glossary_term",
+        # PII/Privacy metadata
+        "pii_category",
+        "sensitivity_level",
+        "masking_strategy",
+        "legal_basis",
+        "retention_days",
+        "consent_required",
         "_name",
         "_has_default",
     )
@@ -212,6 +264,13 @@ class Field:
         unit: str | None = None,
         aggregation: AggregationType | str | None = None,
         glossary_term: str | None = None,
+        # PII/Privacy metadata (FR-SDK-008)
+        pii_category: PIICategory | str | None = None,
+        sensitivity_level: SensitivityLevel | str | None = None,
+        masking_strategy: MaskingStrategy | str | None = None,
+        legal_basis: LegalBasis | str | None = None,
+        retention_days: int | None = None,
+        consent_required: bool = False,
     ) -> None:
         self.description = description
         self.default = default
@@ -248,6 +307,30 @@ class Field:
             else aggregation
         )
         self.glossary_term = glossary_term
+
+        # PII/Privacy metadata
+        self.pii_category = (
+            PIICategory(pii_category)
+            if isinstance(pii_category, str)
+            else pii_category
+        )
+        self.sensitivity_level = (
+            SensitivityLevel(sensitivity_level)
+            if isinstance(sensitivity_level, str)
+            else sensitivity_level
+        )
+        self.masking_strategy = (
+            MaskingStrategy(masking_strategy)
+            if isinstance(masking_strategy, str)
+            else masking_strategy
+        )
+        self.legal_basis = (
+            LegalBasis(legal_basis)
+            if isinstance(legal_basis, str)
+            else legal_basis
+        )
+        self.retention_days = retention_days
+        self.consent_required = consent_required
 
         # Validate constraint combinations
         self._validate_constraints()
@@ -332,6 +415,13 @@ class Field:
             unit=self.unit,
             aggregation=self.aggregation,
             glossary_term=self.glossary_term,
+            # PII/Privacy metadata
+            pii_category=self.pii_category,
+            sensitivity_level=self.sensitivity_level,
+            masking_strategy=self.masking_strategy,
+            legal_basis=self.legal_basis,
+            retention_days=self.retention_days,
+            consent_required=self.consent_required,
         )
 
     def __repr__(self) -> str:
@@ -484,6 +574,8 @@ class GriotModel(metaclass=GriotModelMeta):
     _griot_fields: ClassVar[dict[str, FieldInfo]] = {}
     _griot_field_names: ClassVar[tuple[str, ...]] = ()
     _griot_primary_key: ClassVar[str | None] = None
+    _griot_residency_config: ClassVar[ResidencyConfig | None] = None
+    _griot_lineage_config: ClassVar[LineageConfig | None] = None
 
     @classmethod
     def list_fields(cls) -> list[FieldInfo]:
@@ -649,6 +741,281 @@ class GriotModel(metaclass=GriotModelMeta):
         from griot_core.manifest import export_manifest
 
         return export_manifest(cls, format=format)
+
+    @classmethod
+    def pii_inventory(cls) -> list[FieldInfo]:
+        """
+        List all fields containing PII.
+
+        Returns a list of FieldInfo objects for all fields that have been
+        marked with a pii_category (other than NONE).
+
+        Returns:
+            List of FieldInfo objects for PII fields.
+
+        Example:
+            class Customer(GriotModel):
+                email: str = Field(
+                    description="Email",
+                    pii_category="email",
+                    sensitivity_level="confidential"
+                )
+                name: str = Field(description="Name")
+
+            pii_fields = Customer.pii_inventory()
+            # Returns [FieldInfo(name='email', ...)]
+        """
+        return [f for f in cls._griot_fields.values() if f.is_pii]
+
+    @classmethod
+    def sensitive_fields(cls) -> list[FieldInfo]:
+        """
+        List all fields classified as sensitive (confidential or higher).
+
+        Returns:
+            List of FieldInfo objects for sensitive fields.
+        """
+        return [f for f in cls._griot_fields.values() if f.is_sensitive]
+
+    @classmethod
+    def pii_summary(cls) -> dict[str, Any]:
+        """
+        Generate a summary of PII data in this contract.
+
+        Returns a dictionary with statistics about PII fields including
+        counts by category, sensitivity levels, and masking strategies.
+
+        Returns:
+            Dictionary with PII statistics.
+        """
+        pii_fields = cls.pii_inventory()
+
+        # Count by category
+        categories: dict[str, int] = {}
+        for field in pii_fields:
+            if field.pii_category:
+                cat = field.pii_category.value
+                categories[cat] = categories.get(cat, 0) + 1
+
+        # Count by sensitivity level
+        sensitivity_levels: dict[str, int] = {}
+        for field in cls._griot_fields.values():
+            if field.sensitivity_level:
+                level = field.sensitivity_level.value
+                sensitivity_levels[level] = sensitivity_levels.get(level, 0) + 1
+
+        # Count by masking strategy
+        masking_strategies: dict[str, int] = {}
+        for field in pii_fields:
+            if field.masking_strategy:
+                strategy = field.masking_strategy.value
+                masking_strategies[strategy] = masking_strategies.get(strategy, 0) + 1
+
+        # Fields requiring consent
+        consent_required = [f.name for f in pii_fields if f.consent_required]
+
+        # Retention periods
+        retention_periods = {
+            f.name: f.retention_days
+            for f in pii_fields
+            if f.retention_days is not None
+        }
+
+        return {
+            "total_fields": len(cls._griot_fields),
+            "pii_field_count": len(pii_fields),
+            "pii_fields": [f.name for f in pii_fields],
+            "categories": categories,
+            "sensitivity_levels": sensitivity_levels,
+            "masking_strategies": masking_strategies,
+            "consent_required": consent_required,
+            "retention_periods": retention_periods,
+        }
+
+    # =========================================================================
+    # Data Residency Methods (FR-SDK-011)
+    # =========================================================================
+
+    @classmethod
+    def set_residency_config(cls, config: ResidencyConfig) -> None:
+        """
+        Set the data residency configuration for this contract.
+
+        Args:
+            config: ResidencyConfig with rules for geographic data storage.
+
+        Example:
+            from griot_core.types import ResidencyConfig, ResidencyRule, DataRegion
+
+            Customer.set_residency_config(ResidencyConfig(
+                default_rule=ResidencyRule(allowed_regions=[DataRegion.EU]),
+                compliance_frameworks=["GDPR"],
+            ))
+        """
+        cls._griot_residency_config = config
+
+    @classmethod
+    def get_residency_config(cls) -> ResidencyConfig | None:
+        """Get the current residency configuration."""
+        return cls._griot_residency_config
+
+    @classmethod
+    def check_residency(
+        cls,
+        region: DataRegion | str,
+        fields: list[str] | None = None,
+    ) -> dict[str, Any]:
+        """
+        Check if data can be stored in a given region.
+
+        Args:
+            region: The target region for data storage.
+            fields: Optional list of specific fields to check.
+                    If None, checks all fields.
+
+        Returns:
+            Dictionary with compliance status and any violations.
+
+        Example:
+            result = Customer.check_residency(DataRegion.US)
+            if not result["compliant"]:
+                for violation in result["violations"]:
+                    print(f"{violation['field']}: {violation['reason']}")
+        """
+        if cls._griot_residency_config is None:
+            return {
+                "compliant": True,
+                "region": region.value if isinstance(region, DataRegion) else region,
+                "violations": [],
+                "warnings": ["No residency configuration set"],
+            }
+
+        # Convert string to enum if needed
+        if isinstance(region, str):
+            region = DataRegion(region)
+
+        # Determine fields to check
+        fields_to_check = fields or list(cls._griot_fields.keys())
+
+        violations = []
+        for field_name in fields_to_check:
+            if field_name not in cls._griot_fields:
+                continue
+
+            is_compliant, error = cls._griot_residency_config.check_residency(
+                field_name, region
+            )
+            if not is_compliant:
+                violations.append({
+                    "field": field_name,
+                    "reason": error,
+                })
+
+        return {
+            "compliant": len(violations) == 0,
+            "region": region.value,
+            "fields_checked": fields_to_check,
+            "violations": violations,
+            "config": cls._griot_residency_config.to_dict() if violations else None,
+        }
+
+    @classmethod
+    def get_allowed_regions(cls) -> list[DataRegion]:
+        """
+        Get all regions where this contract's data can be stored.
+
+        Returns:
+            List of DataRegion values where all fields can be stored.
+        """
+        if cls._griot_residency_config is None:
+            # No restrictions
+            return list(DataRegion)
+
+        config = cls._griot_residency_config
+        allowed = []
+
+        for region in DataRegion:
+            result = cls.check_residency(region)
+            if result["compliant"]:
+                allowed.append(region)
+
+        return allowed
+
+    # =========================================================================
+    # Data Lineage Methods (FR-SDK-012)
+    # =========================================================================
+
+    @classmethod
+    def set_lineage_config(cls, config: LineageConfig) -> None:
+        """
+        Set the data lineage configuration for this contract.
+
+        Args:
+            config: LineageConfig with source, transformation, and consumer info.
+
+        Example:
+            from griot_core.types import LineageConfig, Source, Consumer
+
+            Customer.set_lineage_config(LineageConfig(
+                sources=[Source(name="crm", type="database", system="salesforce")],
+                data_owner="Data Team",
+            ))
+        """
+        cls._griot_lineage_config = config
+
+    @classmethod
+    def get_lineage_config(cls) -> LineageConfig | None:
+        """Get the current lineage configuration."""
+        return cls._griot_lineage_config
+
+    @classmethod
+    def get_field_lineage(cls, field_name: str) -> dict[str, Any]:
+        """
+        Get lineage information for a specific field.
+
+        Args:
+            field_name: Name of the field to trace.
+
+        Returns:
+            Dictionary with source, transformations, and consumers for the field.
+        """
+        if cls._griot_lineage_config is None:
+            return {
+                "field": field_name,
+                "source": None,
+                "transformations": [],
+                "consumers": [],
+            }
+
+        return cls._griot_lineage_config.get_field_lineage(field_name)
+
+    @classmethod
+    def lineage_summary(cls) -> dict[str, Any]:
+        """
+        Get a summary of data lineage for this contract.
+
+        Returns:
+            Dictionary with lineage statistics and information.
+        """
+        if cls._griot_lineage_config is None:
+            return {
+                "sources": [],
+                "transformations": [],
+                "consumers": [],
+                "data_owner": None,
+                "data_steward": None,
+            }
+
+        config = cls._griot_lineage_config
+        return {
+            "sources": [s.name for s in config.sources],
+            "transformations": [t.name for t in config.transformations],
+            "consumers": [c.name for c in config.consumers],
+            "data_owner": config.data_owner,
+            "data_steward": config.data_steward,
+            "technical_owner": config.technical_owner,
+            "fields_with_lineage": list(config.field_sources.keys()),
+        }
 
     def __init_subclass__(cls, **kwargs: Any) -> None:
         """Hook for subclass creation."""

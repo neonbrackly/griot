@@ -537,3 +537,4 @@ Before any agent begins work:
 - [ ] Check `status/decisions/*` for context
 - [ ] Identify blocking dependencies and update them in `status/board.md`
 - [ ] Confirm you're only writing to owned paths
+- [ ] Set up your Git branch named `agent-<your-agent-name>` and work there exclusively.

@@ -40,18 +40,32 @@ Example:
 """
 from __future__ import annotations
 
-__version__ = "0.3.0"
+__version__ = "0.4.0"
 __all__ = [
     # Core classes
     "GriotModel",
     "Field",
     "FieldInfo",
-    # Type definitions
+    # Type definitions (Phase 1)
     "ConstraintType",
     "Severity",
     "FieldFormat",
     "AggregationType",
     "DataType",
+    # PII/Privacy types (Phase 2 - FR-SDK-008)
+    "PIICategory",
+    "SensitivityLevel",
+    "MaskingStrategy",
+    "LegalBasis",
+    # Data Residency types (Phase 2 - FR-SDK-011)
+    "DataRegion",
+    "ResidencyConfig",
+    "ResidencyRule",
+    # Data Lineage types (Phase 2 - FR-SDK-012)
+    "LineageConfig",
+    "Source",
+    "Transformation",
+    "Consumer",
     # Validation
     "ValidationResult",
     "FieldValidationError",
@@ -75,18 +89,46 @@ __all__ = [
     "generate_mock_data",
     # Manifest export
     "export_manifest",
+    # Reports (Phase 2 - FR-SDK-013)
+    "AnalyticsReport",
+    "AIReadinessReport",
+    "generate_analytics_report",
+    "generate_ai_readiness_report",
 ]
 
 # Core classes
 from griot_core.models import Field, FieldInfo, GriotModel
 
-# Type definitions
+# Type definitions (Phase 1)
 from griot_core.types import (
     AggregationType,
     ConstraintType,
     DataType,
     FieldFormat,
     Severity,
+)
+
+# PII/Privacy types (Phase 2)
+from griot_core.types import (
+    LegalBasis,
+    MaskingStrategy,
+    PIICategory,
+    SensitivityLevel,
+)
+
+# Data Residency types (Phase 2)
+from griot_core.types import (
+    DataRegion,
+    ResidencyConfig,
+    ResidencyRule,
+)
+
+# Data Lineage types (Phase 2)
+from griot_core.types import (
+    Consumer,
+    LineageConfig,
+    Source,
+    Transformation,
 )
 
 # Validation
@@ -122,3 +164,11 @@ from griot_core.mock import generate_mock_data
 
 # Manifest export
 from griot_core.manifest import export_manifest
+
+# Reports (Phase 2)
+from griot_core.reports import (
+    AIReadinessReport,
+    AnalyticsReport,
+    generate_ai_readiness_report,
+    generate_analytics_report,
+)

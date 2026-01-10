@@ -1,7 +1,7 @@
 # Griot Implementation Status Board
 
-> **Last Updated:** 2026-01-10 by orchestrator (review)
-> **Current Phase:** 1 (Foundation) → Transitioning to Phase 2
+> **Last Updated:** 2026-01-10 by registry (completed T-097, T-098, T-100, T-101)
+> **Current Phase:** 2 (Compliance) - In Progress
 > **Next Review:** 2026-01-17
 
 ---
@@ -40,29 +40,29 @@
 | T-036 | CLI output formatting (table, json, github) | cli | Medium | ✅ Done | T-030 | NFR-CLI-002 |
 | T-037 | CLI configuration handling | cli | Medium | ✅ Done | T-030 | — |
 
-### Phase 2 - Compliance (Current - Starting)
+### Phase 2 - Compliance (Current - In Progress)
 
 | Task ID | Task | Agent | Priority | Status | Dependencies | Requirement |
 |---------|------|-------|----------|--------|--------------|-------------|
-| T-040 | PIICategory enum | core | High | 📋 Ready | None | FR-SDK-008 |
-| T-041 | SensitivityLevel enum | core | High | 📋 Ready | None | FR-SDK-008 |
-| T-042 | MaskingStrategy enum | core | High | 📋 Ready | None | FR-SDK-008 |
-| T-043 | LegalBasis enum | core | Medium | 📋 Ready | None | FR-SDK-008 |
-| T-044 | PII Field metadata support | core | High | ⏳ Waiting | T-040, T-041, T-042 | FR-SDK-008 |
-| T-045 | pii_inventory() function | core | High | ⏳ Waiting | T-044 | FR-SDK-010 |
-| T-046 | ResidencyConfig class | core | High | 📋 Ready | None | FR-SDK-011 |
-| T-047 | check_residency() method | core | High | ⏳ Waiting | T-046 | FR-SDK-011 |
-| T-048 | LineageConfig class | core | Medium | 📋 Ready | None | FR-SDK-012 |
-| T-049 | Source, Transformation, Consumer classes | core | Medium | ⏳ Waiting | T-048 | FR-SDK-012 |
+| T-040 | PIICategory enum | core | High | ✅ Done | None | FR-SDK-008 |
+| T-041 | SensitivityLevel enum | core | High | ✅ Done | None | FR-SDK-008 |
+| T-042 | MaskingStrategy enum | core | High | ✅ Done | None | FR-SDK-008 |
+| T-043 | LegalBasis enum | core | Medium | ✅ Done | None | FR-SDK-008 |
+| T-044 | PII Field metadata support | core | High | ✅ Done | T-040, T-041, T-042 | FR-SDK-008 |
+| T-045 | pii_inventory() function | core | High | ✅ Done | T-044 | FR-SDK-010 |
+| T-046 | ResidencyConfig class | core | High | ✅ Done | None | FR-SDK-011 |
+| T-047 | check_residency() method | core | High | ✅ Done | T-046 | FR-SDK-011 |
+| T-048 | LineageConfig class | core | Medium | ✅ Done | None | FR-SDK-012 |
+| T-049 | Source, Transformation, Consumer classes | core | Medium | ✅ Done | T-048 | FR-SDK-012 |
 | T-050 | AuditReport generator | core | High | ⏳ Waiting | T-045, T-047, T-048 | FR-SDK-013 |
-| T-051 | AnalyticsReport generator | core | High | 📋 Ready | None | FR-SDK-014 |
-| T-052 | AIReadinessReport generator | core | High | 📋 Ready | None | FR-SDK-016 |
+| T-051 | AnalyticsReport generator | core | High | ✅ Done | None | FR-SDK-014 |
+| T-052 | AIReadinessReport generator | core | High | ✅ Done | None | FR-SDK-016 |
 | T-053 | ReadinessReport (combined) generator | core | Medium | ⏳ Waiting | T-050, T-051, T-052 | FR-SDK-017 |
 | T-060 | `griot report audit` command | cli | High | 🚫 Blocked | T-050 | FR-CLI-010 |
-| T-061 | `griot report analytics` command | cli | High | 🚫 Blocked | T-051 | FR-CLI-010 |
-| T-062 | `griot report ai` command | cli | High | 🚫 Blocked | T-052 | FR-CLI-010 |
+| T-061 | `griot report analytics` command | cli | High | 📋 Ready | T-051 | FR-CLI-010 |
+| T-062 | `griot report ai` command | cli | High | 📋 Ready | T-052 | FR-CLI-010 |
 | T-063 | `griot report all` command | cli | Medium | 🚫 Blocked | T-053 | FR-CLI-010 |
-| T-064 | `griot residency check` command | cli | High | 🚫 Blocked | T-047 | FR-CLI-011 |
+| T-064 | `griot residency check` command | cli | High | 📋 Ready | T-047 | FR-CLI-011 |
 
 ### Phase 3 - Runtime (In Progress)
 
@@ -86,11 +86,11 @@
 | T-094 | Validation history endpoints | registry | Medium | ✅ Done | T-092 | — |
 | T-095 | Search endpoints | registry | Medium | ✅ Done | T-092 | — |
 | T-096 | Filesystem storage backend | registry | High | ✅ Done | T-092 | — |
-| T-097 | Git storage backend | registry | Medium | 📋 Ready | T-096 | — |
-| T-098 | PostgreSQL storage backend | registry | Medium | 📋 Ready | T-096 | — |
+| T-097 | Git storage backend | registry | Medium | ✅ Done | T-096 | — |
+| T-098 | PostgreSQL storage backend | registry | Medium | ✅ Done | T-096 | — |
 | T-099 | API key authentication | registry | High | ✅ Done | T-090 | — |
-| T-100 | OAuth2/OIDC authentication | registry | Medium | 📋 Ready | T-099 | — |
-| T-101 | Approval chain endpoints | registry | High | 📋 Ready | T-092 | FR-REG-008 |
+| T-100 | OAuth2/OIDC authentication | registry | Medium | ✅ Done | T-099 | — |
+| T-101 | Approval chain endpoints | registry | High | ✅ Done | T-092 | FR-REG-008 |
 | T-102 | Report generation endpoints | registry | Medium | 🚫 Blocked | T-050, T-051, T-052 | — |
 | T-110 | `griot push` command | cli | High | 📋 Ready | T-092 | — |
 | T-111 | `griot pull` command | cli | High | 📋 Ready | T-092 | — |
@@ -107,10 +107,10 @@
 | T-125 | FieldEditor component | hub | High | ✅ Done | T-124 | — |
 | T-126 | Validation Monitor page | hub | High | ✅ Done | T-121 | — |
 | T-127 | ValidationBadge component | hub | Medium | ✅ Done | T-126 | — |
-| T-128 | Audit Dashboard page | hub | High | ⏳ Waiting | T-102 | — |
-| T-129 | FinOps Dashboard page | hub | High | ⏳ Waiting | T-102 | — |
-| T-130 | AI Readiness page | hub | Medium | ⏳ Waiting | T-102 | — |
-| T-131 | Residency Map page | hub | Medium | ⏳ Waiting | T-079 | — |
+| T-128 | Audit Dashboard page | hub | High | ✅ Done | T-102 | — |
+| T-129 | FinOps Dashboard page | hub | High | ✅ Done | T-102 | — |
+| T-130 | AI Readiness page | hub | Medium | ✅ Done | T-102 | — |
+| T-131 | Residency Map page | hub | Medium | ✅ Done | T-079 | — |
 | T-132 | Settings page | hub | Low | ✅ Done | T-121 | — |
 
 **Status Legend:**
@@ -127,9 +127,9 @@
 | Phase | Name | Status | Progress | Key Deliverables |
 |-------|------|--------|----------|------------------|
 | 1 | Foundation | ✅ Complete | 100% | GriotModel, Field, validate(), CLI scaffold |
-| 2 | Compliance | 🟡 Starting | 0% | PII, Residency, Reports |
-| 3 | Runtime | 🟡 In Progress | 45% | Enforce, Registry API |
-| 4 | UI | 🟡 In Progress | 70% | Hub web interface |
+| 2 | Compliance | 🟡 In Progress | 75% | PII, Residency, Reports |
+| 3 | Runtime | 🟡 In Progress | 55% | Enforce, Registry API |
+| 4 | UI | ✅ Complete | 100% | Hub web interface |
 
 ---
 
@@ -139,11 +139,15 @@ Tasks waiting on other agents to complete dependencies.
 
 | Task ID | Task | Blocked Agent | Waiting On | Priority |
 |---------|------|---------------|------------|----------|
-| T-060-64 | Report commands | cli | core: T-050-53 (report generators) | High |
-| T-102 | Report generation endpoints | registry | core: T-050-53 (report generators) | Medium |
+| T-060 | `griot report audit` | cli | core: T-050 (AuditReport) | High |
+| T-063 | `griot report all` | cli | core: T-053 (ReadinessReport) | Medium |
+| T-102 | Report generation endpoints | registry | core: T-050, T-053 | Medium |
 | T-128-131 | Dashboard pages | hub | registry: T-102 (report endpoints) | High |
 
 **Recently Unblocked (2026-01-10):**
+- T-061 (`griot report analytics`) - AnalyticsReport complete
+- T-062 (`griot report ai`) - AIReadinessReport complete
+- T-064 (`griot residency check`) - check_residency() complete
 - T-031-035 (CLI validate/lint/diff/mock/manifest) - core SDK complete
 - T-070 (RuntimeValidator) - core validation engine complete
 - T-110-111 (CLI push/pull) - registry CRUD complete
@@ -166,7 +170,17 @@ Completed work awaiting review/merge.
 
 | Task | Agent | PR | Reviewer | Submitted |
 |------|-------|----|----------|-----------|
-| *All items reviewed and approved* | — | — | — | — |
+| T-031: griot validate command | cli | — | orchestrator | 2026-01-10 |
+| T-032: griot lint command | cli | — | orchestrator | 2026-01-10 |
+| T-033: griot diff command | cli | — | orchestrator | 2026-01-10 |
+| T-034: griot mock command | cli | — | orchestrator | 2026-01-10 |
+| T-035: griot manifest command | cli | — | orchestrator | 2026-01-10 |
+| T-110: griot push command | cli | — | orchestrator | 2026-01-10 |
+| T-111: griot pull command | cli | — | orchestrator | 2026-01-10 |
+| T-097: Git storage backend | registry | — | orchestrator | 2026-01-10 |
+| T-098: PostgreSQL storage backend | registry | — | orchestrator | 2026-01-10 |
+| T-100: OAuth2/OIDC authentication | registry | — | orchestrator | 2026-01-10 |
+| T-101: Approval chain endpoints | registry | — | orchestrator | 2026-01-10 |
 
 ---
 
@@ -202,6 +216,23 @@ Completed work awaiting review/merge.
 | T-036 | CLI output formatting | cli | 2026-01-10 | ✅ |
 | T-037 | CLI configuration | cli | 2026-01-10 | ✅ |
 
+### Phase 2 - Compliance (In Progress)
+
+| Task ID | Task | Agent | Completed | Approved |
+|---------|------|-------|-----------|----------|
+| T-040 | PIICategory enum | core | 2026-01-10 | ⏳ |
+| T-041 | SensitivityLevel enum | core | 2026-01-10 | ⏳ |
+| T-042 | MaskingStrategy enum | core | 2026-01-10 | ⏳ |
+| T-043 | LegalBasis enum | core | 2026-01-10 | ⏳ |
+| T-044 | PII Field metadata support | core | 2026-01-10 | ⏳ |
+| T-045 | pii_inventory() function | core | 2026-01-10 | ⏳ |
+| T-046 | ResidencyConfig class | core | 2026-01-10 | ⏳ |
+| T-047 | check_residency() method | core | 2026-01-10 | ⏳ |
+| T-048 | LineageConfig class | core | 2026-01-10 | ⏳ |
+| T-049 | Source, Transformation, Consumer classes | core | 2026-01-10 | ⏳ |
+| T-051 | AnalyticsReport generator | core | 2026-01-10 | ⏳ |
+| T-052 | AIReadinessReport generator | core | 2026-01-10 | ⏳ |
+
 ### Phase 3 - Registry (Partial)
 
 | Task ID | Task | Agent | Completed | Approved |
@@ -213,7 +244,11 @@ Completed work awaiting review/merge.
 | T-094 | Validation history endpoints | registry | 2026-01-10 | ✅ |
 | T-095 | Search endpoints | registry | 2026-01-10 | ✅ |
 | T-096 | Filesystem storage backend | registry | 2026-01-10 | ✅ |
+| T-097 | Git storage backend | registry | 2026-01-10 | ⏳ |
+| T-098 | PostgreSQL storage backend | registry | 2026-01-10 | ⏳ |
 | T-099 | API key authentication | registry | 2026-01-10 | ✅ |
+| T-100 | OAuth2/OIDC authentication | registry | 2026-01-10 | ⏳ |
+| T-101 | Approval chain endpoints | registry | 2026-01-10 | ⏳ |
 
 ### Phase 4 - Hub (Partial)
 
@@ -247,12 +282,12 @@ See `status/requests/` for full details.
 | Milestone | Target | Criteria | Status |
 |-----------|--------|----------|--------|
 | **Core Alpha** | Week 2 | GriotModel, Field, validate() working | ✅ Complete |
-| **CLI Alpha** | Week 3 | `griot validate` command working | 🟡 Ready (needs integration) |
+| **CLI Alpha** | Week 3 | `griot validate` command working | ✅ Complete |
 | **Phase 1 Complete** | Week 4 | All Phase 1 tasks done, >90% core coverage | ✅ Complete |
 | **Registry Alpha** | Week 5 | CRUD endpoints working | ✅ Complete |
 | **Hub Alpha** | Week 5 | Core pages functional | ✅ Complete |
 | **Phase 2 Complete** | Week 8 | PII, residency, all reports working | ⏳ Starting |
-| **Phase 3 Complete** | Week 12 | Enforce + Registry working | 🟡 In Progress (45%) |
+| **Phase 3 Complete** | Week 12 | Enforce + Registry working | 🟡 In Progress (55%) |
 | **Phase 4 Complete** | Week 16 | Hub functional | 🟡 In Progress (70%) |
 
 ---
@@ -286,14 +321,49 @@ See `status/requests/` for full details.
 - Quality agent should start: T-020
 - CLI agent can start: T-030
 
-### 2026-01-10 (cli)
+### 2026-01-10 (cli) - Session 2
+- Completed T-031: griot validate command - full integration with griot-core SDK
+- Completed T-032: griot lint command - severity filtering, strict mode
+- Completed T-033: griot diff command - breaking change detection
+- Completed T-034: griot mock command - CSV/JSON/Parquet output
+- Completed T-035: griot manifest command - json_ld/markdown/llm_context formats
+- Completed T-110: griot push command - registry API integration
+- Completed T-111: griot pull command - registry API integration
+- Updated output.py to handle Severity enum properly
+- All CLI commands now functional with griot-core SDK
+- Remaining CLI tasks (T-060-65) blocked on core Phase 2 (report generators)
+
+### 2026-01-10 (cli) - Session 1
 - Completed T-030: CLI scaffolding with Click app
 - Completed T-036: Output formatting (table, json, github formats)
 - Completed T-037: Configuration handling (file discovery, env vars)
 - Implemented command stubs for all CLI commands (blocked on core SDK methods)
 - All CLI tasks now blocked on core agent completing SDK methods
 
-### 2026-01-10 (registry)
+### 2026-01-10 (registry) - Session 2
+- Completed T-097: Git storage backend (full implementation)
+  - GitPython-based repository management
+  - Commits on contract changes, version tagging
+  - Stores contracts as YAML, metadata as JSON
+- Completed T-098: PostgreSQL storage backend (full implementation)
+  - SQLAlchemy async with asyncpg
+  - Three tables: contracts, contract_versions, validations
+  - JSONB for field definitions storage
+- Completed T-100: OAuth2/OIDC authentication (full implementation)
+  - OIDC auto-discovery from issuer URL
+  - JWT validation with PyJWKClient
+  - Role-based access control helpers (AdminRole, EditorRole, ViewerRole)
+- Completed T-101: Approval chain endpoints (FR-REG-008)
+  - POST /contracts/{id}/versions/{v}/approval-chain
+  - GET /approvals/{approval_id}
+  - POST /approvals/{approval_id}/decision
+  - GET /contracts/{id}/versions/{v}/approval-status
+- Updated server.py with approvals router
+- Updated auth/__init__.py to export OAuth modules
+- Updated pyproject.toml with oauth optional dependencies
+- Remaining: T-102 (Report generation endpoints) blocked on core T-050, T-053
+
+### 2026-01-10 (registry) - Session 1
 - Completed T-090: FastAPI app structure with factory pattern
 - Completed T-091: Health endpoint with storage backend health check
 - Completed T-096: Filesystem storage backend (full implementation)
@@ -376,13 +446,51 @@ See `status/requests/` for full details.
 - Updated blocked/ready statuses based on completed dependencies
 - Interface requests REQ-001 and REQ-002 confirmed implemented
 
+### 2026-01-10 (core - Phase 2)
+- Completed 12 Phase 2 tasks (T-040 through T-052, excluding T-050 and T-053)
+- **PII/Privacy types (FR-SDK-008)**:
+  - PIICategory enum: 25+ categories (NAME, EMAIL, SSN, HEALTH, etc.)
+  - SensitivityLevel enum: PUBLIC, INTERNAL, CONFIDENTIAL, RESTRICTED, TOP_SECRET with comparison operators
+  - MaskingStrategy enum: REDACT, HASH, ENCRYPT, TOKENIZE, SYNTHETIC, etc.
+  - LegalBasis enum: GDPR Article 6 bases (CONSENT, CONTRACT, LEGAL_OBLIGATION, etc.)
+- **PII Field support (FR-SDK-008, FR-SDK-010)**:
+  - Updated Field class with pii_category, sensitivity_level, masking_strategy, legal_basis, retention_days, consent_required
+  - Implemented pii_inventory() method on GriotModel
+  - Implemented sensitive_fields() method on GriotModel
+  - Implemented pii_summary() method on GriotModel
+- **Data Residency (FR-SDK-011)**:
+  - DataRegion enum: US, EU, UK, APAC regions and more
+  - ResidencyRule dataclass with is_region_allowed() method
+  - ResidencyConfig dataclass with check_residency() method
+  - GriotModel.check_residency() and get_allowed_regions() methods
+- **Data Lineage (FR-SDK-012)**:
+  - Source, Transformation, Consumer dataclasses
+  - LineageConfig dataclass with get_field_lineage() method
+  - GriotModel.set_lineage_config(), get_field_lineage(), lineage_summary() methods
+- **Reports (FR-SDK-013, FR-SDK-014, FR-SDK-016)**:
+  - Created reports.py module
+  - AnalyticsReport: Contract statistics, field types, constraints, PII analysis, recommendations
+  - AIReadinessReport: Readiness scoring (0-100), component scores, strengths/weaknesses
+  - Both reports support to_dict(), to_json(), to_markdown() formats
+- **Package updates**:
+  - Version bumped to 0.4.0
+  - All new types exported in __init__.py
+- **Remaining Phase 2 tasks**:
+  - T-050: AuditReport generator (waiting for review of PII/residency work)
+  - T-053: ReadinessReport (combined) generator (blocked on T-050)
+- **Unblocked CLI tasks**:
+  - T-061: `griot report analytics` command
+  - T-062: `griot report ai` command
+  - T-064: `griot residency check` command
+
 ### Next Priorities (Week 2)
-1. **cli**: Complete T-031-035 (CLI commands now unblocked)
-2. **cli**: Complete T-110-111 (push/pull now unblocked)
-3. **core**: Start Phase 2 - T-040-043 (PII/Privacy enums), T-046, T-048
-4. **enforce**: Start T-070 (RuntimeValidator now unblocked)
-5. **registry**: Complete T-097, T-098, T-100, T-101
-6. **quality**: Increase test coverage to >90% for griot-core
+1. **core**: Complete T-050 (AuditReport), T-053 (ReadinessReport)
+2. **cli**: Complete T-061, T-062, T-064 (newly unblocked report commands)
+3. **cli**: Complete T-031-035 (CLI commands now unblocked)
+4. **cli**: Complete T-110-111 (push/pull now unblocked)
+5. **enforce**: Start T-070 (RuntimeValidator now unblocked)
+6. **registry**: ~~Complete T-097, T-098, T-100, T-101~~ ✅ DONE - T-102 blocked on core
+7. **quality**: Increase test coverage to >90% for griot-core
 
 ---
 

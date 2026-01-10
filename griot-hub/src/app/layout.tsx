@@ -34,6 +34,25 @@ export default function RootLayout({
                   <a href="/monitor" className="text-gray-600 hover:text-gray-900">
                     Monitor
                   </a>
+                  <div className="relative group">
+                    <span className="text-gray-600 hover:text-gray-900 cursor-pointer">
+                      Reports
+                    </span>
+                    <div className="absolute left-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
+                      <a href="/audit" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                        Audit Dashboard
+                      </a>
+                      <a href="/finops" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                        FinOps Dashboard
+                      </a>
+                      <a href="/ai-readiness" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                        AI Readiness
+                      </a>
+                      <a href="/residency" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                        Residency Map
+                      </a>
+                    </div>
+                  </div>
                 </div>
               </div>
               <div>

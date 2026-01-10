@@ -3,7 +3,11 @@
     "allow": [
       "Bash(pip install:*)",
       "Bash(python -m pytest:*)",
-      "Bash(python:*)"
+      "Bash(python:*)",
+      "Bash(git checkout:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nfeat\\(cli\\): Complete all CLI commands with griot-core SDK integration\n\n- T-031: griot validate command - validates data against contracts\n- T-032: griot lint command - checks contracts for quality issues\n- T-033: griot diff command - compares contract versions\n- T-034: griot mock command - generates synthetic test data\n- T-035: griot manifest command - exports AI/LLM metadata\n- T-110: griot push command - pushes contracts to registry\n- T-111: griot pull command - pulls contracts from registry\n\nAll commands properly integrated with griot-core SDK.\nUpdated output.py to handle Severity enum.\nUpdated board.md with completion status.\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git stash:*)"
     ]
   }
 }
