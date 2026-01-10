@@ -2,16 +2,28 @@
 
 > **Problem**: Multiple agents updating `board.md` simultaneously causes merge conflicts and lost updates.
 >
-> **Solution**: Agent-specific status files + orchestrator consolidation + atomic commits.
+> **Solution**: All agents work on master + agent-specific status files + orchestrator consolidation.
 
 ---
 
 ## The Golden Rules
 
-1. **NEVER edit `board.md` directly** (except orchestrator)
-2. **ALWAYS commit your work before ending a session**
-3. **ALWAYS pull before starting work**
+1. **ALL agents work on `master` branch** (no agent-specific branches!)
+2. **NEVER edit `board.md` directly** (except orchestrator)
+3. **ALWAYS commit your work before ending a session**
 4. **Write status updates to your agent file**
+
+---
+
+## Why No Branches?
+
+All agents share the same working directory on one machine. When one agent switches branches, it affects all other agents. Since each agent owns different directories, conflicts are rare when working on master.
+
+**Benefits of master-only workflow:**
+- No branch confusion when multiple agents are active
+- Immediate visibility of all work
+- Simpler coordination
+- Ownership model prevents file conflicts
 
 ---
 
@@ -39,13 +51,16 @@ agents/status/
 ### Starting a Session
 
 ```bash
-# 1. Pull latest changes FIRST
-git pull origin master
+# 1. Ensure you're on master (CRITICAL!)
+git checkout master
+git status   # Should show "On branch master"
 
 # 2. Check board.md for your assigned tasks
 # 3. Read your agent's update file for context
-# 4. Start working on tasks
+# 4. Start working on tasks in YOUR owned directories only
 ```
+
+> **Do NOT create branches!** All agents work on master. The ownership model prevents conflicts.
 
 ### During Work
 
@@ -59,7 +74,7 @@ git commit -m "feat(<component>): <description>"
 
 ```bash
 # 1. Update YOUR agent status file (not board.md!)
-# 2. Commit everything together
+# 2. Commit everything together on master
 git add agents/status/updates/<your-agent>.md
 git add <your-code-files>
 git commit -m "feat(<component>): <task-description>
@@ -67,8 +82,8 @@ git commit -m "feat(<component>): <task-description>
 Tasks completed: T-XXX, T-YYY
 Status update in agents/status/updates/<agent>.md"
 
-# 3. Push to remote
-git push origin master
+# 3. (Optional) Push to remote if it exists
+# git push origin master
 ```
 
 ---
@@ -109,8 +124,8 @@ The orchestrator is the ONLY agent that edits `board.md`:
 ### Review Cycle
 
 ```bash
-# 1. Pull latest
-git pull origin master
+# 1. Ensure on master
+git checkout master
 
 # 2. Read all agent update files
 cat agents/status/updates/*.md
@@ -123,10 +138,9 @@ cat agents/status/updates/*.md
 
 # 4. Clear processed updates (optional, or archive)
 
-# 5. Commit the consolidated board
+# 5. Commit the consolidated board on master
 git add agents/status/board.md
 git commit -m "chore(orchestrator): Review cycle - consolidated agent updates"
-git push origin master
 ```
 
 ---
@@ -204,14 +218,16 @@ Update the request file:
 ## Example Session (CLI Agent)
 
 ```bash
-# Start
-git pull origin master
+# Start - ensure on master
+git checkout master
+git status   # Verify "On branch master"
+
 # Read board.md - see T-031 assigned to me
 
 # Work on T-031...
-# ... coding ...
+# ... coding in griot-cli/ (my owned directory) ...
 
-# Commit code
+# Commit code on master
 git add griot-cli/src/griot_cli/commands/validate.py
 git commit -m "feat(cli): Implement griot validate command (T-031)"
 
@@ -231,16 +247,16 @@ EOF
 git add agents/status/updates/cli.md
 git commit -m "chore(cli): Status update for T-031"
 
-# Push
-git push origin master
+# Done! (push only if remote exists)
 ```
 
 ---
 
 ## Benefits
 
-1. **No overwrites** - Each agent has their own file
-2. **Clear audit trail** - Status updates are versioned
-3. **Async coordination** - Agents don't need to wait for each other
-4. **Single source of truth** - board.md is authoritative, managed by orchestrator
-5. **Easy conflict resolution** - Conflicts isolated to individual files
+1. **No branch confusion** - All agents on master, no switching issues
+2. **No overwrites** - Each agent owns different directories
+3. **Clear audit trail** - Status updates are versioned in agent files
+4. **Async coordination** - Agents don't need to wait for each other
+5. **Single source of truth** - board.md is authoritative, managed by orchestrator
+6. **Simple workflow** - Just commit to master, no merge/rebase complexity

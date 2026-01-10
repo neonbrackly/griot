@@ -6,14 +6,16 @@
 
 ## 🎯 Quick Start
 
-1. **Pull latest changes**: `git pull origin master`
+1. **Ensure you're on master**: `git checkout master`
 2. **Identify your agent role** (see table below)
 3. **Read** `AGENTS.md` for full context
 4. **Check** `status/board.md` for current tasks
 5. **Read** your spec file in `specs/`
 6. **Work only** in your owned directories
 7. **Update YOUR status file** (not board.md!) when done
-8. **Commit and push** your changes
+8. **Commit to master**: `git commit` then optionally push
+
+> **Important**: All agents work on `master` branch. Do NOT create agent-specific branches.
 
 ---
 
@@ -108,8 +110,11 @@ griot/
 
 ```bash
 # ALWAYS start with this
-git pull origin master
+git checkout master   # Ensure you're on master (not a branch)
+git status            # Verify clean working directory
 ```
+
+> **No branches!** All agents work directly on master. The ownership model prevents conflicts.
 
 ### Working on a Task
 
@@ -127,16 +132,18 @@ git pull origin master
 # 1. Update YOUR agent status file (NOT board.md!)
 #    File: status/updates/<your-agent>.md
 
-# 2. Commit everything together
+# 2. Commit everything together on master
 git add <your-code-files>
 git add agents/status/updates/<your-agent>.md
 git commit -m "feat(<component>): <description>
 
 Tasks completed: T-XXX, T-YYY"
 
-# 3. Push immediately
-git push origin master
+# 3. (Optional) Push if remote exists
+# git push origin master
 ```
+
+> **Stay on master!** Do not create branches. Your owned directories ensure no conflicts with other agents.
 
 ### ⚠️ Status Board Rules
 
@@ -193,11 +200,11 @@ def foo(self) -> Result: ...
 
 ## ✅ Success Criteria
 
-- [ ] Started with `git pull origin master`
+- [ ] Working on `master` branch (no agent branches!)
 - [ ] Code in your owned directories only
 - [ ] Spec updated before/after implementing
 - [ ] YOUR status file updated (`status/updates/<agent>.md`)
 - [ ] Did NOT edit `board.md` directly (orchestrator only)
 - [ ] Tests pass, coverage met
 - [ ] Types check (pyright --strict for core)
-- [ ] Changes committed and pushed
+- [ ] Changes committed to master

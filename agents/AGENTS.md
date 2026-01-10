@@ -396,8 +396,14 @@ docs/
 
 ## Communication Rules
 
-### Rule 0 Each agent creates its own Branch 
-Each agent works in its own Git branch named after the agent. For example, the `core` agent works in the `agent-core` branch. This prevents merge conflicts and keeps work isolated.
+### Rule 0: All Agents Work on Master
+All agents work directly on the `master` branch. Since each agent owns different directories, conflicts are rare. This simplifies coordination and ensures all agents see each other's work immediately.
+
+**Why not branches?**
+- All agents share the same working directory on one machine
+- When one agent switches branches, it affects all agents
+- The ownership model already prevents conflicts (each agent owns different files)
+- Simpler workflow with immediate visibility
 
 ### Rule 1: Core-First Development
 
@@ -530,12 +536,11 @@ Before any agent begins work:
 
 - [ ] Read this entire `AGENTS.md` file
 - [ ] Read `CLAUDE.md` for quick reference
-- [ ] Read `COORDINATION.md` for quick reference
-- [ ] Read Task Assignments in `status/board.md` for current tasks, only if you are the the orchestrator agent should you update this section, otherwise just read it.
-- [ ] Update in the relevant places as per the  `COORDINATION.md` complete a task for current tasks
+- [ ] Read `COORDINATION.md` for workflow details
+- [ ] Ensure you're on the `master` branch (all agents work on master)
+- [ ] Read Task Assignments in `status/board.md` for current tasks
 - [ ] Read relevant `specs/*.yaml` for interfaces
 - [ ] Check `status/requests/*` for pending items
 - [ ] Check `status/decisions/*` for context
-- [ ] Identify blocking dependencies and update them in `status/board.md`
 - [ ] Confirm you're only writing to owned paths
-- [ ] Set up your Git branch named `agent-<your-agent-name>` and work there exclusively.
+- [ ] Update `status/updates/<your-agent>.md` when completing tasks (not board.md!)
