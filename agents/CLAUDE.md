@@ -6,12 +6,14 @@
 
 ## 🎯 Quick Start
 
-1. **Identify your agent role** (see table below)
-2. **Read** `AGENTS.md` for full context
-3. **Check** `status/board.md` for current tasks
-4. **Read** your spec file in `specs/`
-5. **Work only** in your owned directories
-6. **Update status** when done
+1. **Pull latest changes**: `git pull origin master`
+2. **Identify your agent role** (see table below)
+3. **Read** `AGENTS.md` for full context
+4. **Check** `status/board.md` for current tasks
+5. **Read** your spec file in `specs/`
+6. **Work only** in your owned directories
+7. **Update YOUR status file** (not board.md!) when done
+8. **Commit and push** your changes
 
 ---
 
@@ -102,18 +104,51 @@ griot/
 
 ## 🔄 Common Workflows
 
-### Starting a Task
+### Starting a Session (IMPORTANT!)
+
+```bash
+# ALWAYS start with this
+git pull origin master
+```
+
+### Working on a Task
 
 ```
-1. Check status/board.md for your tasks
+1. Check status/board.md for your assigned tasks
 2. Verify dependencies are complete
 3. If blocked → create status/requests/REQ-NNN.md
-4. Move task to "In Progress"
-5. Create branch: feat/{component}-{feature}
-6. Implement
-7. Update spec status to 'complete'
-8. Move task to "Ready for Review"
+4. Implement your task
+5. Update spec status to 'complete'
 ```
+
+### Ending a Session (CRITICAL!)
+
+```bash
+# 1. Update YOUR agent status file (NOT board.md!)
+#    File: status/updates/<your-agent>.md
+
+# 2. Commit everything together
+git add <your-code-files>
+git add agents/status/updates/<your-agent>.md
+git commit -m "feat(<component>): <description>
+
+Tasks completed: T-XXX, T-YYY"
+
+# 3. Push immediately
+git push origin master
+```
+
+### ⚠️ Status Board Rules
+
+| Action | Who Can Do It |
+|--------|---------------|
+| Edit `board.md` | **orchestrator ONLY** |
+| Edit `status/updates/<agent>.md` | That specific agent |
+| Create `status/requests/REQ-NNN.md` | Any agent |
+
+**Why?** Multiple agents editing board.md causes merge conflicts and lost updates.
+
+> 📖 Full details: `status/COORDINATION.md`
 
 ### Creating Interface Request
 
@@ -158,8 +193,11 @@ def foo(self) -> Result: ...
 
 ## ✅ Success Criteria
 
+- [ ] Started with `git pull origin master`
 - [ ] Code in your owned directories only
 - [ ] Spec updated before/after implementing
-- [ ] Status board updated
+- [ ] YOUR status file updated (`status/updates/<agent>.md`)
+- [ ] Did NOT edit `board.md` directly (orchestrator only)
 - [ ] Tests pass, coverage met
 - [ ] Types check (pyright --strict for core)
+- [ ] Changes committed and pushed
