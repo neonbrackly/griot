@@ -45,3 +45,73 @@
 - Phase 2 core tasks complete (100%)
 - All report generators implemented
 - Unblocks: T-060 (CLI audit command), T-102 (Registry report endpoints)
+
+---
+
+## Session: 2026-01-10 (Documentation)
+
+### Tasks Completed
+- T-201: griot-core Sphinx documentation - comprehensive developer documentation
+
+### Files Created
+- griot-core/docs/conf.py - Sphinx configuration with autodoc, napoleon, furo theme
+- griot-core/docs/index.rst - Main documentation index
+
+**Getting Started:**
+- getting-started/index.rst
+- getting-started/installation.rst
+- getting-started/quickstart.rst
+- getting-started/first-contract.rst
+
+**User Guide:**
+- user-guide/index.rst
+- user-guide/defining-contracts.rst
+- user-guide/field-types.rst
+- user-guide/validation.rst
+- user-guide/pii-sensitivity.rst
+- user-guide/residency.rst
+- user-guide/lineage.rst
+- user-guide/reports.rst
+- user-guide/mock-data.rst
+- user-guide/manifests.rst
+
+**API Reference:**
+- api/index.rst
+- api/models.rst
+- api/validation.rst
+- api/types.rst
+- api/contract.rst
+- api/reports.rst
+- api/mock.rst
+- api/manifest.rst
+- api/exceptions.rst
+
+**Examples:**
+- examples/index.rst
+- examples/ecommerce.rst (Customer, Order, Product contracts)
+- examples/healthcare.rst (HIPAA-compliant PatientRecord, ClinicalEvent, LabResult)
+- examples/fintech.rst (PCI-DSS Transaction, Account, WireTransfer)
+- examples/analytics.rst (UserEvent, DailyMetric, FunnelStep, UserFeature)
+
+**Type Reference:**
+- types/index.rst
+- types/enums.rst (all enum types documented)
+- types/dataclasses.rst (all dataclass types documented)
+
+**Changelog:**
+- changelog.rst
+
+### Documentation Coverage
+- Getting Started: 4 pages (installation, quickstart, first-contract tutorial)
+- User Guide: 9 pages (all major features covered)
+- API Reference: 8 pages (all public classes/functions)
+- Examples: 4 domain-specific pages with real-world contracts
+- Type Reference: 2 pages (all enums and dataclasses)
+- Total: 28 documentation files
+
+### Notes
+- Sphinx configured with autodoc, napoleon, intersphinx, furo theme
+- All code examples are runnable
+- Examples cover e-commerce, healthcare (HIPAA), fintech (PCI-DSS), analytics
+- PII/privacy documentation comprehensive with GDPR/CCPA/HIPAA guidance
+- Phase 5 Documentation task T-201 complete
