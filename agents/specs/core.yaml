@@ -1,0 +1,510 @@
+# =============================================================================
+# GRIOT core INTERFACE SPECIFICATION
+# =============================================================================
+# Owner: core agent
+# Consumers: cli, enforce, registry
+#
+# This file is the CONTRACT between core and all consumers.
+# Update BEFORE implementing. Consumers code against this spec.
+# =============================================================================
+
+version: "0.3.0"
+spec_version: "1.0"
+last_updated: "2025-01-10"
+updated_by: orchestrator
+
+# =============================================================================
+# PACKAGE STRUCTURE
+# =============================================================================
+# griot-core/src/griot_core/
+# ├── __init__.py       # Public API exports
+# ├── models.py         # GriotModel, Field
+# ├── contract.py       # Contract class
+# ├── types.py          # Enums, type definitions
+# ├── constraints.py    # Constraint logic
+# ├── validation.py     # Validation engine
+# ├── mock.py           # Mock data generator
+# ├── manifest.py       # AI manifest export
+# └── exceptions.py     # Custom exceptions
+# =============================================================================
+
+# =============================================================================
+# FILE: types.py
+# Enums and type definitions
+# =============================================================================
+types:
+  status: implementing
+
+  enums:
+    ConstraintType:
+      description: Types of field constraints
+      values:
+        - min_length
+        - max_length
+        - pattern
+        - format
+        - ge
+        - le
+        - gt
+        - lt
+        - multiple_of
+        - enum
+        - unique
+
+    Severity:
+      description: Error/issue severity levels
+      values: [error, warning, info]
+
+    FieldFormat:
+      description: Built-in field format validators
+      values:
+        - email
+        - uri
+        - uuid
+        - date
+        - datetime
+        - ipv4
+        - ipv6
+        - hostname
+
+    AggregationType:
+      description: Recommended aggregation methods
+      values: [sum, avg, count, min, max, none]
+
+# =============================================================================
+# FILE: exceptions.py
+# Custom exceptions
+# =============================================================================
+exceptions:
+  status: planned
+
+  classes:
+    GriotError:
+      description: Base exception for all Griot errors
+      parent: Exception
+
+    ValidationError:
+      description: Raised when data validation fails
+      parent: GriotError
+      attributes:
+        - name: errors
+          type: "list[FieldValidationError]"
+
+    ContractNotFoundError:
+      description: Raised when contract file not found
+      parent: GriotError
+
+    ContractParseError:
+      description: Raised when contract YAML/Python is invalid
+      parent: GriotError
+
+    BreakingChangeError:
+      description: Raised when contract diff has breaking changes
+      parent: GriotError
+      attributes:
+        - name: diff
+          type: ContractDiff
+
+# =============================================================================
+# FILE: models.py
+# GriotModel and Field definitions
+# =============================================================================
+models:
+  status: implementing
+  requirement_ids: [FR-SDK-001, FR-SDK-004]
+
+  classes:
+    # -------------------------------------------------------------------------
+    # Field - Field definition with constraints
+    # -------------------------------------------------------------------------
+    Field:
+      description: |
+        Define a field with type, constraints, and metadata.
+        Used as default values in GriotModel subclasses.
+      status: implementing
+      file: models.py
+
+      signature: |
+        Field(
+            description: str,
+            *,
+            default: Any = None,
+            default_factory: Callable[[], Any] | None = None,
+            # String constraints
+            min_length: int | None = None,
+            max_length: int | None = None,
+            pattern: str | None = None,
+            format: FieldFormat | None = None,
+            # Numeric constraints
+            ge: int | float | None = None,
+            le: int | float | None = None,
+            gt: int | float | None = None,
+            lt: int | float | None = None,
+            multiple_of: int | float | None = None,
+            # Other constraints
+            enum: list[Any] | None = None,
+            unique: bool = False,
+            primary_key: bool = False,
+            nullable: bool = False,
+            # Semantic metadata (AI readiness)
+            unit: str | None = None,
+            aggregation: AggregationType | None = None,
+            glossary_term: str | None = None,
+        ) -> Field
+
+      example: |
+        from griot_core import GriotModel, Field
+        
+        class Customer(GriotModel):
+            customer_id: str = Field(
+                description="Unique customer identifier",
+                primary_key=True,
+                pattern=r"^CUST-\d{6}$"
+            )
+            email: str = Field(
+                description="Customer email address",
+                format="email",
+                max_length=255
+            )
+            age: int = Field(
+                description="Customer age in years",
+                ge=0,
+                le=150,
+                unit="years"
+            )
+            status: str = Field(
+                description="Account status",
+                enum=["active", "inactive", "suspended"]
+            )
+
+    # -------------------------------------------------------------------------
+    # GriotModel - Base class for contracts
+    # -------------------------------------------------------------------------
+    GriotModel:
+      description: |
+        Base class for defining data contracts. Subclass this to create
+        contracts with typed fields and validation rules.
+      status: implementing
+      file: models.py
+
+      class_methods:
+        - name: from_yaml
+          signature: "(path: str | Path) -> type[GriotModel]"
+          description: Load contract definition from YAML file
+          status: planned
+          file: contract.py
+          requirement_ids: [FR-SDK-002]
+
+        - name: from_yaml_string
+          signature: "(content: str) -> type[GriotModel]"
+          description: Load contract from YAML string
+          status: planned
+          file: contract.py
+          requirement_ids: [FR-SDK-002]
+
+        - name: from_dict
+          signature: "(data: dict) -> type[GriotModel]"
+          description: Load contract from dictionary
+          status: planned
+          file: contract.py
+
+      instance_methods:
+        - name: validate
+          signature: "(data: pd.DataFrame | list[dict] | dict) -> ValidationResult"
+          description: |
+            Validate data against this contract.
+          status: planned
+          file: validation.py
+          requirement_ids: [FR-SDK-005]
+          example: |
+            result = contract.validate(dataframe)
+            if not result.passed:
+                for error in result.errors:
+                    print(f"{error.field}[{error.row}]: {error.message}")
+
+        - name: validate_row
+          signature: "(row: dict) -> list[FieldValidationError]"
+          description: Validate single row, return errors
+          status: planned
+          file: validation.py
+
+        - name: to_yaml
+          signature: "() -> str"
+          description: Export contract as YAML string
+          status: planned
+          file: contract.py
+          requirement_ids: [FR-SDK-003]
+
+        - name: to_yaml_file
+          signature: "(path: str | Path) -> None"
+          description: Write contract to YAML file
+          status: planned
+          file: contract.py
+
+        - name: to_dict
+          signature: "() -> dict"
+          description: Export contract as dictionary
+          status: planned
+          file: contract.py
+
+        - name: mock
+          signature: "(rows: int = 100, seed: int | None = None) -> pd.DataFrame"
+          description: Generate synthetic data conforming to contract
+          status: planned
+          file: mock.py
+          requirement_ids: [FR-SDK-006]
+          example: |
+            mock_df = contract.mock(rows=1000, seed=42)
+
+        - name: diff
+          signature: "(other: GriotModel) -> ContractDiff"
+          description: Compare with another contract version
+          status: planned
+          file: contract.py
+          requirement_ids: [FR-SDK-015]
+          example: |
+            diff = contract_v1.diff(contract_v2)
+            if diff.has_breaking_changes:
+                raise BreakingChangeError(diff)
+
+        - name: lint
+          signature: "() -> list[LintIssue]"
+          description: Check contract for quality issues
+          status: planned
+          file: contract.py
+
+        - name: to_manifest
+          signature: "(format: Literal['json_ld', 'markdown', 'llm_context'] = 'json_ld') -> str"
+          description: Export metadata for AI/LLM consumption
+          status: planned
+          file: manifest.py
+          requirement_ids: [FR-SDK-007]
+
+        - name: get_field
+          signature: "(name: str) -> FieldInfo"
+          description: Get field metadata by name
+          status: planned
+          file: models.py
+
+        - name: list_fields
+          signature: "() -> list[FieldInfo]"
+          description: List all fields with metadata
+          status: planned
+          file: models.py
+
+        - name: get_primary_key
+          signature: "() -> str | None"
+          description: Get primary key field name
+          status: planned
+          file: models.py
+
+# =============================================================================
+# FILE: validation.py
+# Validation engine and result classes
+# =============================================================================
+validation:
+  status: planned
+  requirement_ids: [FR-SDK-005]
+
+  classes:
+    ValidationResult:
+      description: Contains validation results and statistics
+      status: planned
+      file: validation.py
+
+      attributes:
+        - name: passed
+          type: bool
+          description: True if all validations passed
+
+        - name: row_count
+          type: int
+          description: Total rows validated
+
+        - name: error_count
+          type: int
+          description: Total validation errors
+
+        - name: error_rate
+          type: float
+          description: Proportion of rows with errors
+
+        - name: errors
+          type: "list[FieldValidationError]"
+          description: Detailed error list
+
+        - name: field_stats
+          type: "dict[str, FieldStats]"
+          description: Per-field statistics
+
+        - name: duration_ms
+          type: float
+          description: Validation duration in milliseconds
+
+      methods:
+        - name: to_dict
+          signature: "() -> dict"
+
+        - name: to_json
+          signature: "(indent: int = 2) -> str"
+
+        - name: raise_on_failure
+          signature: "() -> None"
+          description: Raise ValidationError if not passed
+
+        - name: summary
+          signature: "() -> str"
+          description: Human-readable summary
+
+    FieldValidationError:
+      description: Single field validation error
+      status: planned
+      file: validation.py
+
+      attributes:
+        - name: field
+          type: str
+          description: Field name
+
+        - name: row
+          type: "int | None"
+          description: Row index (None for schema errors)
+
+        - name: value
+          type: Any
+          description: The invalid value
+
+        - name: constraint
+          type: str
+          description: Failed constraint type
+
+        - name: message
+          type: str
+          description: Human-readable error
+
+        - name: severity
+          type: Severity
+          default: error
+
+    FieldStats:
+      description: Per-field validation statistics
+      status: planned
+      file: validation.py
+
+      attributes:
+        - name: field
+          type: str
+        - name: total
+          type: int
+        - name: valid
+          type: int
+        - name: invalid
+          type: int
+        - name: null_count
+          type: int
+
+  functions:
+    - name: validate_value
+      signature: "(value: Any, field: Field) -> list[FieldValidationError]"
+      description: Validate single value against field constraints
+      status: planned
+      file: validation.py
+
+# =============================================================================
+# FILE: contract.py
+# Contract class with loading and diffing
+# =============================================================================
+contract:
+  status: planned
+  requirement_ids: [FR-SDK-002, FR-SDK-003, FR-SDK-015]
+
+  classes:
+    ContractDiff:
+      description: Differences between two contract versions
+      status: planned
+      file: contract.py
+
+      attributes:
+        - name: has_breaking_changes
+          type: bool
+
+        - name: added_fields
+          type: "list[str]"
+
+        - name: removed_fields
+          type: "list[str]"
+          description: BREAKING
+
+        - name: type_changes
+          type: "list[TypeChange]"
+
+        - name: constraint_changes
+          type: "list[ConstraintChange]"
+
+        - name: metadata_changes
+          type: "list[MetadataChange]"
+          description: Non-breaking
+
+      methods:
+        - name: summary
+          signature: "() -> str"
+
+        - name: to_markdown
+          signature: "() -> str"
+
+    TypeChange:
+      description: Field type change record
+      status: planned
+      file: contract.py
+
+      attributes:
+        - name: field
+          type: str
+        - name: from_type
+          type: str
+        - name: to_type
+          type: str
+        - name: is_breaking
+          type: bool
+
+    ConstraintChange:
+      description: Constraint change record
+      status: planned
+      file: contract.py
+
+      attributes:
+        - name: field
+          type: str
+        - name: constraint
+          type: str
+        - name: from_value
+          type: Any
+        - name: to_value
+          type: Any
+        - name: is_breaking
+          type: bool
+
+    LintIssue:
+      description: Contract quality issue
+      status: planned
+      file: contract.py
+
+      attributes:
+        - name: code
+          type: str
+          description: "Issue code (e.g., G001)"
+        - name: field
+          type: "str | None"
+        - name: message
+          type: str
+        - name: severity
+          type: Severity
+        - name: suggestion
+          type: "str | None"
+
+  functions:
+    - name: load_contract
+      signature: "(path: str | Path) -> GriotModel"
+      description: Load contract from YAML file
+      status: planned
+      file: contract.py

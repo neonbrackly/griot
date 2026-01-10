@@ -1,0 +1,1049 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Griot Software Requirements Specification</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      line-height: 1.6;
+      color: #1a1a2e;
+      background: #fff;
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+    
+    /* Cover */
+    .cover {
+      text-align: center;
+      padding: 60px 20px;
+      border-bottom: 3px solid #7b2cbf;
+      margin-bottom: 40px;
+    }
+    
+    .cover h1 {
+      font-size: 2.5rem;
+      background: linear-gradient(135deg, #7b2cbf, #00d4ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 10px;
+    }
+    
+    .cover .version {
+      color: #888;
+      margin-top: 20px;
+    }
+    
+    /* Navigation */
+    .toc {
+      background: #f8f9fa;
+      padding: 30px;
+      border-radius: 12px;
+      margin-bottom: 40px;
+    }
+    
+    .toc h2 {
+      margin-bottom: 20px;
+      color: #7b2cbf;
+    }
+    
+    .toc ol {
+      list-style: none;
+      counter-reset: toc;
+    }
+    
+    .toc > ol > li {
+      counter-increment: toc;
+      margin: 10px 0;
+    }
+    
+    .toc > ol > li::before {
+      content: counter(toc) ". ";
+      color: #7b2cbf;
+      font-weight: 600;
+    }
+    
+    .toc a {
+      color: #1a1a2e;
+      text-decoration: none;
+    }
+    
+    .toc a:hover {
+      color: #7b2cbf;
+    }
+    
+    .toc .sub {
+      margin-left: 25px;
+      font-size: 0.9rem;
+      color: #666;
+    }
+    
+    /* Headings */
+    h1 { font-size: 1.8rem; color: #1a1a2e; margin: 50px 0 25px; border-bottom: 3px solid #7b2cbf; padding-bottom: 10px; }
+    h2 { font-size: 1.4rem; color: #1a1a2e; margin: 35px 0 20px; border-bottom: 1px solid #ddd; padding-bottom: 8px; }
+    h3 { font-size: 1.15rem; color: #333; margin: 25px 0 15px; }
+    h4 { font-size: 1rem; color: #555; margin: 20px 0 10px; }
+    
+    .section-num { color: #7b2cbf; }
+    
+    /* Content */
+    p { margin-bottom: 15px; }
+    ul, ol { margin: 15px 0 15px 25px; }
+    li { margin-bottom: 8px; }
+    
+    /* Tables */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+      font-size: 0.9rem;
+    }
+    
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border: 1px solid #ddd;
+    }
+    
+    th {
+      background: #7b2cbf;
+      color: white;
+    }
+    
+    tr:nth-child(even) { background: #f9f9f9; }
+    
+    /* Code */
+    code {
+      background: #f4f4f4;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-family: 'Consolas', monospace;
+      font-size: 0.85em;
+    }
+    
+    pre {
+      background: #1a1a2e;
+      color: #e0e0e0;
+      padding: 20px;
+      border-radius: 8px;
+      overflow-x: auto;
+      margin: 15px 0;
+      font-size: 0.8rem;
+      line-height: 1.5;
+    }
+    
+    pre code {
+      background: none;
+      padding: 0;
+      color: inherit;
+    }
+    
+    .keyword { color: #ff79c6; }
+    .string { color: #f1fa8c; }
+    .comment { color: #6272a4; }
+    .function { color: #50fa7b; }
+    .type { color: #8be9fd; }
+    
+    /* Callouts */
+    .callout {
+      padding: 20px;
+      border-radius: 8px;
+      margin: 20px 0;
+    }
+    
+    .callout-purple { background: #f8f4ff; border-left: 4px solid #7b2cbf; }
+    .callout-blue { background: #e8f4fd; border-left: 4px solid #00d4ff; }
+    .callout-green { background: #e6f9ed; border-left: 4px solid #00cc6a; }
+    .callout-yellow { background: #fff8e6; border-left: 4px solid #ffaa00; }
+    
+    /* Requirement boxes */
+    .requirement {
+      background: #fafafa;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 20px;
+      margin: 20px 0;
+    }
+    
+    .requirement h4 {
+      color: #7b2cbf;
+      margin-top: 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .requirement h4 .tag {
+      font-size: 0.7rem;
+      background: #7b2cbf;
+      color: white;
+      padding: 2px 8px;
+      border-radius: 10px;
+    }
+    
+    .requirement h4 .tag.mvp { background: #00cc6a; }
+    .requirement h4 .tag.post-mvp { background: #888; }
+    
+    /* Traceability matrix */
+    .trace-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      margin: 30px 0;
+    }
+    
+    .trace-card {
+      background: linear-gradient(135deg, var(--bg), white);
+      border: 2px solid var(--color);
+      border-radius: 12px;
+      padding: 20px;
+    }
+    
+    .trace-card h3 {
+      color: var(--color);
+      margin-top: 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .trace-card .coverage {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--color);
+    }
+    
+    .trace-card ul {
+      font-size: 0.85rem;
+      margin-top: 15px;
+    }
+    
+    .trace-card li.done::marker { content: "✅ "; }
+    .trace-card li.pending::marker { content: "⏳ "; }
+    
+    /* Badges */
+    .badge {
+      display: inline-block;
+      font-size: 0.7rem;
+      padding: 2px 8px;
+      border-radius: 10px;
+      margin-left: 8px;
+    }
+    
+    .badge-mvp { background: #00cc6a; color: white; }
+    .badge-v11 { background: #888; color: white; }
+    
+    /* Footer */
+    .doc-footer {
+      margin-top: 60px;
+      padding-top: 20px;
+      border-top: 2px solid #eee;
+      text-align: center;
+      color: #888;
+      font-size: 0.85rem;
+    }
+  </style>
+</head>
+<body>
+
+<!-- Cover -->
+<div class="cover">
+  <h1>GRIOT</h1>
+  <p style="font-size: 1.2rem; color: #666;">Software Requirements Specification</p>
+  <div class="version">
+    Version 0.3.0 | January 2025 | Draft
+  </div>
+</div>
+
+<!-- Table of Contents -->
+<div class="toc">
+  <h2>Table of Contents</h2>
+  <ol>
+    <li><a href="#philosophy">Design Philosophy</a></li>
+    <li><a href="#traceability">Promise Traceability Matrix</a></li>
+    <li><a href="#architecture">Component Architecture</a></li>
+    <li><a href="#sdk">griot-sdk Requirements</a>
+      <div class="sub">Core models, validation, reports, readiness assessment</div>
+    </li>
+    <li><a href="#cli">griot-cli Requirements</a>
+      <div class="sub">Command-line interface wrapping SDK</div>
+    </li>
+    <li><a href="#enforce">griot-enforce Requirements</a>
+      <div class="sub">Runtime validation, orchestrator integrations</div>
+    </li>
+    <li><a href="#registry">griot-registry Requirements</a>
+      <div class="sub">Contract storage, versioning, API</div>
+    </li>
+    <li><a href="#hub">griot-hub Requirements</a>
+      <div class="sub">Web UI, dashboards, collaboration</div>
+    </li>
+    <li><a href="#cross-cutting">Cross-Cutting Concerns</a></li>
+    <li><a href="#user-stories">User Stories</a></li>
+  </ol>
+</div>
+
+<!-- Section 1: Design Philosophy -->
+<h1 id="philosophy"><span class="section-num">1.</span> Design Philosophy</h1>
+
+<h2>Core Principles</h2>
+
+<table>
+  <tr><th>Principle</th><th>Description</th></tr>
+  <tr><td><strong>Simplicity</strong></td><td>Do one thing well. Avoid feature creep.</td></tr>
+  <tr><td><strong>Minimal Dependencies</strong></td><td>Core has zero non-standard deps. Optional features via extras.</td></tr>
+  <tr><td><strong>Offline-First</strong></td><td>Works locally without network. Registry sync is optional.</td></tr>
+  <tr><td><strong>SDK-First</strong></td><td>All functionality lives in SDK. CLI and Hub are thin wrappers.</td></tr>
+  <tr><td><strong>Fail Fast, Fail Clear</strong></td><td>Explicit errors with actionable messages.</td></tr>
+  <tr><td><strong>Interoperability</strong></td><td>Standard formats (YAML, JSON). Standard protocols (HTTP, Git).</td></tr>
+</table>
+
+<h2>Technology Choices</h2>
+
+<table>
+  <tr><th>Component</th><th>Language</th><th>Rationale</th></tr>
+  <tr><td>griot-sdk</td><td>Python</td><td>Primary user base is data engineers/scientists</td></tr>
+  <tr><td>griot-cli</td><td>Python (Click)</td><td>Thin wrapper over SDK</td></tr>
+  <tr><td>griot-enforce</td><td>Python</td><td>Integrates with Python orchestrators</td></tr>
+  <tr><td>griot-registry</td><td>Python (FastAPI)</td><td>Lightweight, async</td></tr>
+  <tr><td>griot-hub</td><td>TypeScript (Next.js)</td><td>Modern web stack; calls SDK via API</td></tr>
+</table>
+
+<div class="callout callout-purple">
+  <strong>SDK-First Architecture:</strong> All business logic lives in <code>griot-sdk</code>. The CLI, Hub, and enforce components are consumers of SDK functionality. This ensures consistency across all interfaces.
+</div>
+
+<!-- Section 2: Traceability -->
+<h1 id="traceability"><span class="section-num">2.</span> Promise Traceability Matrix</h1>
+
+<p>This section maps each business promise to software requirements, ensuring complete coverage.</p>
+
+<h2>Problem Statement</h2>
+
+<table>
+  <tr><th>Crisis</th><th>Problem</th><th>Impact</th></tr>
+  <tr><td><strong>Waste (FinOps)</strong></td><td>60-73% data unused. Paying to store junk.</td><td>Cloud costs</td></tr>
+  <tr><td><strong>Compliance (Audit)</strong></td><td>KES 26.2M in fines. No lineage. No masking.</td><td>Regulatory risk</td></tr>
+  <tr><td><strong>Knowledge (AI)</strong></td><td>No semantic context. LLMs hallucinate.</td><td>AI failure</td></tr>
+</table>
+
+<h2>Coverage Summary</h2>
+
+<div class="trace-grid">
+  <div class="trace-card" style="--color: #ff006e; --bg: #fff0f5;">
+    <h3>🛡️ Audit-Ready</h3>
+    <div class="coverage">94%</div>
+    <p>12 of 13 requirements in MVP</p>
+    <ul>
+      <li class="done">PII tagging & inventory</li>
+      <li class="done">Masking strategies</li>
+      <li class="done">Residency enforcement</li>
+      <li class="done">Audit report export</li>
+      <li class="done">Approval chain</li>
+      <li class="pending">Lineage visualization (v1.1)</li>
+    </ul>
+  </div>
+  
+  <div class="trace-card" style="--color: #00cc6a; --bg: #f0fff5;">
+    <h3>📊 Analytics-Ready</h3>
+    <div class="coverage">92%</div>
+    <p>11 of 12 requirements in MVP</p>
+    <ul>
+      <li class="done">Shift-left validation</li>
+      <li class="done">Breaking change detection</li>
+      <li class="done">Runtime gating</li>
+      <li class="done">Anomaly detection</li>
+      <li class="done">Analytics report export</li>
+      <li class="pending">Cost attribution (v1.1)</li>
+    </ul>
+  </div>
+  
+  <div class="trace-card" style="--color: #7b2cbf; --bg: #f8f0ff;">
+    <h3>🤖 AI-Ready</h3>
+    <div class="coverage">100%</div>
+    <p>10 of 10 requirements in MVP</p>
+    <ul>
+      <li class="done">Semantic metadata</li>
+      <li class="done">JSON-LD manifests</li>
+      <li class="done">LLM context export</li>
+      <li class="done">AI readiness report</li>
+      <li class="done">Field relationships</li>
+    </ul>
+  </div>
+</div>
+
+<h2>Pillar 1: Audit-Ready</h2>
+
+<table>
+  <tr><th>Promise</th><th>Requirement</th><th>Component</th><th>MVP</th></tr>
+  <tr><td>PII tagging</td><td>FR-SDK-008</td><td>griot-sdk</td><td>✅</td></tr>
+  <tr><td>PII inventory query</td><td>FR-SDK-010</td><td>griot-sdk</td><td>✅</td></tr>
+  <tr><td>Masking strategies</td><td>FR-SDK-008</td><td>griot-sdk</td><td>✅</td></tr>
+  <tr><td>Masking verification</td><td>FR-ENF-009</td><td>griot-enforce</td><td>✅</td></tr>
+  <tr><td>Residency rules</td><td>FR-SDK-011</td><td>griot-sdk</td><td>✅</td></tr>
+  <tr><td>Residency enforcement</td><td>FR-ENF-008</td><td>griot-enforce</td><td>✅</td></tr>
+  <tr><td>Lineage definition</td><td>FR-SDK-012</td><td>griot-sdk</td><td>✅</td></tr>
+  <tr><td>Audit report export</td><td>FR-SDK-013</td><td>griot-sdk</td><td>✅</td></tr>
+  <tr><td>Approval chain</td><td>FR-REG-008</td><td>griot-registry</td><td>✅</td></tr>
+  <tr><td>Lineage visualization</td><td>FR-HUB-007</td><td>griot-hub</td><td>v1.1</td></tr>
+</table>
+
+<h2>Pillar 2: Analytics-Ready (FinOps)</h2>
+
+<table>
+  <tr><th>Promise</th><th>Requirement</th><th>Component</th><th>MVP</th></tr>
+  <tr><td>Contract definition</td><td>FR-SDK-001, 002</td><td>griot-sdk</td><td>✅</td></tr>
+  <tr><td>Schema validation</td><td>FR-SDK-005</td><td>griot-sdk</td><td>✅</td></tr>
+  <tr><td>Constraint validation</td><td>FR-SDK-004</td><td>griot-sdk</td><td>✅</td></tr>
+  <tr><td>CI/CD validation</td><td>FR-CLI-001</td><td>griot-cli</td><td>✅</td></tr>
+  <tr><td>Breaking change detection</td><td>FR-SDK-015</td><td>griot-sdk</td><td>✅</td></tr>
+  <tr><td>Runtime validation</td><td>FR-ENF-001</td><td>griot-enforce</td><td>✅</td></tr>
+  <tr><td>Anomaly detection</td><td>FR-ENF-007</td><td>griot-enforce</td><td>✅</td></tr>
+  <tr><td>Analytics report</td><td>FR-SDK-014</td><td>griot-sdk</td><td>✅</td></tr>
+  <tr><td>Cost tracking</td><td>FR-HUB-008</td><td>griot-hub</td><td>✅</td></tr>
+  <tr><td>Cost attribution</td><td>FR-HUB-008</td><td>griot-hub</td><td>v1.1</td></tr>
+</table>
+
+<h2>Pillar 3: AI-Ready</h2>
+
+<table>
+  <tr><th>Promise</th><th>Requirement</th><th>Component</th><th>MVP</th></tr>
+  <tr><td>Semantic descriptions</td><td>FR-SDK-004</td><td>griot-sdk</td><td>✅</td></tr>
+  <tr><td>Units of measure</td><td>FR-SDK-004</td><td>griot-sdk</td><td>✅</td></tr>
+  <tr><td>Aggregation guidance</td><td>FR-SDK-004</td><td>griot-sdk</td><td>✅</td></tr>
+  <tr><td>Business glossary links</td><td>FR-SDK-004</td><td>griot-sdk</td><td>✅</td></tr>
+  <tr><td>JSON-LD export</td><td>FR-SDK-007</td><td>griot-sdk</td><td>✅</td></tr>
+  <tr><td>LLM context export</td><td>FR-SDK-007</td><td>griot-sdk</td><td>✅</td></tr>
+  <tr><td>AI readiness report</td><td>FR-SDK-016</td><td>griot-sdk</td><td>✅</td></tr>
+</table>
+
+<!-- Section 3: Architecture -->
+<h1 id="architecture"><span class="section-num">3.</span> Component Architecture</h1>
+
+<h2>Dependency Graph</h2>
+
+<pre><code>griot-sdk (foundation - ALL business logic)
+    │
+    ├── griot-cli (thin wrapper - calls SDK methods)
+    │
+    ├── griot-enforce (runtime - uses SDK validation)
+    │
+    └── griot-registry (storage - uses SDK parsing)
+            │
+            └── griot-hub (web UI - calls Registry API + SDK via API)
+</code></pre>
+
+<h2>SDK-First Principle</h2>
+
+<div class="callout callout-blue">
+  <strong>Rule:</strong> Every feature available in CLI or Hub MUST be implemented as a SDK method first. CLI and Hub are presentation layers only.
+</div>
+
+<table>
+  <tr><th>Feature</th><th>SDK Method</th><th>CLI Command</th><th>Hub UI</th></tr>
+  <tr><td>Validate data</td><td><code>contract.validate()</code></td><td><code>griot validate</code></td><td>Validation Monitor</td></tr>
+  <tr><td>Generate mock</td><td><code>contract.mock()</code></td><td><code>griot mock</code></td><td>Mock Generator</td></tr>
+  <tr><td>Audit report</td><td><code>AuditReport.generate()</code></td><td><code>griot report audit</code></td><td>Compliance Center</td></tr>
+  <tr><td>Analytics report</td><td><code>AnalyticsReport.generate()</code></td><td><code>griot report analytics</code></td><td>FinOps Dashboard</td></tr>
+  <tr><td>AI readiness</td><td><code>AIReadinessReport.generate()</code></td><td><code>griot report ai</code></td><td>AI Readiness View</td></tr>
+  <tr><td>Check residency</td><td><code>contract.check_residency()</code></td><td><code>griot residency check</code></td><td>Residency Dashboard</td></tr>
+  <tr><td>PII inventory</td><td><code>pii_inventory()</code></td><td><code>griot report audit --pii</code></td><td>PII Inventory</td></tr>
+  <tr><td>Diff contracts</td><td><code>contract.diff()</code></td><td><code>griot diff</code></td><td>Version Compare</td></tr>
+</table>
+
+<h2>Installation Matrix</h2>
+
+<table>
+  <tr><th>Need</th><th>Install</th></tr>
+  <tr><td>Author contracts, validate, generate reports</td><td><code>pip install griot-sdk</code></td></tr>
+  <tr><td>CLI commands</td><td><code>pip install griot-cli</code></td></tr>
+  <tr><td>Airflow/Dagster integration</td><td><code>pip install griot-enforce[airflow]</code></td></tr>
+  <tr><td>Self-host registry</td><td><code>pip install griot-registry</code></td></tr>
+  <tr><td>Everything</td><td><code>pip install griot[all]</code></td></tr>
+</table>
+
+<!-- Section 4: SDK Requirements -->
+<h1 id="sdk"><span class="section-num">4.</span> griot-sdk Requirements</h1>
+
+<p>The SDK is the core library containing ALL business logic. Every other component depends on it.</p>
+
+<h2>Contract Definition</h2>
+
+<div class="requirement">
+  <h4>FR-SDK-001: Contract Definition via Python <span class="tag mvp">MVP</span></h4>
+  <p><strong>Description:</strong> Define contracts as Python classes with type annotations.</p>
+  <pre><code><span class="keyword">from</span> griot_sdk <span class="keyword">import</span> GriotModel, Field
+
+<span class="keyword">class</span> <span class="type">CustomerContract</span>(GriotModel):
+    customer_id: <span class="type">str</span> = Field(description=<span class="string">"Unique ID"</span>, primary_key=<span class="keyword">True</span>)
+    email: <span class="type">str</span> = Field(description=<span class="string">"Email"</span>, pii=<span class="string">"email"</span>)
+    age: <span class="type">int</span> = Field(description=<span class="string">"Age"</span>, ge=<span class="string">0</span>, le=<span class="string">150</span>)</code></pre>
+</div>
+
+<div class="requirement">
+  <h4>FR-SDK-002: Contract Definition via YAML <span class="tag mvp">MVP</span></h4>
+  <p><strong>Description:</strong> Load contracts from YAML files.</p>
+  <pre><code><span class="keyword">from</span> griot_sdk <span class="keyword">import</span> Contract
+
+contract = Contract.from_yaml(<span class="string">"contracts/customer.yaml"</span>)
+contract = Contract.from_yaml_string(yaml_content)</code></pre>
+</div>
+
+<div class="requirement">
+  <h4>FR-SDK-003: Bidirectional Conversion <span class="tag mvp">MVP</span></h4>
+  <p><strong>Description:</strong> Convert between Python and YAML representations.</p>
+  <pre><code><span class="comment"># Python → YAML</span>
+yaml_str = contract.to_yaml()
+
+<span class="comment"># YAML → Python class file</span>
+python_code = Contract.to_python_code(<span class="string">"customer.yaml"</span>)</code></pre>
+</div>
+
+<h2>Validation</h2>
+
+<div class="requirement">
+  <h4>FR-SDK-004: Field Constraints <span class="tag mvp">MVP</span></h4>
+  <p><strong>Description:</strong> Define validation constraints on fields.</p>
+  <table>
+    <tr><th>Type</th><th>Constraints</th></tr>
+    <tr><td>String</td><td><code>pattern</code>, <code>min_length</code>, <code>max_length</code>, <code>format</code></td></tr>
+    <tr><td>Numeric</td><td><code>ge</code>, <code>le</code>, <code>gt</code>, <code>lt</code>, <code>multiple_of</code></td></tr>
+    <tr><td>Enum</td><td><code>enum=[...]</code></td></tr>
+    <tr><td>Uniqueness</td><td><code>unique=True</code></td></tr>
+  </table>
+</div>
+
+<div class="requirement">
+  <h4>FR-SDK-005: Data Validation <span class="tag mvp">MVP</span></h4>
+  <p><strong>Description:</strong> Validate data against a contract.</p>
+  <pre><code>result = contract.validate(dataframe)
+
+<span class="keyword">if not</span> result.passed:
+    <span class="keyword">for</span> error <span class="keyword">in</span> result.errors:
+        <span class="function">print</span>(f<span class="string">"{error.field}[{error.row}]: {error.message}"</span>)
+
+<span class="comment"># Result contains:</span>
+<span class="comment"># - passed: bool</span>
+<span class="comment"># - row_count: int</span>
+<span class="comment"># - error_count: int</span>
+<span class="comment"># - error_rate: float</span>
+<span class="comment"># - errors: List[ValidationError]</span></code></pre>
+</div>
+
+<div class="requirement">
+  <h4>FR-SDK-015: Contract Diff <span class="tag mvp">MVP</span></h4>
+  <p><strong>Description:</strong> Compare two contract versions and detect breaking changes.</p>
+  <pre><code>diff = contract_v1.diff(contract_v2)
+
+<span class="function">print</span>(diff.summary())
+<span class="comment"># Added fields: [email_verified]</span>
+<span class="comment"># Removed fields: [legacy_id]  ← BREAKING</span>
+<span class="comment"># Type changes: [age: string → int]  ← BREAKING</span>
+
+<span class="keyword">if</span> diff.has_breaking_changes:
+    <span class="keyword">raise</span> BreakingChangeError(diff)</code></pre>
+</div>
+
+<h2>Mock Data & Manifests</h2>
+
+<div class="requirement">
+  <h4>FR-SDK-006: Mock Data Generation <span class="tag mvp">MVP</span></h4>
+  <p><strong>Description:</strong> Generate synthetic data conforming to contract.</p>
+  <pre><code>mock_df = contract.mock(rows=<span class="string">1000</span>, seed=<span class="string">42</span>)
+
+<span class="comment"># Respects all constraints</span>
+<span class="comment"># Generates realistic values for semantic types</span>
+<span class="comment"># PII fields use fake/masked values</span></code></pre>
+</div>
+
+<div class="requirement">
+  <h4>FR-SDK-007: Manifest Generation <span class="tag mvp">MVP</span></h4>
+  <p><strong>Description:</strong> Export contract metadata for AI/LLM consumption.</p>
+  <pre><code><span class="comment"># Multiple formats</span>
+json_ld = contract.to_manifest(format=<span class="string">"json_ld"</span>)
+markdown = contract.to_manifest(format=<span class="string">"markdown"</span>)
+llm_context = contract.to_manifest(format=<span class="string">"llm_context"</span>)</code></pre>
+</div>
+
+<h2>Privacy & Compliance</h2>
+
+<div class="requirement">
+  <h4>FR-SDK-008: PII Metadata <span class="tag mvp">MVP</span></h4>
+  <p><strong>Description:</strong> Tag and track PII fields with full compliance metadata.</p>
+  <pre><code>email: <span class="type">str</span> = Field(
+    description=<span class="string">"Customer email"</span>,
+    pii_category=PIICategory.EMAIL,
+    sensitivity=SensitivityLevel.CONFIDENTIAL,
+    masking=MaskingStrategy.HASH_SHA256,
+    retention_days=<span class="string">365</span>,
+    legal_basis=LegalBasis.CONTRACT
+)</code></pre>
+</div>
+
+<div class="requirement">
+  <h4>FR-SDK-010: PII Inventory <span class="tag mvp">MVP</span></h4>
+  <p><strong>Description:</strong> Query all PII fields across contracts.</p>
+  <pre><code><span class="keyword">from</span> griot_sdk <span class="keyword">import</span> pii_inventory
+
+<span class="comment"># From directory of contracts</span>
+inventory = pii_inventory(<span class="string">"contracts/"</span>)
+
+<span class="comment"># Filter and export</span>
+restricted = inventory.filter(sensitivity=<span class="string">"restricted"</span>)
+inventory.to_dataframe()
+inventory.to_csv(<span class="string">"pii_inventory.csv"</span>)</code></pre>
+</div>
+
+<div class="requirement">
+  <h4>FR-SDK-011: Data Residency Rules <span class="tag mvp">MVP</span></h4>
+  <p><strong>Description:</strong> Define and check geographic constraints.</p>
+  <pre><code><span class="keyword">from</span> griot_sdk <span class="keyword">import</span> ResidencyConfig
+
+@contract(
+    residency=ResidencyConfig(
+        data_residency=<span class="string">"KE"</span>,           <span class="comment"># Must store in Kenya</span>
+        allowed_regions=[<span class="string">"KE"</span>, <span class="string">"EU"</span>],  <span class="comment"># Can process here</span>
+        denied_regions=[<span class="string">"CN"</span>, <span class="string">"RU"</span>]    <span class="comment"># Never send here</span>
+    )
+)
+<span class="keyword">class</span> <span class="type">CustomerContract</span>(GriotModel):
+    ...
+
+<span class="comment"># Check compliance</span>
+result = contract.check_residency(destination=<span class="string">"eu-west-1"</span>)
+<span class="keyword">if not</span> result.compliant:
+    <span class="function">print</span>(result.violations)</code></pre>
+</div>
+
+<div class="requirement">
+  <h4>FR-SDK-012: Lineage Definition <span class="tag mvp">MVP</span></h4>
+  <p><strong>Description:</strong> Define data lineage within contracts.</p>
+  <pre><code>@contract(
+    lineage=LineageConfig(
+        sources=[
+            Source(type=<span class="string">"contract"</span>, id=<span class="string">"CONTRACT-RAW"</span>),
+            Source(type=<span class="string">"system"</span>, id=<span class="string">"kafka://events"</span>)
+        ],
+        transformation=Transformation(
+            repository=<span class="string">"github.com/co/transforms"</span>,
+            path=<span class="string">"customer/features.py"</span>
+        ),
+        consumers=[
+            Consumer(type=<span class="string">"contract"</span>, id=<span class="string">"CONTRACT-MODEL"</span>)
+        ]
+    )
+)</code></pre>
+</div>
+
+<h2>Readiness Reports</h2>
+
+<div class="callout callout-green">
+  <strong>Three Pillars, Three Reports:</strong> Each pillar (Audit, Analytics, AI) has a dedicated report generator in the SDK.
+</div>
+
+<div class="requirement">
+  <h4>FR-SDK-013: Audit Readiness Report <span class="tag mvp">MVP</span></h4>
+  <p><strong>Description:</strong> Generate compliance report for auditors.</p>
+  <pre><code><span class="keyword">from</span> griot_sdk.reports <span class="keyword">import</span> AuditReport
+
+report = AuditReport.generate(
+    contracts=<span class="string">"contracts/"</span>,     <span class="comment"># or list of Contract objects</span>
+    include_pii_inventory=<span class="keyword">True</span>,
+    include_lineage=<span class="keyword">True</span>,
+    include_masking_policies=<span class="keyword">True</span>,
+    include_residency=<span class="keyword">True</span>,
+    include_approval_chain=<span class="keyword">True</span>,
+    date_range=(start_date, end_date)  <span class="comment"># for validation history</span>
+)
+
+<span class="comment"># Export in multiple formats</span>
+report.to_pdf(<span class="string">"audit-report.pdf"</span>)
+report.to_html(<span class="string">"audit-report.html"</span>)
+report.to_json(<span class="string">"audit-report.json"</span>)
+report.to_csv(<span class="string">"audit-report.csv"</span>)  <span class="comment"># Tabular summary</span>
+
+<span class="comment"># Access sections programmatically</span>
+report.pii_inventory      <span class="comment"># DataFrame of all PII fields</span>
+report.residency_status   <span class="comment"># Compliance by contract</span>
+report.masking_coverage   <span class="comment"># % of PII with masking defined</span>
+report.approval_chain     <span class="comment"># Who approved what, when</span></code></pre>
+  
+  <p><strong>Report Contents:</strong></p>
+  <ol>
+    <li>Executive Summary (contract count, PII fields, compliance %)</li>
+    <li>PII Inventory (all PII fields with categories, masking)</li>
+    <li>Data Lineage (sources → transformations → consumers)</li>
+    <li>Residency Compliance (rules and current status)</li>
+    <li>Masking Policies (strategy per field, coverage %)</li>
+    <li>Approval Chain (who approved, when, comments)</li>
+    <li>Validation History (pass/fail trends)</li>
+  </ol>
+</div>
+
+<div class="requirement">
+  <h4>FR-SDK-014: Analytics Readiness Report <span class="tag mvp">MVP</span></h4>
+  <p><strong>Description:</strong> Generate FinOps and data quality report.</p>
+  <pre><code><span class="keyword">from</span> griot_sdk.reports <span class="keyword">import</span> AnalyticsReport
+
+report = AnalyticsReport.generate(
+    contracts=<span class="string">"contracts/"</span>,
+    validation_history=validation_logs,  <span class="comment"># from registry or local</span>
+    cost_config=CostConfig(
+        compute_cost_per_hour=<span class="string">2.50</span>,
+        storage_cost_per_gb=<span class="string">0.02</span>
+    )
+)
+
+report.to_pdf(<span class="string">"analytics-report.pdf"</span>)
+
+<span class="comment"># Access metrics</span>
+report.contract_coverage    <span class="comment"># % of datasets with contracts</span>
+report.validation_pass_rate <span class="comment"># % of validations passing</span>
+report.blocked_bad_data     <span class="comment"># Volume blocked by validation</span>
+report.estimated_savings    <span class="comment"># Cost savings from shift-left</span>
+report.schema_stability     <span class="comment"># Breaking changes over time</span>
+report.data_freshness       <span class="comment"># SLA compliance %</span></code></pre>
+  
+  <p><strong>Report Contents:</strong></p>
+  <ol>
+    <li>Executive Summary (coverage, pass rate, savings)</li>
+    <li>Contract Coverage (which datasets have contracts)</li>
+    <li>Validation Trends (pass/fail over time)</li>
+    <li>Breaking Changes (schema stability)</li>
+    <li>Data Quality Scores (by contract)</li>
+    <li>Cost Savings (compute + storage prevented)</li>
+    <li>Freshness Compliance (SLA adherence)</li>
+  </ol>
+</div>
+
+<div class="requirement">
+  <h4>FR-SDK-016: AI Readiness Report <span class="tag mvp">MVP</span></h4>
+  <p><strong>Description:</strong> Assess readiness for AI/LLM consumption.</p>
+  <pre><code><span class="keyword">from</span> griot_sdk.reports <span class="keyword">import</span> AIReadinessReport
+
+report = AIReadinessReport.generate(contracts=<span class="string">"contracts/"</span>)
+
+report.to_pdf(<span class="string">"ai-readiness-report.pdf"</span>)
+
+<span class="comment"># Access scores</span>
+report.overall_score          <span class="comment"># 0-100 AI readiness score</span>
+report.semantic_coverage      <span class="comment"># % fields with descriptions</span>
+report.unit_coverage          <span class="comment"># % numeric fields with units</span>
+report.relationship_coverage  <span class="comment"># % fields with relationships defined</span>
+report.glossary_coverage      <span class="comment"># % fields linked to glossary</span>
+report.manifest_ready         <span class="comment"># Contracts ready for LLM export</span>
+
+<span class="comment"># Per-contract breakdown</span>
+<span class="keyword">for</span> score <span class="keyword">in</span> report.contract_scores:
+    <span class="function">print</span>(f<span class="string">"{score.contract_id}: {score.ai_score}/100"</span>)
+    <span class="function">print</span>(f<span class="string">"  Missing: {score.missing_elements}"</span>)</code></pre>
+  
+  <p><strong>Report Contents:</strong></p>
+  <ol>
+    <li>Overall AI Readiness Score (0-100)</li>
+    <li>Semantic Completeness (descriptions, units)</li>
+    <li>Relationship Coverage (field links, lineage)</li>
+    <li>Glossary Integration (business term coverage)</li>
+    <li>Manifest Readiness (which contracts can export)</li>
+    <li>Recommendations (what to add for better AI support)</li>
+  </ol>
+</div>
+
+<div class="requirement">
+  <h4>FR-SDK-017: Combined Readiness Report <span class="tag mvp">MVP</span></h4>
+  <p><strong>Description:</strong> Generate unified report across all three pillars.</p>
+  <pre><code><span class="keyword">from</span> griot_sdk.reports <span class="keyword">import</span> ReadinessReport
+
+report = ReadinessReport.generate(
+    contracts=<span class="string">"contracts/"</span>,
+    pillars=[<span class="string">"audit"</span>, <span class="string">"analytics"</span>, <span class="string">"ai"</span>]  <span class="comment"># or "all"</span>
+)
+
+report.to_pdf(<span class="string">"griot-readiness-report.pdf"</span>)
+
+<span class="comment"># Summary scores</span>
+report.audit_score      <span class="comment"># 0-100</span>
+report.analytics_score  <span class="comment"># 0-100</span>
+report.ai_score         <span class="comment"># 0-100</span>
+report.overall_score    <span class="comment"># Weighted average</span></code></pre>
+</div>
+
+<h2>Non-Functional Requirements</h2>
+
+<table>
+  <tr><th>ID</th><th>Requirement</th><th>Target</th></tr>
+  <tr><td>NFR-SDK-001</td><td>Zero required dependencies</td><td>stdlib only for core</td></tr>
+  <tr><td>NFR-SDK-002</td><td>Optional pandas</td><td><code>griot-sdk[pandas]</code></td></tr>
+  <tr><td>NFR-SDK-003</td><td>Python version</td><td>3.9+</td></tr>
+  <tr><td>NFR-SDK-004</td><td>Validation performance</td><td>100K rows < 5s</td></tr>
+  <tr><td>NFR-SDK-005</td><td>Report generation</td><td>100 contracts < 30s</td></tr>
+  <tr><td>NFR-SDK-006</td><td>Type hints</td><td>100% coverage, mypy strict</td></tr>
+  <tr><td>NFR-SDK-007</td><td>Test coverage</td><td>>90%</td></tr>
+</table>
+
+<!-- Section 5: CLI Requirements -->
+<h1 id="cli"><span class="section-num">5.</span> griot-cli Requirements</h1>
+
+<div class="callout callout-yellow">
+  <strong>Thin Wrapper:</strong> Every CLI command calls an SDK method. No business logic in CLI.
+</div>
+
+<h2>Command Reference</h2>
+
+<table>
+  <tr><th>Command</th><th>SDK Method</th><th>Description</th></tr>
+  <tr><td><code>griot validate</code></td><td><code>contract.validate()</code></td><td>Validate data against contract</td></tr>
+  <tr><td><code>griot lint</code></td><td><code>contract.lint()</code></td><td>Check contract for issues</td></tr>
+  <tr><td><code>griot diff</code></td><td><code>contract.diff()</code></td><td>Compare contract versions</td></tr>
+  <tr><td><code>griot mock</code></td><td><code>contract.mock()</code></td><td>Generate test data</td></tr>
+  <tr><td><code>griot manifest</code></td><td><code>contract.to_manifest()</code></td><td>Export AI manifest</td></tr>
+  <tr><td><code>griot push</code></td><td><code>registry.push()</code></td><td>Push to registry</td></tr>
+  <tr><td><code>griot pull</code></td><td><code>registry.pull()</code></td><td>Pull from registry</td></tr>
+  <tr><td><code>griot report audit</code></td><td><code>AuditReport.generate()</code></td><td>Generate audit report</td></tr>
+  <tr><td><code>griot report analytics</code></td><td><code>AnalyticsReport.generate()</code></td><td>Generate analytics report</td></tr>
+  <tr><td><code>griot report ai</code></td><td><code>AIReadinessReport.generate()</code></td><td>Generate AI readiness report</td></tr>
+  <tr><td><code>griot report all</code></td><td><code>ReadinessReport.generate()</code></td><td>Generate combined report</td></tr>
+  <tr><td><code>griot residency check</code></td><td><code>contract.check_residency()</code></td><td>Verify residency compliance</td></tr>
+</table>
+
+<h2>Report Commands</h2>
+
+<div class="requirement">
+  <h4>FR-CLI-010: Report Commands <span class="tag mvp">MVP</span></h4>
+  <pre><code><span class="comment"># Audit report</span>
+griot report audit --contracts ./contracts/ --output audit.pdf
+
+<span class="comment"># Analytics report</span>
+griot report analytics --contracts ./contracts/ --output analytics.pdf
+
+<span class="comment"># AI readiness report</span>
+griot report ai --contracts ./contracts/ --output ai-readiness.pdf
+
+<span class="comment"># Combined report</span>
+griot report all --contracts ./contracts/ --output readiness.pdf
+
+<span class="comment"># Common options</span>
+--format pdf|html|json|csv
+--output, -o PATH
+--contracts, -c PATH (directory or file)
+--from, --to DATE (for historical data)
+--verbose (include per-field details)</code></pre>
+</div>
+
+<div class="requirement">
+  <h4>FR-CLI-011: Residency Commands <span class="tag mvp">MVP</span></h4>
+  <pre><code><span class="comment"># Check single destination</span>
+griot residency check --contract CONTRACT-001 --destination eu-west-1
+
+<span class="comment"># Check all contracts</span>
+griot residency check --all --destination us-east-1
+
+<span class="comment"># List rules</span>
+griot residency rules --contract CONTRACT-001</code></pre>
+</div>
+
+<h2>Non-Functional Requirements</h2>
+
+<table>
+  <tr><th>ID</th><th>Requirement</th><th>Target</th></tr>
+  <tr><td>NFR-CLI-001</td><td>Startup time</td><td>< 500ms</td></tr>
+  <tr><td>NFR-CLI-002</td><td>CI-friendly</td><td>GitHub/GitLab annotations</td></tr>
+  <tr><td>NFR-CLI-003</td><td>Exit codes</td><td>0=success, 1=fail, 2=error</td></tr>
+  <tr><td>NFR-CLI-004</td><td>No prompts in CI</td><td>Auto-detect CI env</td></tr>
+</table>
+
+<!-- Section 6: Enforce Requirements -->
+<h1 id="enforce"><span class="section-num">6.</span> griot-enforce Requirements</h1>
+
+<p>Runtime validation for orchestrators. Uses SDK validation under the hood.</p>
+
+<div class="requirement">
+  <h4>FR-ENF-001: Core Validator <span class="tag mvp">MVP</span></h4>
+  <pre><code><span class="keyword">from</span> griot_enforce <span class="keyword">import</span> Validator
+
+validator = Validator(registry_url=<span class="string">"..."</span>)
+result = validator.validate(
+    contract_id=<span class="string">"CONTRACT-001"</span>,
+    data=dataframe,
+    enforce_residency=<span class="keyword">True</span>,
+    verify_masking=<span class="keyword">True</span>  <span class="comment"># in non-prod</span>
+)</code></pre>
+</div>
+
+<div class="requirement">
+  <h4>FR-ENF-002: Airflow Operator <span class="tag mvp">MVP</span></h4>
+  <pre><code><span class="keyword">from</span> griot_enforce.airflow <span class="keyword">import</span> GriotValidateOperator
+
+validate = GriotValidateOperator(
+    task_id=<span class="string">"validate"</span>,
+    contract_id=<span class="string">"CONTRACT-001"</span>,
+    data_path=<span class="string">"{{ output_path }}"</span>,
+    enforce_residency=<span class="keyword">True</span>
+)</code></pre>
+</div>
+
+<div class="requirement">
+  <h4>FR-ENF-008: Residency Enforcement <span class="tag mvp">MVP</span></h4>
+  <p>Block writes to non-compliant regions. Auto-detect region from cloud URIs.</p>
+  <pre><code>result = validator.check_residency(
+    contract_id=<span class="string">"CONTRACT-001"</span>,
+    destination=<span class="string">"s3://bucket-eu-west-1/data/"</span>  <span class="comment"># Auto-detects eu-west-1</span>
+)
+
+<span class="keyword">if not</span> result.compliant:
+    <span class="keyword">raise</span> ResidencyViolationError(result.violations)</code></pre>
+</div>
+
+<div class="requirement">
+  <h4>FR-ENF-009: Masking Verification <span class="tag mvp">MVP</span></h4>
+  <p>Verify PII is masked in non-prod environments.</p>
+  <pre><code>result = validator.validate(
+    contract_id=<span class="string">"CONTRACT-001"</span>,
+    data=dataframe,
+    verify_masking=<span class="keyword">True</span>,
+    environment=<span class="string">"staging"</span>
+)
+
+<span class="keyword">if</span> result.masking_violations:
+    <span class="function">print</span>(<span class="string">"Unmasked PII detected!"</span>)</code></pre>
+</div>
+
+<!-- Section 7: Registry Requirements -->
+<h1 id="registry"><span class="section-num">7.</span> griot-registry Requirements</h1>
+
+<p>Contract storage with versioning and API access.</p>
+
+<h2>API Endpoints</h2>
+
+<table>
+  <tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
+  <tr><td>POST</td><td>/api/v1/contracts</td><td>Create contract</td></tr>
+  <tr><td>GET</td><td>/api/v1/contracts</td><td>List contracts</td></tr>
+  <tr><td>GET</td><td>/api/v1/contracts/{id}</td><td>Get latest version</td></tr>
+  <tr><td>GET</td><td>/api/v1/contracts/{id}/versions</td><td>List versions</td></tr>
+  <tr><td>GET</td><td>/api/v1/contracts/{id}/approvals</td><td>Get approval chain</td></tr>
+  <tr><td>POST</td><td>/api/v1/validations</td><td>Report validation</td></tr>
+  <tr><td>GET</td><td>/api/v1/reports/audit</td><td>Generate audit report</td></tr>
+  <tr><td>GET</td><td>/api/v1/reports/analytics</td><td>Generate analytics report</td></tr>
+  <tr><td>GET</td><td>/api/v1/reports/ai</td><td>Generate AI report</td></tr>
+</table>
+
+<div class="requirement">
+  <h4>FR-REG-008: Approval Chain <span class="tag mvp">MVP</span></h4>
+  <p>Immutable record of contract approvals for audit.</p>
+  <pre><code>{
+  <span class="string">"contract_id"</span>: <span class="string">"CONTRACT-001"</span>,
+  <span class="string">"version"</span>: <span class="string">"1.2.0"</span>,
+  <span class="string">"approver"</span>: {
+    <span class="string">"email"</span>: <span class="string">"privacy@company.com"</span>,
+    <span class="string">"role"</span>: <span class="string">"privacy_officer"</span>
+  },
+  <span class="string">"status"</span>: <span class="string">"approved"</span>,
+  <span class="string">"timestamp"</span>: <span class="string">"2024-01-15T10:30:00Z"</span>,
+  <span class="string">"comments"</span>: <span class="string">"PII handling reviewed"</span>
+}</code></pre>
+</div>
+
+<!-- Section 8: Hub Requirements -->
+<h1 id="hub"><span class="section-num">8.</span> griot-hub Requirements</h1>
+
+<p>Web UI calling Registry API and SDK (via API wrapper).</p>
+
+<h2>Views</h2>
+
+<table>
+  <tr><th>View</th><th>Stakeholder</th><th>Backend</th></tr>
+  <tr><td>Contract Browser</td><td>All</td><td>Registry API</td></tr>
+  <tr><td>Contract Studio</td><td>Product, Engineers</td><td>SDK via API</td></tr>
+  <tr><td>Validation Monitor</td><td>Engineers</td><td>Registry API</td></tr>
+  <tr><td>Audit Dashboard</td><td>Compliance</td><td>SDK AuditReport</td></tr>
+  <tr><td>FinOps Dashboard</td><td>CFO, CTO</td><td>SDK AnalyticsReport</td></tr>
+  <tr><td>AI Readiness</td><td>Data Scientists</td><td>SDK AIReadinessReport</td></tr>
+  <tr><td>Residency Map</td><td>Compliance</td><td>SDK residency checks</td></tr>
+</table>
+
+<div class="callout callout-blue">
+  <strong>Hub calls SDK:</strong> All report generation in Hub uses the same SDK methods as CLI, exposed via a thin API wrapper in the registry.
+</div>
+
+<!-- Section 9: Cross-Cutting -->
+<h1 id="cross-cutting"><span class="section-num">9.</span> Cross-Cutting Concerns</h1>
+
+<h2>Configuration</h2>
+
+<pre><code><span class="comment"># griot.yaml</span>
+registry:
+  url: https://registry.company.com
+  api_key: ${GRIOT_API_KEY}
+
+validation:
+  fail_on_error: true
+  error_threshold: 0.001
+
+residency:
+  default_check: true
+  
+reports:
+  output_dir: ./reports
+  default_format: pdf</code></pre>
+
+<h2>Error Handling</h2>
+
+<pre><code><span class="comment"># All errors inherit from GriotError</span>
+<span class="keyword">class</span> <span class="type">ValidationError</span>(GriotError): ...
+<span class="keyword">class</span> <span class="type">ResidencyViolationError</span>(GriotError): ...
+<span class="keyword">class</span> <span class="type">ContractNotFoundError</span>(GriotError): ...
+<span class="keyword">class</span> <span class="type">BreakingChangeError</span>(GriotError): ...</code></pre>
+
+<!-- Section 10: User Stories -->
+<h1 id="user-stories"><span class="section-num">10.</span> User Stories</h1>
+
+<h3>Data Engineer</h3>
+<ul>
+  <li>Define contracts in Python with IDE support</li>
+  <li>CI fails if my PR breaks the contract</li>
+  <li>Generate mock data for testing</li>
+  <li>Specify residency rules to avoid violations</li>
+</ul>
+
+<h3>Compliance Officer</h3>
+<ul>
+  <li>Export audit report with one command</li>
+  <li>See all PII fields across all contracts</li>
+  <li>Verify data is stored in compliant regions</li>
+  <li>See who approved each contract and when</li>
+</ul>
+
+<h3>CFO</h3>
+<ul>
+  <li>See cost savings from blocked bad data</li>
+  <li>Get analytics readiness report</li>
+  <li>Track infrastructure efficiency</li>
+</ul>
+
+<h3>Data Scientist</h3>
+<ul>
+  <li>Get AI readiness score for datasets</li>
+  <li>Export LLM-ready manifests</li>
+  <li>Know which fields have semantic metadata</li>
+</ul>
+
+<h3>Auditor (External)</h3>
+<ul>
+  <li>Receive PDF compliance report</li>
+  <li>See data lineage from source to consumption</li>
+  <li>Verify approval records</li>
+</ul>
+
+<!-- Footer -->
+<div class="doc-footer">
+  <strong>Griot Data Technologies</strong><br>
+  Software Requirements Specification v0.3.0<br>
+  © 2025 Griot Data Technologies
+</div>
+
+</body>
+</html>

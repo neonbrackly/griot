@@ -1,0 +1,18 @@
+[project]
+name = "griot"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "griot-core",
+]
+
+[tool.uv.workspace]
+members = [
+    "griot/griot-core",
+    "griot/griot-registry",
+]
+
+[tool.uv.sources]
+griot-core = { workspace = true }

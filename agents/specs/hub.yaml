@@ -1,0 +1,338 @@
+# =============================================================================
+# GRIOT HUB INTERFACE SPECIFICATION
+# =============================================================================
+# Owner: hub agent
+# Dependencies: registry (API)
+#
+# Next.js web interface for Griot
+# =============================================================================
+
+version: "0.1.0"
+spec_version: "1.0"
+last_updated: "2026-01-10"
+updated_by: hub
+
+# =============================================================================
+# PACKAGE STRUCTURE
+# =============================================================================
+# griot-hub/src/
+# ├── app/                    # Next.js App Router
+# │   ├── layout.tsx         # Root layout
+# │   ├── page.tsx           # Home/dashboard
+# │   ├── contracts/
+# │   │   └── page.tsx       # Contract browser
+# │   ├── studio/
+# │   │   └── page.tsx       # Contract editor
+# │   ├── monitor/
+# │   │   └── page.tsx       # Validation monitor
+# │   └── settings/
+# │       └── page.tsx       # User settings
+# ├── components/            # React components
+# │   ├── ContractCard.tsx
+# │   ├── FieldEditor.tsx
+# │   └── ValidationBadge.tsx
+# └── lib/                   # Utilities
+#     ├── api.ts            # Registry API client
+#     └── types.ts          # TypeScript types
+# =============================================================================
+
+# =============================================================================
+# CRITICAL CONSTRAINT
+# =============================================================================
+# ⛔ NEVER import griot-core directly
+# ✅ All data comes through Registry API
+# ✅ API client generated from specs/api.yaml
+# =============================================================================
+
+# =============================================================================
+# PAGES
+# =============================================================================
+pages:
+  # ---------------------------------------------------------------------------
+  # Home / Dashboard
+  # ---------------------------------------------------------------------------
+  home:
+    file: app/page.tsx
+    route: /
+    status: complete
+    description: Overview dashboard with key metrics
+
+    features:
+      - Contract count and status breakdown
+      - Recent validation results
+      - Quick actions (create contract, run validation)
+      - Health status of registry
+
+    api_calls:
+      - GET /contracts (limit=5, sort=updated_at)
+      - GET /validations (limit=10)
+      - GET /health
+
+  # ---------------------------------------------------------------------------
+  # Contract Browser
+  # ---------------------------------------------------------------------------
+  contracts:
+    file: app/contracts/page.tsx
+    route: /contracts
+    status: complete
+    description: Browse, search, and manage contracts
+
+    features:
+      - List all contracts with pagination
+      - Search by name, field, description
+      - Filter by status (active, draft, deprecated)
+      - Sort by name, updated_at, version
+      - Click to view contract details
+
+    api_calls:
+      - GET /contracts
+      - GET /search?q={query}
+      - GET /contracts/{id}
+
+  # ---------------------------------------------------------------------------
+  # Contract Detail
+  # ---------------------------------------------------------------------------
+  contract_detail:
+    file: app/contracts/[id]/page.tsx
+    route: /contracts/:id
+    status: complete
+    description: View contract details, fields, history
+
+    features:
+      - Contract metadata (name, description, owner)
+      - Field list with constraints
+      - Version history
+      - Recent validations for this contract
+      - Diff between versions
+      - Download as YAML
+
+    api_calls:
+      - GET /contracts/{id}
+      - GET /contracts/{id}/versions
+      - GET /contracts/{id}/validations
+      - GET /contracts/{id}/diff?from={v1}&to={v2}
+
+  # ---------------------------------------------------------------------------
+  # Contract Studio (Editor)
+  # ---------------------------------------------------------------------------
+  studio:
+    file: app/studio/page.tsx
+    route: /studio
+    status: complete
+    description: Visual contract editor
+
+    features:
+      - Create new contract
+      - Edit existing contract
+      - Add/remove/edit fields
+      - Visual constraint editor
+      - YAML preview
+      - Validation preview (dry run)
+      - Save draft / publish
+
+    api_calls:
+      - POST /contracts
+      - PUT /contracts/{id}
+      - GET /contracts/{id}
+
+    components:
+      - FieldEditor
+      - ConstraintEditor
+      - YamlPreview
+
+  # ---------------------------------------------------------------------------
+  # Validation Monitor
+  # ---------------------------------------------------------------------------
+  monitor:
+    file: app/monitor/page.tsx
+    route: /monitor
+    status: complete
+    description: Monitor validation results across pipelines
+
+    features:
+      - Real-time validation feed
+      - Filter by contract, status, date range
+      - Error rate trends (chart)
+      - Drill down to individual validation
+      - Sample errors display
+
+    api_calls:
+      - GET /validations
+      - GET /contracts/{id}/validations
+
+    components:
+      - ValidationBadge
+      - ErrorTrendChart
+      - ValidationDetail
+
+  # ---------------------------------------------------------------------------
+  # Settings
+  # ---------------------------------------------------------------------------
+  settings:
+    file: app/settings/page.tsx
+    route: /settings
+    status: complete
+    description: User and application settings
+
+    features:
+      - API key management
+      - Registry connection settings
+      - Theme (light/dark)
+      - Notification preferences
+
+# =============================================================================
+# COMPONENTS
+# =============================================================================
+components:
+  ContractCard:
+    file: components/ContractCard.tsx
+    status: complete
+    description: Card displaying contract summary
+    props:
+      - name: contract
+        type: Contract
+      - name: onClick
+        type: "() => void"
+        optional: true
+    displays:
+      - Contract name
+      - Description (truncated)
+      - Version
+      - Status badge
+      - Field count
+      - Last updated
+
+  FieldEditor:
+    file: components/FieldEditor.tsx
+    status: complete
+    description: Form for editing field definition
+    props:
+      - name: field
+        type: FieldDefinition
+      - name: onChange
+        type: "(field: FieldDefinition) => void"
+      - name: onDelete
+        type: "() => void"
+    features:
+      - Field name input
+      - Type selector
+      - Description textarea
+      - Constraint editors (contextual by type)
+      - Metadata editors (unit, aggregation)
+
+  ValidationBadge:
+    file: components/ValidationBadge.tsx
+    status: complete
+    description: Badge showing validation status
+    props:
+      - name: passed
+        type: boolean
+      - name: errorRate
+        type: number
+        optional: true
+      - name: size
+        type: "'sm' | 'md' | 'lg'"
+        default: md
+
+  ConstraintEditor:
+    file: components/ConstraintEditor.tsx
+    status: complete
+    description: Dynamic constraint editor based on field type
+    props:
+      - name: fieldType
+        type: string
+      - name: constraints
+        type: FieldConstraints
+      - name: onChange
+        type: "(constraints: FieldConstraints) => void"
+
+  YamlPreview:
+    file: components/YamlPreview.tsx
+    status: complete
+    description: Syntax-highlighted YAML preview
+    props:
+      - name: content
+        type: string
+      - name: onCopy
+        type: "() => void"
+        optional: true
+
+  ErrorTrendChart:
+    file: components/ErrorTrendChart.tsx
+    status: complete
+    description: Line chart showing validation error trends
+    props:
+      - name: data
+        type: "ValidationRecord[]"
+      - name: contractId
+        type: string
+        optional: true
+
+# =============================================================================
+# LIB
+# =============================================================================
+lib:
+  api:
+    file: lib/api.ts
+    status: complete
+    description: Registry API client
+
+    note: |
+      Generate from specs/api.yaml using openapi-typescript or similar.
+      Provides typed API calls for all registry endpoints.
+
+    functions:
+      - name: getContracts
+        signature: "(params?: ListParams) => Promise<ContractList>"
+      - name: getContract
+        signature: "(id: string, version?: string) => Promise<Contract>"
+      - name: createContract
+        signature: "(data: ContractCreate) => Promise<Contract>"
+      - name: updateContract
+        signature: "(id: string, data: ContractUpdate) => Promise<Contract>"
+      - name: getValidations
+        signature: "(params?: ValidationParams) => Promise<ValidationList>"
+      - name: searchContracts
+        signature: "(query: string) => Promise<SearchResults>"
+
+  types:
+    file: lib/types.ts
+    status: complete
+    description: TypeScript types matching API schemas
+
+    note: |
+      Generate from specs/api.yaml components/schemas.
+      Keep in sync with API spec.
+
+# =============================================================================
+# TECH STACK
+# =============================================================================
+tech_stack:
+  framework: Next.js 14 (App Router)
+  language: TypeScript
+  styling: Tailwind CSS
+  components: shadcn/ui (recommended)
+  charts: Recharts or Chart.js
+  api_client: fetch or axios with generated types
+  state: React hooks (useState, useEffect, useSWR)
+
+# =============================================================================
+# CHANGELOG
+# =============================================================================
+changelog:
+  - version: "0.1.0"
+    date: "2025-01-10"
+    changes:
+      - Initial spec creation
+      - Defined all pages
+      - Defined core components
+      - Defined API client interface
+  - version: "0.1.1"
+    date: "2026-01-10"
+    changes:
+      - Implemented all pages (home, contracts, contract detail, studio, monitor, settings)
+      - Implemented all components (ContractCard, FieldEditor, ValidationBadge, ConstraintEditor, YamlPreview, ErrorTrendChart)
+      - Implemented API client (lib/api.ts) with typed methods for all registry endpoints
+      - Implemented TypeScript types (lib/types.ts) matching registry.yaml schemas
+      - All pages functional but depend on Registry API for live data
+      - Marked all implemented items as complete

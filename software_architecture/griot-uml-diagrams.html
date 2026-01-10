@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Griot UML Diagrams</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #0a0a0f;
+      color: #e0e0e0;
+      min-height: 100vh;
+      padding: 40px 20px;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    
+    h1 {
+      text-align: center;
+      font-size: 2rem;
+      margin-bottom: 10px;
+      background: linear-gradient(90deg, #00d4ff, #7b2cbf);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    
+    .subtitle {
+      text-align: center;
+      color: #888;
+      margin-bottom: 40px;
+    }
+    
+    .tabs {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 30px;
+      flex-wrap: wrap;
+    }
+    
+    .tab {
+      padding: 10px 20px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 20px;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-size: 0.9rem;
+    }
+    
+    .tab:hover, .tab.active {
+      background: linear-gradient(135deg, #7b2cbf, #00d4ff);
+      border-color: transparent;
+    }
+    
+    .diagram {
+      display: none;
+      background: rgba(255,255,255,0.02);
+      border-radius: 16px;
+      padding: 30px;
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+    
+    .diagram.active {
+      display: block;
+    }
+    
+    .diagram h2 {
+      font-size: 1.3rem;
+      margin-bottom: 10px;
+      color: #fff;
+    }
+    
+    .diagram-desc {
+      color: #888;
+      margin-bottom: 25px;
+      font-size: 0.9rem;
+    }
+    
+    /* Component Diagram */
+    .component-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 30px;
+    }
+    
+    .layer {
+      background: rgba(255,255,255,0.03);
+      border-radius: 12px;
+      padding: 20px;
+      border: 1px dashed rgba(255,255,255,0.1);
+    }
+    
+    .layer-title {
+      font-size: 0.8rem;
+      color: #666;
+      margin-bottom: 15px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    
+    .layer-components {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    
+    .component {
+      background: linear-gradient(135deg, rgba(123,44,191,0.2), rgba(0,212,255,0.1));
+      border: 2px solid var(--color, #7b2cbf);
+      border-radius: 12px;
+      padding: 20px;
+      min-width: 180px;
+      text-align: center;
+      position: relative;
+    }
+    
+    .component h4 {
+      font-size: 1rem;
+      margin-bottom: 8px;
+      color: var(--color, #7b2cbf);
+    }
+    
+    .component p {
+      font-size: 0.75rem;
+      color: #888;
+    }
+    
+    .component-icon {
+      font-size: 1.5rem;
+      margin-bottom: 10px;
+    }
+    
+    /* Dependency arrows */
+    .dep-section {
+      text-align: center;
+      padding: 15px 0;
+      color: #555;
+    }
+    
+    .dep-arrow {
+      display: inline-block;
+      width: 0;
+      height: 0;
+      border-left: 10px solid transparent;
+      border-right: 10px solid transparent;
+      border-top: 15px solid #7b2cbf;
+      margin: 0 10px;
+    }
+    
+    .dep-label {
+      font-size: 0.75rem;
+      color: #666;
+    }
+    
+    /* Class Diagram */
+    .class-diagram {
+      display: flex;
+      gap: 30px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    
+    .uml-class {
+      background: #1a1a2e;
+      border: 2px solid var(--color, #7b2cbf);
+      border-radius: 8px;
+      min-width: 250px;
+      overflow: hidden;
+    }
+    
+    .class-header {
+      background: var(--color, #7b2cbf);
+      padding: 12px;
+      text-align: center;
+    }
+    
+    .class-header h4 {
+      font-size: 0.95rem;
+      color: #fff;
+    }
+    
+    .class-header .stereotype {
+      font-size: 0.7rem;
+      color: rgba(255,255,255,0.7);
+      font-style: italic;
+    }
+    
+    .class-section {
+      padding: 12px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      font-family: 'Consolas', monospace;
+      font-size: 0.8rem;
+    }
+    
+    .class-section:last-child {
+      border-bottom: none;
+    }
+    
+    .class-section p {
+      padding: 3px 0;
+      color: #aaa;
+    }
+    
+    .class-section .public::before { content: '+ '; color: #00ff88; }
+    .class-section .private::before { content: '- '; color: #ff4444; }
+    .class-section .protected::before { content: '# '; color: #ffaa00; }
+    
+    .type { color: #00d4ff; }
+    .method { color: #aa66ff; }
+    
+    /* Sequence Diagram */
+    .sequence-diagram {
+      overflow-x: auto;
+    }
+    
+    .seq-container {
+      display: flex;
+      justify-content: space-around;
+      min-width: 900px;
+      padding-bottom: 20px;
+    }
+    
+    .seq-actor {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 120px;
+    }
+    
+    .seq-actor-box {
+      background: linear-gradient(135deg, rgba(123,44,191,0.3), rgba(0,212,255,0.2));
+      border: 2px solid #7b2cbf;
+      border-radius: 8px;
+      padding: 10px 15px;
+      text-align: center;
+      margin-bottom: 10px;
+    }
+    
+    .seq-actor-box h5 {
+      font-size: 0.85rem;
+      color: #fff;
+    }
+    
+    .seq-lifeline {
+      width: 2px;
+      background: linear-gradient(180deg, #7b2cbf, #7b2cbf 50%, transparent 50%);
+      background-size: 2px 10px;
+      flex-grow: 1;
+      min-height: 400px;
+    }
+    
+    .seq-messages {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 80px;
+    }
+    
+    .seq-wrapper {
+      position: relative;
+    }
+    
+    .seq-message {
+      display: flex;
+      align-items: center;
+      margin: 20px 0;
+      font-size: 0.8rem;
+    }
+    
+    .seq-message-line {
+      flex-grow: 1;
+      height: 2px;
+      background: #00d4ff;
+      position: relative;
+    }
+    
+    .seq-message-line.return {
+      background: #888;
+      border-style: dashed;
+    }
+    
+    .seq-message-label {
+      position: absolute;
+      top: -18px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #0a0a0f;
+      padding: 2px 8px;
+      white-space: nowrap;
+      color: #ddd;
+      font-size: 0.75rem;
+    }
+    
+    /* Package Diagram */
+    .package-tree {
+      font-family: 'Consolas', monospace;
+      font-size: 0.85rem;
+      line-height: 1.8;
+      background: #0d0d12;
+      padding: 25px;
+      border-radius: 8px;
+      overflow-x: auto;
+    }
+    
+    .package-tree .folder { color: #ffaa00; }
+    .package-tree .file { color: #888; }
+    .package-tree .comment { color: #555; font-style: italic; }
+    
+    /* Deployment Diagram */
+    .deployment-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+    
+    .deploy-node {
+      background: rgba(255,255,255,0.03);
+      border: 2px solid #444;
+      border-radius: 12px;
+      padding: 20px;
+    }
+    
+    .deploy-node h4 {
+      font-size: 0.9rem;
+      color: #fff;
+      margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .deploy-node h4 .icon {
+      font-size: 1.2rem;
+    }
+    
+    .deploy-item {
+      background: rgba(123,44,191,0.2);
+      border: 1px solid #7b2cbf;
+      border-radius: 6px;
+      padding: 10px;
+      margin: 8px 0;
+      font-size: 0.8rem;
+    }
+    
+    .deploy-item .name {
+      color: #fff;
+      font-weight: 600;
+    }
+    
+    .deploy-item .tech {
+      color: #888;
+      font-size: 0.7rem;
+    }
+    
+    /* Legend */
+    .legend {
+      display: flex;
+      gap: 20px;
+      margin-top: 20px;
+      flex-wrap: wrap;
+    }
+    
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.8rem;
+      color: #888;
+    }
+    
+    .legend-color {
+      width: 20px;
+      height: 20px;
+      border-radius: 4px;
+      border: 2px solid;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Griot UML Diagrams</h1>
+    <p class="subtitle">Software Architecture Visualizations</p>
+    
+    <div class="tabs">
+      <div class="tab active" onclick="showDiagram('component')">Component Diagram</div>
+      <div class="tab" onclick="showDiagram('class')">Class Diagram (SDK)</div>
+      <div class="tab" onclick="showDiagram('sequence')">Sequence: Validation</div>
+      <div class="tab" onclick="showDiagram('package')">Package Structure</div>
+      <div class="tab" onclick="showDiagram('deployment')">Deployment</div>
+    </div>
+    
+    <!-- Component Diagram -->
+    <div id="component" class="diagram active">
+      <h2>Component Diagram</h2>
+      <p class="diagram-desc">Shows the major components and their dependencies. Arrows indicate "depends on" relationships.</p>
+      
+      <div class="component-grid">
+        <div class="layer">
+          <div class="layer-title">User Interface Layer</div>
+          <div class="layer-components">
+            <div class="component" style="--color: #00d4ff;">
+              <div class="component-icon">💻</div>
+              <h4>griot-cli</h4>
+              <p>Command-line interface<br>for all operations</p>
+            </div>
+            <div class="component" style="--color: #7b2cbf;">
+              <div class="component-icon">🌐</div>
+              <h4>griot-hub</h4>
+              <p>Web UI for collaboration<br>and monitoring</p>
+            </div>
+            <div class="component" style="--color: #888;">
+              <div class="component-icon">🔧</div>
+              <h4>Orchestrator UI</h4>
+              <p>Airflow, Dagster<br>(external)</p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="dep-section">
+          <span class="dep-arrow"></span>
+          <span class="dep-label">depends on</span>
+          <span class="dep-arrow"></span>
+        </div>
+        
+        <div class="layer">
+          <div class="layer-title">Core Library Layer</div>
+          <div class="layer-components">
+            <div class="component" style="--color: #00ff88;">
+              <div class="component-icon">📦</div>
+              <h4>griot-sdk</h4>
+              <p>Contract models, validation<br>mock generation, manifests</p>
+            </div>
+            <div class="component" style="--color: #ff006e;">
+              <div class="component-icon">🚦</div>
+              <h4>griot-enforce</h4>
+              <p>Runtime validators<br>Orchestrator integrations</p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="dep-section">
+          <span class="dep-arrow"></span>
+          <span class="dep-label">depends on</span>
+          <span class="dep-arrow"></span>
+        </div>
+        
+        <div class="layer">
+          <div class="layer-title">Infrastructure Layer</div>
+          <div class="layer-components">
+            <div class="component" style="--color: #ffaa00;">
+              <div class="component-icon">🗄️</div>
+              <h4>griot-registry</h4>
+              <p>Contract storage, versioning<br>API server</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="legend">
+        <div class="legend-item">
+          <div class="legend-color" style="border-color: #00ff88; background: rgba(0,255,136,0.2);"></div>
+          Foundation (no griot deps)
+        </div>
+        <div class="legend-item">
+          <div class="legend-color" style="border-color: #00d4ff; background: rgba(0,212,255,0.2);"></div>
+          Depends on SDK
+        </div>
+        <div class="legend-item">
+          <div class="legend-color" style="border-color: #7b2cbf; background: rgba(123,44,191,0.2);"></div>
+          Depends on Registry
+        </div>
+      </div>
+    </div>
+    
+    <!-- Class Diagram -->
+    <div id="class" class="diagram">
+      <h2>Class Diagram: griot-sdk</h2>
+      <p class="diagram-desc">Core classes in the SDK package showing attributes and methods.</p>
+      
+      <div class="class-diagram">
+        <div class="uml-class" style="--color: #7b2cbf;">
+          <div class="class-header">
+            <div class="stereotype">«abstract»</div>
+            <h4>GriotModel</h4>
+          </div>
+          <div class="class-section">
+            <p class="protected">__griot_config__: <span class="type">ContractConfig</span></p>
+          </div>
+          <div class="class-section">
+            <p class="public"><span class="method">get_fields()</span> → <span class="type">Dict[str, Field]</span></p>
+            <p class="public"><span class="method">to_yaml()</span> → <span class="type">str</span></p>
+            <p class="public"><span class="method">to_dict()</span> → <span class="type">Dict</span></p>
+            <p class="public"><span class="method">validate(data)</span> → <span class="type">ValidationResult</span></p>
+            <p class="public"><span class="method">mock(rows)</span> → <span class="type">DataFrame</span></p>
+            <p class="public"><span class="method">to_manifest(format)</span> → <span class="type">str</span></p>
+          </div>
+        </div>
+        
+        <div class="uml-class" style="--color: #00d4ff;">
+          <div class="class-header">
+            <h4>Field</h4>
+          </div>
+          <div class="class-section">
+            <p class="public">description: <span class="type">str</span></p>
+            <p class="public">nullable: <span class="type">bool</span></p>
+            <p class="public">primary_key: <span class="type">bool</span></p>
+            <p class="public">pattern: <span class="type">Optional[str]</span></p>
+            <p class="public">ge, le, gt, lt: <span class="type">Optional[float]</span></p>
+            <p class="public">enum: <span class="type">Optional[List]</span></p>
+            <p class="public">pii_category: <span class="type">Optional[PIICategory]</span></p>
+            <p class="public">unit: <span class="type">Optional[str]</span></p>
+          </div>
+          <div class="class-section">
+            <p class="public"><span class="method">contains_pii</span> → <span class="type">bool</span></p>
+          </div>
+        </div>
+        
+        <div class="uml-class" style="--color: #00ff88;">
+          <div class="class-header">
+            <h4>Contract</h4>
+          </div>
+          <div class="class-section">
+            <p class="public">id: <span class="type">str</span></p>
+            <p class="public">name: <span class="type">str</span></p>
+            <p class="public">version: <span class="type">str</span></p>
+            <p class="public">fields: <span class="type">List[FieldDef]</span></p>
+            <p class="public">owner: <span class="type">Owner</span></p>
+          </div>
+          <div class="class-section">
+            <p class="public"><span class="method">from_yaml(path)</span> → <span class="type">Contract</span></p>
+            <p class="public"><span class="method">from_model(cls)</span> → <span class="type">Contract</span></p>
+            <p class="public"><span class="method">validate(data)</span> → <span class="type">ValidationResult</span></p>
+            <p class="public"><span class="method">diff(other)</span> → <span class="type">ContractDiff</span></p>
+          </div>
+        </div>
+        
+        <div class="uml-class" style="--color: #ff006e;">
+          <div class="class-header">
+            <h4>ValidationResult</h4>
+          </div>
+          <div class="class-section">
+            <p class="public">passed: <span class="type">bool</span></p>
+            <p class="public">row_count: <span class="type">int</span></p>
+            <p class="public">error_count: <span class="type">int</span></p>
+            <p class="public">error_rate: <span class="type">float</span></p>
+            <p class="public">errors: <span class="type">List[ValidationError]</span></p>
+          </div>
+          <div class="class-section">
+            <p class="public"><span class="method">summary()</span> → <span class="type">str</span></p>
+            <p class="public"><span class="method">to_dict()</span> → <span class="type">Dict</span></p>
+          </div>
+        </div>
+        
+        <div class="uml-class" style="--color: #ffaa00;">
+          <div class="class-header">
+            <h4>MockGenerator</h4>
+          </div>
+          <div class="class-section">
+            <p class="private">contract: <span class="type">Contract</span></p>
+            <p class="private">seed: <span class="type">Optional[int]</span></p>
+          </div>
+          <div class="class-section">
+            <p class="public"><span class="method">generate(rows)</span> → <span class="type">DataFrame</span></p>
+            <p class="private"><span class="method">_generate_field(field)</span> → <span class="type">Series</span></p>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Sequence Diagram -->
+    <div id="sequence" class="diagram">
+      <h2>Sequence Diagram: CI/CD Validation Flow</h2>
+      <p class="diagram-desc">Shows the interaction between components during a pull request validation.</p>
+      
+      <div class="sequence-diagram">
+        <div style="background: #0d0d12; border-radius: 8px; padding: 20px; overflow-x: auto;">
+          <pre style="color: #ddd; font-family: monospace; font-size: 0.8rem; line-height: 2;">
+┌──────────┐     ┌──────────┐     ┌──────────┐     ┌──────────┐     ┌──────────┐
+│Developer │     │GitHub CI │     │griot-cli │     │griot-sdk │     │ Registry │
+└────┬─────┘     └────┬─────┘     └────┬─────┘     └────┬─────┘     └────┬─────┘
+     │                │                │                │                │
+     │  Push PR       │                │                │                │
+     │───────────────>│                │                │                │
+     │                │                │                │                │
+     │                │ Run workflow   │                │                │
+     │                │───────────────>│                │                │
+     │                │                │                │                │
+     │                │                │ griot validate │                │
+     │                │                │ ─ ─ ─ ─ ─ ─ ─>│                │
+     │                │                │                │                │
+     │                │                │                │ Fetch contract │
+     │                │                │                │───────────────>│
+     │                │                │                │                │
+     │                │                │                │<─ ─ ─ ─ ─ ─ ─ ─│
+     │                │                │                │  Contract YAML │
+     │                │                │                │                │
+     │                │                │                │ Load & parse   │
+     │                │                │                │ ─ ─ ─ ─ ─ ─ ─>│
+     │                │                │                │                │
+     │                │                │                │ Run transform  │
+     │                │                │                │ (test data)    │
+     │                │                │                │                │
+     │                │                │                │ Validate output│
+     │                │                │                │ against schema │
+     │                │                │                │                │
+     │                │                │<─ ─ ─ ─ ─ ─ ─ ─│                │
+     │                │                │ ValidationResult                │
+     │                │                │                │                │
+     │                │<─ ─ ─ ─ ─ ─ ─ ─│                │                │
+     │                │ Exit code 0/1  │                │                │
+     │                │                │                │                │
+     │<─ ─ ─ ─ ─ ─ ─ ─│                │                │                │
+     │ PR status      │                │                │                │
+     │ (pass/fail)    │                │                │                │
+     │                │                │                │                │
+          </pre>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Package Structure -->
+    <div id="package" class="diagram">
+      <h2>Package Structure</h2>
+      <p class="diagram-desc">Directory layout for the Griot monorepo.</p>
+      
+      <div class="sequence-diagram">
+        <div style="background: #0d0d12; border-radius: 8px; padding: 20px; overflow-x: auto;">
+          <pre style="color: #ddd; font-family: monospace; font-size: 0.8rem; line-height: 1.8;">
+<span style="color: #ffaa00;">griot/</span>                                    <span style="color: #555; font-style: italic;"># Monorepo root</span>
+│
+├── <span style="color: #ffaa00;">griot-sdk/</span>                            <span style="color: #555; font-style: italic;"># Core library (foundation)</span>
+│   ├── pyproject.toml
+│   ├── README.md
+│   └── <span style="color: #ffaa00;">src/griot_sdk/</span>
+│       ├── <span style="color: #888;">__init__.py</span>                   <span style="color: #555; font-style: italic;"># Public API exports</span>
+│       ├── <span style="color: #888;">models.py</span>                     <span style="color: #555; font-style: italic;"># GriotModel, Field</span>
+│       ├── <span style="color: #888;">contract.py</span>                   <span style="color: #555; font-style: italic;"># Contract class</span>
+│       ├── <span style="color: #888;">types.py</span>                      <span style="color: #555; font-style: italic;"># Enums, type definitions</span>
+│       ├── <span style="color: #888;">constraints.py</span>                <span style="color: #555; font-style: italic;"># Constraint logic</span>
+│       ├── <span style="color: #888;">validation.py</span>                 <span style="color: #555; font-style: italic;"># Validation engine</span>
+│       ├── <span style="color: #888;">mock.py</span>                       <span style="color: #555; font-style: italic;"># Mock data generator</span>
+│       ├── <span style="color: #888;">manifest.py</span>                   <span style="color: #555; font-style: italic;"># AI manifest export</span>
+│       └── <span style="color: #888;">exceptions.py</span>                 <span style="color: #555; font-style: italic;"># Custom exceptions</span>
+│
+├── <span style="color: #ffaa00;">griot-cli/</span>                            <span style="color: #555; font-style: italic;"># Command-line interface</span>
+│   ├── pyproject.toml
+│   └── <span style="color: #ffaa00;">src/griot_cli/</span>
+│       ├── <span style="color: #888;">__init__.py</span>
+│       ├── <span style="color: #888;">main.py</span>                       <span style="color: #555; font-style: italic;"># Entry point, Click app</span>
+│       ├── <span style="color: #ffaa00;">commands/</span>
+│       │   ├── <span style="color: #888;">validate.py</span>               <span style="color: #555; font-style: italic;"># griot validate</span>
+│       │   ├── <span style="color: #888;">lint.py</span>                   <span style="color: #555; font-style: italic;"># griot lint</span>
+│       │   ├── <span style="color: #888;">diff.py</span>                   <span style="color: #555; font-style: italic;"># griot diff</span>
+│       │   ├── <span style="color: #888;">mock.py</span>                   <span style="color: #555; font-style: italic;"># griot mock</span>
+│       │   ├── <span style="color: #888;">push.py</span>                   <span style="color: #555; font-style: italic;"># griot push</span>
+│       │   ├── <span style="color: #888;">pull.py</span>                   <span style="color: #555; font-style: italic;"># griot pull</span>
+│       │   └── <span style="color: #888;">manifest.py</span>               <span style="color: #555; font-style: italic;"># griot manifest</span>
+│       ├── <span style="color: #888;">config.py</span>                     <span style="color: #555; font-style: italic;"># Configuration handling</span>
+│       └── <span style="color: #888;">output.py</span>                     <span style="color: #555; font-style: italic;"># Formatting, colors</span>
+│
+├── <span style="color: #ffaa00;">griot-enforce/</span>                        <span style="color: #555; font-style: italic;"># Runtime validation</span>
+│   ├── pyproject.toml
+│   └── <span style="color: #ffaa00;">src/griot_enforce/</span>
+│       ├── <span style="color: #888;">__init__.py</span>
+│       ├── <span style="color: #888;">validator.py</span>                  <span style="color: #555; font-style: italic;"># Core RuntimeValidator</span>
+│       ├── <span style="color: #ffaa00;">airflow/</span>
+│       │   ├── <span style="color: #888;">__init__.py</span>
+│       │   ├── <span style="color: #888;">operators.py</span>              <span style="color: #555; font-style: italic;"># GriotValidateOperator</span>
+│       │   └── <span style="color: #888;">sensors.py</span>                <span style="color: #555; font-style: italic;"># GriotFreshnessSensor</span>
+│       ├── <span style="color: #ffaa00;">dagster/</span>
+│       │   ├── <span style="color: #888;">__init__.py</span>
+│       │   ├── <span style="color: #888;">resources.py</span>              <span style="color: #555; font-style: italic;"># GriotResource</span>
+│       │   └── <span style="color: #888;">decorators.py</span>             <span style="color: #555; font-style: italic;"># @griot_asset</span>
+│       └── <span style="color: #ffaa00;">prefect/</span>
+│           └── <span style="color: #888;">tasks.py</span>                  <span style="color: #555; font-style: italic;"># @task decorator</span>
+│
+├── <span style="color: #ffaa00;">griot-registry/</span>                       <span style="color: #555; font-style: italic;"># Contract registry server</span>
+│   ├── pyproject.toml
+│   ├── Dockerfile
+│   └── <span style="color: #ffaa00;">src/griot_registry/</span>
+│       ├── <span style="color: #888;">__init__.py</span>
+│       ├── <span style="color: #888;">server.py</span>                     <span style="color: #555; font-style: italic;"># FastAPI app</span>
+│       ├── <span style="color: #ffaa00;">api/</span>
+│       │   ├── <span style="color: #888;">contracts.py</span>              <span style="color: #555; font-style: italic;"># CRUD endpoints</span>
+│       │   ├── <span style="color: #888;">validations.py</span>            <span style="color: #555; font-style: italic;"># Validation reports</span>
+│       │   └── <span style="color: #888;">search.py</span>                 <span style="color: #555; font-style: italic;"># Search endpoints</span>
+│       ├── <span style="color: #ffaa00;">storage/</span>
+│       │   ├── <span style="color: #888;">base.py</span>                   <span style="color: #555; font-style: italic;"># Abstract backend</span>
+│       │   ├── <span style="color: #888;">filesystem.py</span>             <span style="color: #555; font-style: italic;"># File-based storage</span>
+│       │   ├── <span style="color: #888;">git.py</span>                    <span style="color: #555; font-style: italic;"># Git-backed storage</span>
+│       │   └── <span style="color: #888;">postgres.py</span>               <span style="color: #555; font-style: italic;"># PostgreSQL backend</span>
+│       └── <span style="color: #ffaa00;">auth/</span>
+│           ├── <span style="color: #888;">api_key.py</span>                <span style="color: #555; font-style: italic;"># API key auth</span>
+│           └── <span style="color: #888;">oauth.py</span>                  <span style="color: #555; font-style: italic;"># OAuth2/OIDC</span>
+│
+├── <span style="color: #ffaa00;">griot-hub/</span>                            <span style="color: #555; font-style: italic;"># Web UI (Next.js)</span>
+│   ├── package.json
+│   ├── Dockerfile
+│   └── <span style="color: #ffaa00;">src/</span>
+│       ├── <span style="color: #ffaa00;">app/</span>                          <span style="color: #555; font-style: italic;"># Next.js app router</span>
+│       │   ├── <span style="color: #888;">page.tsx</span>                  <span style="color: #555; font-style: italic;"># Home/dashboard</span>
+│       │   ├── <span style="color: #ffaa00;">contracts/</span>                <span style="color: #555; font-style: italic;"># Contract browser</span>
+│       │   ├── <span style="color: #ffaa00;">studio/</span>                   <span style="color: #555; font-style: italic;"># Contract Studio</span>
+│       │   ├── <span style="color: #ffaa00;">monitor/</span>                  <span style="color: #555; font-style: italic;"># Validation monitor</span>
+│       │   └── <span style="color: #ffaa00;">settings/</span>                 <span style="color: #555; font-style: italic;"># User settings</span>
+│       ├── <span style="color: #ffaa00;">components/</span>                   <span style="color: #555; font-style: italic;"># React components</span>
+│       │   ├── <span style="color: #888;">ContractCard.tsx</span>
+│       │   ├── <span style="color: #888;">FieldEditor.tsx</span>
+│       │   └── <span style="color: #888;">ValidationBadge.tsx</span>
+│       └── <span style="color: #ffaa00;">lib/</span>                          <span style="color: #555; font-style: italic;"># Utilities</span>
+│           ├── <span style="color: #888;">api.ts</span>                    <span style="color: #555; font-style: italic;"># Registry API client</span>
+│           └── <span style="color: #888;">types.ts</span>                  <span style="color: #555; font-style: italic;"># TypeScript types</span>
+│
+├── <span style="color: #ffaa00;">docs/</span>                                 <span style="color: #555; font-style: italic;"># Documentation (MkDocs)</span>
+│   ├── <span style="color: #888;">index.md</span>
+│   ├── <span style="color: #ffaa00;">getting-started/</span>
+│   ├── <span style="color: #ffaa00;">guides/</span>
+│   └── <span style="color: #ffaa00;">api-reference/</span>
+│
+├── <span style="color: #ffaa00;">examples/</span>                             <span style="color: #555; font-style: italic;"># Example contracts</span>
+│   ├── <span style="color: #888;">customer_churn.py</span>
+│   ├── <span style="color: #888;">transactions.yaml</span>
+│   └── <span style="color: #ffaa00;">airflow_dag/</span>
+│
+├── <span style="color: #888;">.github/</span>                              <span style="color: #555; font-style: italic;"># GitHub workflows</span>
+│   └── <span style="color: #ffaa00;">workflows/</span>
+│       ├── <span style="color: #888;">test.yml</span>
+│       └── <span style="color: #888;">release.yml</span>
+│
+├── <span style="color: #888;">pyproject.toml</span>                        <span style="color: #555; font-style: italic;"># Meta-package: pip install griot[all]</span>
+├── <span style="color: #888;">README.md</span>
+└── <span style="color: #888;">LICENSE</span>
+          </pre>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Deployment Diagram -->
+    <div id="deployment" class="diagram">
+      <h2>Deployment Diagram</h2>
+      <p class="diagram-desc">How components are deployed in a typical production environment.</p>
+      
+      <div class="deployment-grid">
+        <div class="deploy-node">
+          <h4><span class="icon">💻</span> Developer Machine</h4>
+          <div class="deploy-item">
+            <div class="name">griot-sdk</div>
+            <div class="tech">pip install</div>
+          </div>
+          <div class="deploy-item">
+            <div class="name">griot-cli</div>
+            <div class="tech">pip install</div>
+          </div>
+        </div>
+        
+        <div class="deploy-node">
+          <h4><span class="icon">🔄</span> CI/CD Runner</h4>
+          <div class="deploy-item">
+            <div class="name">griot-cli</div>
+            <div class="tech">GitHub Actions / GitLab CI</div>
+          </div>
+        </div>
+        
+        <div class="deploy-node">
+          <h4><span class="icon">⚙️</span> Orchestrator</h4>
+          <div class="deploy-item">
+            <div class="name">griot-enforce</div>
+            <div class="tech">Airflow / Dagster worker</div>
+          </div>
+        </div>
+        
+        <div class="deploy-node">
+          <h4><span class="icon">🗄️</span> Registry Server</h4>
+          <div class="deploy-item">
+            <div class="name">griot-registry</div>
+            <div class="tech">Docker / Kubernetes</div>
+          </div>
+          <div class="deploy-item">
+            <div class="name">PostgreSQL</div>
+            <div class="tech">Contract storage</div>
+          </div>
+        </div>
+        
+        <div class="deploy-node">
+          <h4><span class="icon">🌐</span> Web Server</h4>
+          <div class="deploy-item">
+            <div class="name">griot-hub</div>
+            <div class="tech">Docker / Vercel / K8s</div>
+          </div>
+        </div>
+        
+        <div class="deploy-node">
+          <h4><span class="icon">☁️</span> Data Platform</h4>
+          <div class="deploy-item">
+            <div class="name">BigQuery / Snowflake</div>
+            <div class="tech">Validated data destination</div>
+          </div>
+        </div>
+      </div>
+      
+      <div style="margin-top: 30px; padding: 20px; background: rgba(0,212,255,0.1); border-radius: 8px; border-left: 3px solid #00d4ff;">
+        <strong style="color: #00d4ff;">Minimal Deployment:</strong>
+        <p style="color: #aaa; margin-top: 8px; font-size: 0.85rem;">
+          For small teams, only <code>griot-sdk</code> and <code>griot-cli</code> are needed. 
+          Contracts stored as YAML files in Git. No registry server required.
+        </p>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    function showDiagram(id) {
+      document.querySelectorAll('.diagram').forEach(d => d.classList.remove('active'));
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+      event.target.classList.add('active');
+    }
+  </script>
+</body>
+</html>

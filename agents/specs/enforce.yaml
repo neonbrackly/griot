@@ -1,0 +1,353 @@
+# =============================================================================
+# GRIOT ENFORCE INTERFACE SPECIFICATION
+# =============================================================================
+# Owner: enforce agent
+# Consumers: (external orchestrator users)
+#
+# Runtime validation for data orchestrators (Airflow, Dagster, Prefect)
+# =============================================================================
+
+version: "0.1.0"
+spec_version: "1.0"
+last_updated: "2025-01-10"
+updated_by: orchestrator
+
+# =============================================================================
+# PACKAGE STRUCTURE
+# =============================================================================
+# griot-enforce/src/griot_enforce/
+# ├── __init__.py           # Public API exports
+# ├── validator.py          # Core RuntimeValidator
+# ├── airflow/
+# │   ├── __init__.py
+# │   ├── operators.py      # GriotValidateOperator
+# │   └── sensors.py        # GriotFreshnessSensor
+# ├── dagster/
+# │   ├── __init__.py
+# │   ├── resources.py      # GriotResource
+# │   └── decorators.py     # @griot_asset
+# └── prefect/
+#     └── tasks.py          # @task wrappers
+# =============================================================================
+
+# =============================================================================
+# DEPENDENCIES
+# =============================================================================
+dependencies:
+  required:
+    - griot-core  # SDK for validation logic
+  optional:
+    - apache-airflow  # griot-enforce[airflow]
+    - dagster         # griot-enforce[dagster]
+    - prefect         # griot-enforce[prefect]
+
+# =============================================================================
+# FILE: validator.py
+# Core RuntimeValidator class
+# =============================================================================
+validator:
+  file: validator.py
+  status: planned
+  requirement_ids: [FR-ENF-001]
+
+  classes:
+    RuntimeValidator:
+      description: |
+        Core validator for runtime data validation.
+        Wraps griot-core SDK validation with runtime features:
+        - Registry integration for contract fetching
+        - Validation result reporting
+        - Caching for performance
+      status: planned
+
+      constructor:
+        signature: |
+          RuntimeValidator(
+              registry_url: str | None = None,
+              api_key: str | None = None,
+              cache_ttl: int = 300,
+              report_results: bool = True,
+          )
+        parameters:
+          - name: registry_url
+            type: "str | None"
+            description: Registry URL (or GRIOT_REGISTRY_URL env var)
+          - name: api_key
+            type: "str | None"
+            description: API key (or GRIOT_API_KEY env var)
+          - name: cache_ttl
+            type: int
+            default: 300
+            description: Contract cache TTL in seconds
+          - name: report_results
+            type: bool
+            default: true
+            description: Report results to registry
+
+      methods:
+        - name: validate
+          signature: |
+            (
+                contract_id: str,
+                data: pd.DataFrame | list[dict],
+                version: str | None = None,
+                fail_on_error: bool = True,
+            ) -> ValidationResult
+          description: |
+            Validate data against a contract from registry.
+            Optionally raises on validation failure.
+          status: planned
+          example: |
+            validator = RuntimeValidator(registry_url="https://registry.example.com")
+            result = validator.validate("customer-profile", dataframe)
+
+        - name: validate_local
+          signature: |
+            (
+                contract_path: str | Path,
+                data: pd.DataFrame | list[dict],
+                fail_on_error: bool = True,
+            ) -> ValidationResult
+          description: Validate against local contract file
+          status: planned
+
+        - name: get_contract
+          signature: "(contract_id: str, version: str | None = None) -> GriotModel"
+          description: Fetch contract from registry (cached)
+          status: planned
+
+        - name: clear_cache
+          signature: "() -> None"
+          description: Clear contract cache
+          status: planned
+
+# =============================================================================
+# FILE: airflow/operators.py
+# Airflow operators
+# =============================================================================
+airflow_operators:
+  file: airflow/operators.py
+  status: planned
+  requirement_ids: [FR-ENF-002]
+
+  classes:
+    GriotValidateOperator:
+      description: |
+        Airflow operator for validating data against Griot contracts.
+        Fails task if validation fails (configurable).
+      status: planned
+      parent: BaseOperator
+
+      constructor:
+        signature: |
+          GriotValidateOperator(
+              task_id: str,
+              contract_id: str,
+              data_path: str,
+              registry_url: str | None = None,
+              version: str | None = None,
+              fail_on_error: bool = True,
+              error_threshold: float | None = None,
+              **kwargs
+          )
+        parameters:
+          - name: contract_id
+            type: str
+            description: Contract ID in registry
+          - name: data_path
+            type: str
+            description: Path to data file (supports Jinja templating)
+          - name: registry_url
+            type: "str | None"
+            description: Registry URL (or from Airflow connection)
+          - name: version
+            type: "str | None"
+            description: Specific contract version
+          - name: fail_on_error
+            type: bool
+            default: true
+            description: Fail task on validation error
+          - name: error_threshold
+            type: "float | None"
+            description: Fail only if error_rate exceeds threshold
+
+      example: |
+        from griot_enforce.airflow import GriotValidateOperator
+        
+        validate_customers = GriotValidateOperator(
+            task_id="validate_customers",
+            contract_id="customer-profile",
+            data_path="{{ ti.xcom_pull('extract_customers') }}",
+            error_threshold=0.01,  # Allow 1% errors
+        )
+        
+        extract >> validate_customers >> load
+
+# =============================================================================
+# FILE: airflow/sensors.py
+# Airflow sensors
+# =============================================================================
+airflow_sensors:
+  file: airflow/sensors.py
+  status: planned
+
+  classes:
+    GriotFreshnessSensor:
+      description: |
+        Sensor that waits for fresh data based on contract SLA.
+        Checks registry for recent successful validation.
+      status: planned
+      parent: BaseSensorOperator
+
+      constructor:
+        signature: |
+          GriotFreshnessSensor(
+              task_id: str,
+              contract_id: str,
+              max_age_minutes: int = 60,
+              registry_url: str | None = None,
+              **kwargs
+          )
+
+      example: |
+        from griot_enforce.airflow import GriotFreshnessSensor
+        
+        wait_for_customers = GriotFreshnessSensor(
+            task_id="wait_for_customers",
+            contract_id="customer-profile",
+            max_age_minutes=120,
+            poke_interval=300,
+        )
+
+# =============================================================================
+# FILE: dagster/resources.py
+# Dagster resources
+# =============================================================================
+dagster_resources:
+  file: dagster/resources.py
+  status: planned
+
+  classes:
+    GriotResource:
+      description: |
+        Dagster resource for Griot validation.
+        Provides validator instance to assets/ops.
+      status: planned
+
+      constructor:
+        signature: |
+          GriotResource(
+              registry_url: str | None = None,
+              api_key: str | None = None,
+          )
+
+      methods:
+        - name: validate
+          signature: "(contract_id: str, data: pd.DataFrame) -> ValidationResult"
+
+        - name: get_contract
+          signature: "(contract_id: str) -> GriotModel"
+
+      example: |
+        from dagster import Definitions, asset
+        from griot_enforce.dagster import GriotResource
+        
+        @asset
+        def customers(griot: GriotResource):
+            df = extract_customers()
+            griot.validate("customer-profile", df)
+            return df
+        
+        defs = Definitions(
+            assets=[customers],
+            resources={"griot": GriotResource(registry_url="...")}
+        )
+
+# =============================================================================
+# FILE: dagster/decorators.py
+# Dagster decorators
+# =============================================================================
+dagster_decorators:
+  file: dagster/decorators.py
+  status: planned
+
+  decorators:
+    griot_asset:
+      description: |
+        Decorator that wraps asset with automatic validation.
+        Validates output against specified contract.
+      status: planned
+
+      signature: |
+        @griot_asset(
+            contract_id: str,
+            version: str | None = None,
+            fail_on_error: bool = True,
+        )
+
+      example: |
+        from griot_enforce.dagster import griot_asset
+        
+        @griot_asset(contract_id="customer-profile")
+        def customers():
+            return extract_customers()  # Auto-validated before return
+
+# =============================================================================
+# FILE: prefect/tasks.py
+# Prefect task wrappers
+# =============================================================================
+prefect_tasks:
+  file: prefect/tasks.py
+  status: planned
+
+  functions:
+    validate_task:
+      description: Prefect task for validation
+      status: planned
+      signature: |
+        @task
+        def validate_task(
+            contract_id: str,
+            data: pd.DataFrame,
+            registry_url: str | None = None,
+            fail_on_error: bool = True,
+        ) -> ValidationResult
+
+      example: |
+        from prefect import flow
+        from griot_enforce.prefect import validate_task
+        
+        @flow
+        def etl_flow():
+            df = extract_customers()
+            validate_task("customer-profile", df)
+            load_customers(df)
+
+# =============================================================================
+# PUBLIC API (__init__.py exports)
+# =============================================================================
+public_api:
+  classes:
+    - RuntimeValidator
+  submodules:
+    airflow:
+      - GriotValidateOperator
+      - GriotFreshnessSensor
+    dagster:
+      - GriotResource
+      - griot_asset
+    prefect:
+      - validate_task
+
+# =============================================================================
+# CHANGELOG
+# =============================================================================
+changelog:
+  - version: "0.1.0"
+    date: "2025-01-10"
+    changes:
+      - Initial spec creation
+      - Defined RuntimeValidator
+      - Defined Airflow operators and sensors
+      - Defined Dagster resources and decorators
+      - Defined Prefect tasks

@@ -1,0 +1,377 @@
+# =============================================================================
+# GRIOT CLI INTERFACE SPECIFICATION
+# =============================================================================
+# Owner: cli agent
+# Consumers: (end users)
+#
+# Command-line interface - thin wrapper over griot-core SDK
+# =============================================================================
+
+version: "0.1.0"
+spec_version: "1.0"
+last_updated: "2025-01-10"
+updated_by: orchestrator
+
+# =============================================================================
+# PACKAGE STRUCTURE
+# =============================================================================
+# griot-cli/src/griot_cli/
+# ├── __init__.py
+# ├── main.py               # Entry point, Click app
+# ├── config.py             # Configuration handling
+# ├── output.py             # Formatting, colors, tables
+# └── commands/
+#     ├── __init__.py
+#     ├── validate.py       # griot validate
+#     ├── lint.py           # griot lint
+#     ├── diff.py           # griot diff
+#     ├── mock.py           # griot mock
+#     ├── push.py           # griot push
+#     ├── pull.py           # griot pull
+#     └── manifest.py       # griot manifest
+# =============================================================================
+
+# =============================================================================
+# CRITICAL CONSTRAINT
+# =============================================================================
+# ⛔ NO BUSINESS LOGIC IN CLI
+# ✅ Every command calls a griot-core SDK method
+# ✅ CLI only handles: argument parsing, output formatting, exit codes
+# =============================================================================
+
+# =============================================================================
+# DEPENDENCIES
+# =============================================================================
+dependencies:
+  required:
+    - griot-core   # SDK for all business logic
+    - click        # CLI framework
+  optional:
+    - pandas       # griot-cli[pandas] for data file loading
+
+# =============================================================================
+# COMMAND REFERENCE
+# =============================================================================
+commands:
+  # ---------------------------------------------------------------------------
+  # griot validate
+  # ---------------------------------------------------------------------------
+  validate:
+    file: commands/validate.py
+    sdk_method: GriotModel.validate()
+    requirement_ids: [FR-SDK-005, FR-CLI-001]
+    status: blocked
+    blocked_by: sdk.validation
+
+    usage: "griot validate CONTRACT DATA [OPTIONS]"
+
+    arguments:
+      - name: contract
+        type: path
+        required: true
+        description: Path to contract YAML file
+      - name: data
+        type: path
+        required: true
+        description: Path to data file (CSV, JSON, Parquet)
+
+    options:
+      - name: --format
+        short: -f
+        type: choice
+        choices: [table, json, github]
+        default: table
+        description: Output format
+      - name: --max-errors
+        type: integer
+        default: 100
+        description: Maximum errors to display
+      - name: --fail-on-warning
+        type: flag
+        description: Exit 1 on warnings
+      - name: --quiet
+        short: -q
+        type: flag
+        description: Only output on failure
+
+    exit_codes:
+      0: Validation passed
+      1: Validation failed
+      2: Error (file not found, parse error, etc.)
+
+    example: |
+      # Basic validation
+      griot validate contracts/customer.yaml data/customers.csv
+      
+      # JSON output for CI
+      griot validate contracts/customer.yaml data/customers.json -f json
+      
+      # GitHub Actions annotations
+      griot validate contracts/customer.yaml data/customers.csv -f github
+
+  # ---------------------------------------------------------------------------
+  # griot lint
+  # ---------------------------------------------------------------------------
+  lint:
+    file: commands/lint.py
+    sdk_method: GriotModel.lint()
+    status: blocked
+    blocked_by: sdk.contract.lint
+
+    usage: "griot lint CONTRACT [OPTIONS]"
+
+    arguments:
+      - name: contract
+        type: path
+        required: true
+        description: Path to contract file or directory
+
+    options:
+      - name: --format
+        short: -f
+        type: choice
+        choices: [table, json, github]
+        default: table
+      - name: --min-severity
+        type: choice
+        choices: [error, warning, info]
+        default: info
+        description: Minimum severity to show
+      - name: --strict
+        type: flag
+        description: Fail on warnings (for CI)
+
+    exit_codes:
+      0: No issues (or only below min-severity)
+      1: Issues found
+      2: Error
+
+    example: |
+      griot lint contracts/customer.yaml
+      griot lint contracts/ --strict
+
+  # ---------------------------------------------------------------------------
+  # griot diff
+  # ---------------------------------------------------------------------------
+  diff:
+    file: commands/diff.py
+    sdk_method: GriotModel.diff()
+    requirement_ids: [FR-SDK-015]
+    status: blocked
+    blocked_by: sdk.contract.diff
+
+    usage: "griot diff CONTRACT_OLD CONTRACT_NEW [OPTIONS]"
+
+    arguments:
+      - name: contract_old
+        type: path
+        required: true
+        description: Path to old contract version
+      - name: contract_new
+        type: path
+        required: true
+        description: Path to new contract version
+
+    options:
+      - name: --format
+        short: -f
+        type: choice
+        choices: [table, json, markdown]
+        default: table
+      - name: --fail-on-breaking
+        type: flag
+        description: Exit 1 if breaking changes detected
+
+    exit_codes:
+      0: No breaking changes (or --fail-on-breaking not set)
+      1: Breaking changes detected
+      2: Error
+
+    example: |
+      griot diff contracts/v1/customer.yaml contracts/v2/customer.yaml
+      griot diff old.yaml new.yaml --fail-on-breaking
+
+  # ---------------------------------------------------------------------------
+  # griot mock
+  # ---------------------------------------------------------------------------
+  mock:
+    file: commands/mock.py
+    sdk_method: GriotModel.mock()
+    requirement_ids: [FR-SDK-006]
+    status: blocked
+    blocked_by: sdk.mock
+
+    usage: "griot mock CONTRACT [OPTIONS]"
+
+    arguments:
+      - name: contract
+        type: path
+        required: true
+        description: Path to contract file
+
+    options:
+      - name: --rows
+        short: -n
+        type: integer
+        default: 100
+        description: Number of rows to generate
+      - name: --seed
+        type: integer
+        description: Random seed for reproducibility
+      - name: --output
+        short: -o
+        type: path
+        description: Output file (default stdout)
+      - name: --format
+        short: -f
+        type: choice
+        choices: [csv, json, parquet]
+        default: csv
+
+    example: |
+      griot mock contracts/customer.yaml -n 1000 -o test_data.csv
+      griot mock contracts/customer.yaml --seed 42 -f json
+
+  # ---------------------------------------------------------------------------
+  # griot manifest
+  # ---------------------------------------------------------------------------
+  manifest:
+    file: commands/manifest.py
+    sdk_method: GriotModel.to_manifest()
+    requirement_ids: [FR-SDK-007]
+    status: blocked
+    blocked_by: sdk.manifest
+
+    usage: "griot manifest CONTRACT [OPTIONS]"
+
+    arguments:
+      - name: contract
+        type: path
+        required: true
+        description: Path to contract file
+
+    options:
+      - name: --format
+        short: -f
+        type: choice
+        choices: [json_ld, markdown, llm_context]
+        default: json_ld
+      - name: --output
+        short: -o
+        type: path
+        description: Output file (default stdout)
+
+    example: |
+      griot manifest contracts/customer.yaml -f markdown
+      griot manifest contracts/customer.yaml -f llm_context -o context.txt
+
+  # ---------------------------------------------------------------------------
+  # griot push
+  # ---------------------------------------------------------------------------
+  push:
+    file: commands/push.py
+    sdk_method: registry API call
+    status: blocked
+    blocked_by: registry.api
+
+    usage: "griot push CONTRACT [OPTIONS]"
+
+    arguments:
+      - name: contract
+        type: path
+        required: true
+        description: Path to contract file
+
+    options:
+      - name: --registry
+        type: string
+        description: Registry URL (or GRIOT_REGISTRY_URL)
+      - name: --message
+        short: -m
+        type: string
+        description: Change notes
+      - name: --major
+        type: flag
+        description: Force major version bump
+      - name: --dry-run
+        type: flag
+        description: Show what would be pushed
+
+    example: |
+      griot push contracts/customer.yaml -m "Added email_verified field"
+      griot push contracts/customer.yaml --major -m "Breaking: removed legacy_id"
+
+  # ---------------------------------------------------------------------------
+  # griot pull
+  # ---------------------------------------------------------------------------
+  pull:
+    file: commands/pull.py
+    sdk_method: registry API call
+    status: blocked
+    blocked_by: registry.api
+
+    usage: "griot pull CONTRACT_ID [OPTIONS]"
+
+    arguments:
+      - name: contract_id
+        type: string
+        required: true
+        description: Contract ID in registry
+
+    options:
+      - name: --registry
+        type: string
+        description: Registry URL
+      - name: --version
+        type: string
+        description: Specific version (default latest)
+      - name: --output
+        short: -o
+        type: path
+        description: Output file
+
+    example: |
+      griot pull customer-profile -o contracts/customer.yaml
+      griot pull customer-profile --version 1.2.0
+
+# =============================================================================
+# FILE: main.py
+# Click application entry point
+# =============================================================================
+main:
+  file: main.py
+  status: planned
+
+  structure: |
+    import click
+    from griot_cli.commands import validate, lint, diff, mock, manifest, push, pull
+    
+    @click.group()
+    @click.version_option()
+    def cli():
+        """Griot - Data Contract Management CLI"""
+        pass
+    
+    cli.add_command(validate.validate)
+    cli.add_command(lint.lint)
+    cli.add_command(diff.diff)
+    cli.add_command(mock.mock)
+    cli.add_command(manifest.manifest)
+    cli.add_command(push.push)
+    cli.add_command(pull.pull)
+    
+    if __name__ == "__main__":
+        cli()
+
+# =============================================================================
+# FILE: config.py
+# Configuration handling
+# =============================================================================
+config:
+  file: config.py
+  status: planned
+
+  functions:
+    - name: find_config
+      signature: "() -> Path | None"
+      description: Find griot

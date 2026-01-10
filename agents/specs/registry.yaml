@@ -1,0 +1,770 @@
+# =============================================================================
+# GRIOT REGISTRY API SPECIFICATION
+# =============================================================================
+# Owner: registry agent
+# Consumers: hub, cli (for push/pull)
+#
+# OpenAPI 3.0 specification for griot-registry REST API
+# Hub agent builds frontend against this spec
+# =============================================================================
+
+openapi: "3.0.3"
+info:
+  title: Griot Registry API
+  description: |
+    Central registry for Griot data contracts. Provides storage, versioning,
+    validation history, and search capabilities.
+  version: "0.1.0"
+  contact:
+    name: Griot Team
+  license:
+    name: Apache 2.0
+
+servers:
+  - url: /api/v1
+    description: API v1
+
+tags:
+  - name: contracts
+    description: Contract CRUD operations
+  - name: versions
+    description: Contract versioning
+  - name: validations
+    description: Validation history
+  - name: search
+    description: Search contracts
+  - name: health
+    description: Service health
+
+# =============================================================================
+# PATHS
+# =============================================================================
+paths:
+  # ---------------------------------------------------------------------------
+  # Health
+  # ---------------------------------------------------------------------------
+  /health:
+    get:
+      tags: [health]
+      summary: Health check
+      operationId: healthCheck
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  # ---------------------------------------------------------------------------
+  # Contracts CRUD
+  # ---------------------------------------------------------------------------
+  /contracts:
+    get:
+      tags: [contracts]
+      summary: List all contracts
+      operationId: listContracts
+      parameters:
+        - $ref: '#/components/parameters/limitParam'
+        - $ref: '#/components/parameters/offsetParam'
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [draft, active, deprecated]
+        - name: owner
+          in: query
+          schema:
+            type: string
+          description: Filter by owner
+      responses:
+        '200':
+          description: List of contracts
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContractList'
+                
+    post:
+      tags: [contracts]
+      summary: Create new contract
+      operationId: createContract
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContractCreate'
+          application/x-yaml:
+            schema:
+              type: string
+              description: YAML contract definition
+      responses:
+        '201':
+          description: Contract created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Contract'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          description: Contract ID already exists
+
+  /contracts/{contractId}:
+    get:
+      tags: [contracts]
+      summary: Get contract by ID
+      operationId: getContract
+      parameters:
+        - $ref: '#/components/parameters/contractIdParam'
+        - name: version
+          in: query
+          schema:
+            type: string
+          description: Specific version (default latest)
+      responses:
+        '200':
+          description: Contract details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Contract'
+            application/x-yaml:
+              schema:
+                type: string
+        '404':
+          $ref: '#/components/responses/NotFound'
+          
+    put:
+      tags: [contracts]
+      summary: Update contract (creates new version)
+      operationId: updateContract
+      parameters:
+        - $ref: '#/components/parameters/contractIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContractUpdate'
+      responses:
+        '200':
+          description: Contract updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Contract'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+          
+    delete:
+      tags: [contracts]
+      summary: Deprecate contract
+      operationId: deprecateContract
+      parameters:
+        - $ref: '#/components/parameters/contractIdParam'
+      responses:
+        '204':
+          description: Contract deprecated
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ---------------------------------------------------------------------------
+  # Versions
+  # ---------------------------------------------------------------------------
+  /contracts/{contractId}/versions:
+    get:
+      tags: [versions]
+      summary: List contract versions
+      operationId: listVersions
+      parameters:
+        - $ref: '#/components/parameters/contractIdParam'
+        - $ref: '#/components/parameters/limitParam'
+        - $ref: '#/components/parameters/offsetParam'
+      responses:
+        '200':
+          description: Version list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VersionList'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /contracts/{contractId}/versions/{version}:
+    get:
+      tags: [versions]
+      summary: Get specific version
+      operationId: getVersion
+      parameters:
+        - $ref: '#/components/parameters/contractIdParam'
+        - name: version
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Version details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Contract'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /contracts/{contractId}/diff:
+    get:
+      tags: [versions]
+      summary: Diff two versions
+      operationId: diffVersions
+      parameters:
+        - $ref: '#/components/parameters/contractIdParam'
+        - name: from
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: to
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Version diff
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContractDiff'
+
+  # ---------------------------------------------------------------------------
+  # Validations
+  # ---------------------------------------------------------------------------
+  /validations:
+    post:
+      tags: [validations]
+      summary: Report validation result
+      operationId: reportValidation
+      description: Called by griot-enforce to report runtime validation results
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValidationReport'
+      responses:
+        '201':
+          description: Validation recorded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationRecord'
+                
+    get:
+      tags: [validations]
+      summary: List validation history
+      operationId: listValidations
+      parameters:
+        - name: contract_id
+          in: query
+          schema:
+            type: string
+        - name: passed
+          in: query
+          schema:
+            type: boolean
+        - name: from_date
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: to_date
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - $ref: '#/components/parameters/limitParam'
+        - $ref: '#/components/parameters/offsetParam'
+      responses:
+        '200':
+          description: Validation history
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationList'
+
+  /contracts/{contractId}/validations:
+    get:
+      tags: [validations]
+      summary: Get validations for specific contract
+      operationId: getContractValidations
+      parameters:
+        - $ref: '#/components/parameters/contractIdParam'
+        - $ref: '#/components/parameters/limitParam'
+        - $ref: '#/components/parameters/offsetParam'
+      responses:
+        '200':
+          description: Validation history for contract
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationList'
+
+  # ---------------------------------------------------------------------------
+  # Search
+  # ---------------------------------------------------------------------------
+  /search:
+    get:
+      tags: [search]
+      summary: Search contracts
+      operationId: searchContracts
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Search query
+        - name: field
+          in: query
+          schema:
+            type: string
+          description: Search in specific field name
+        - $ref: '#/components/parameters/limitParam'
+        - $ref: '#/components/parameters/offsetParam'
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchResults'
+
+# =============================================================================
+# COMPONENTS
+# =============================================================================
+components:
+  # ---------------------------------------------------------------------------
+  # Parameters
+  # ---------------------------------------------------------------------------
+  parameters:
+    contractIdParam:
+      name: contractId
+      in: path
+      required: true
+      schema:
+        type: string
+      description: Contract identifier
+      
+    limitParam:
+      name: limit
+      in: query
+      schema:
+        type: integer
+        default: 50
+        minimum: 1
+        maximum: 100
+        
+    offsetParam:
+      name: offset
+      in: query
+      schema:
+        type: integer
+        default: 0
+        minimum: 0
+
+  # ---------------------------------------------------------------------------
+  # Responses
+  # ---------------------------------------------------------------------------
+  responses:
+    BadRequest:
+      description: Invalid request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+            
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+  # ---------------------------------------------------------------------------
+  # Schemas
+  # ---------------------------------------------------------------------------
+  schemas:
+    # Health
+    HealthResponse:
+      type: object
+      required: [status, version]
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+        version:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+
+    # Error
+    Error:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+
+    # Contract
+    Contract:
+      type: object
+      required: [id, name, version, status, fields]
+      properties:
+        id:
+          type: string
+          example: "customer-profile"
+        name:
+          type: string
+          example: "Customer Profile"
+        description:
+          type: string
+        version:
+          type: string
+          example: "1.2.0"
+        status:
+          type: string
+          enum: [draft, active, deprecated]
+        owner:
+          type: string
+        fields:
+          type: array
+          items:
+            $ref: '#/components/schemas/FieldDefinition'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    ContractCreate:
+      type: object
+      required: [id, name, fields]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        owner:
+          type: string
+        fields:
+          type: array
+          items:
+            $ref: '#/components/schemas/FieldDefinition'
+
+    ContractUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        fields:
+          type: array
+          items:
+            $ref: '#/components/schemas/FieldDefinition'
+        change_type:
+          type: string
+          enum: [patch, minor, major]
+          default: minor
+        change_notes:
+          type: string
+
+    ContractList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Contract'
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+
+    # Field
+    FieldDefinition:
+      type: object
+      required: [name, type, description]
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+          enum: [string, integer, float, boolean, date, datetime, array, object]
+        description:
+          type: string
+        nullable:
+          type: boolean
+          default: false
+        primary_key:
+          type: boolean
+          default: false
+        unique:
+          type: boolean
+          default: false
+        constraints:
+          $ref: '#/components/schemas/FieldConstraints'
+        metadata:
+          $ref: '#/components/schemas/FieldMetadata'
+
+    FieldConstraints:
+      type: object
+      properties:
+        min_length:
+          type: integer
+        max_length:
+          type: integer
+        pattern:
+          type: string
+        format:
+          type: string
+          enum: [email, uri, uuid, date, datetime, ipv4, ipv6, hostname]
+        ge:
+          type: number
+        le:
+          type: number
+        gt:
+          type: number
+        lt:
+          type: number
+        multiple_of:
+          type: number
+        enum:
+          type: array
+          items: {}
+
+    FieldMetadata:
+      type: object
+      properties:
+        unit:
+          type: string
+        aggregation:
+          type: string
+          enum: [sum, avg, count, min, max, none]
+        glossary_term:
+          type: string
+
+    # Versions
+    VersionList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/VersionSummary'
+        total:
+          type: integer
+
+    VersionSummary:
+      type: object
+      properties:
+        version:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        created_by:
+          type: string
+        change_type:
+          type: string
+          enum: [patch, minor, major]
+        change_notes:
+          type: string
+        is_breaking:
+          type: boolean
+
+    ContractDiff:
+      type: object
+      properties:
+        from_version:
+          type: string
+        to_version:
+          type: string
+        has_breaking_changes:
+          type: boolean
+        added_fields:
+          type: array
+          items:
+            type: string
+        removed_fields:
+          type: array
+          items:
+            type: string
+        type_changes:
+          type: array
+          items:
+            $ref: '#/components/schemas/TypeChange'
+        constraint_changes:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConstraintChange'
+
+    TypeChange:
+      type: object
+      properties:
+        field:
+          type: string
+        from_type:
+          type: string
+        to_type:
+          type: string
+        is_breaking:
+          type: boolean
+
+    ConstraintChange:
+      type: object
+      properties:
+        field:
+          type: string
+        constraint:
+          type: string
+        from_value: {}
+        to_value: {}
+        is_breaking:
+          type: boolean
+
+    # Validations
+    ValidationReport:
+      type: object
+      required: [contract_id, passed, row_count]
+      properties:
+        contract_id:
+          type: string
+        contract_version:
+          type: string
+        passed:
+          type: boolean
+        row_count:
+          type: integer
+        error_count:
+          type: integer
+        error_rate:
+          type: number
+        duration_ms:
+          type: number
+        environment:
+          type: string
+          enum: [development, staging, production]
+        pipeline_id:
+          type: string
+        run_id:
+          type: string
+        sample_errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          maxItems: 100
+
+    ValidationError:
+      type: object
+      properties:
+        field:
+          type: string
+        row:
+          type: integer
+        value: {}
+        constraint:
+          type: string
+        message:
+          type: string
+
+    ValidationRecord:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        contract_id:
+          type: string
+        contract_version:
+          type: string
+        passed:
+          type: boolean
+        row_count:
+          type: integer
+        error_count:
+          type: integer
+        recorded_at:
+          type: string
+          format: date-time
+
+    ValidationList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ValidationRecord'
+        total:
+          type: integer
+
+    # Search
+    SearchResults:
+      type: object
+      properties:
+        query:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/SearchHit'
+        total:
+          type: integer
+
+    SearchHit:
+      type: object
+      properties:
+        contract_id:
+          type: string
+        contract_name:
+          type: string
+        field_name:
+          type: string
+        match_type:
+          type: string
+          enum: [name, description, field]
+        snippet:
+          type: string
+
+  # ---------------------------------------------------------------------------
+  # Security
+  # ---------------------------------------------------------------------------
+  securitySchemes:
+    apiKey:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - apiKey: []
+  - bearerAuth: []

@@ -1,0 +1,155 @@
+# Griot CI/CD - Release Pipeline
+# Owner: quality agent
+# Runs: On release creation or manual trigger
+#
+# Publishes packages to PyPI after all tests pass.
+
+name: Release
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      package:
+        description: 'Package to release'
+        required: true
+        default: 'griot-core'
+        type: choice
+        options:
+          - griot-core
+          - griot-cli
+          - griot-enforce
+          - griot-registry
+          - all
+      dry-run:
+        description: 'Dry run (no actual publish)'
+        required: false
+        default: true
+        type: boolean
+
+env:
+  PYTHON_VERSION: "3.10"
+
+jobs:
+  # ==========================================================================
+  # BUILD JOB - Build packages
+  # ==========================================================================
+  build:
+    name: Build Package
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        package:
+          - griot-core
+          # Future packages will be added here:
+          # - griot-cli
+          # - griot-enforce
+          # - griot-registry
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install build tools
+        run: pip install build twine
+
+      - name: Build package
+        run: |
+          cd ${{ matrix.package }}
+          python -m build
+
+      - name: Check package
+        run: |
+          cd ${{ matrix.package }}
+          twine check dist/*
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-${{ matrix.package }}
+          path: ${{ matrix.package }}/dist/
+          retention-days: 5
+
+  # ==========================================================================
+  # TEST BUILT PACKAGE - Verify the built package works
+  # ==========================================================================
+  test-built:
+    name: Test Built Package
+    runs-on: ubuntu-latest
+    needs: [build]
+    strategy:
+      matrix:
+        package:
+          - griot-core
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist-${{ matrix.package }}
+          path: dist/
+
+      - name: Install built package
+        run: |
+          pip install dist/*.whl
+          pip install pytest
+
+      - name: Test import
+        run: |
+          python -c "from griot_core import GriotModel, Field; print('Import OK')"
+          python -c "from griot_core.validation import validate_data; print('Validation OK')"
+
+      - name: Run smoke tests
+        run: |
+          python -c "
+          from griot_core import GriotModel, Field
+          from griot_core.validation import validate_data
+
+          class Test(GriotModel):
+              name: str = Field(description='Name')
+              age: int = Field(description='Age', ge=0)
+
+          result = validate_data(Test, [{'name': 'Test', 'age': 25}])
+          assert result.passed, 'Smoke test failed'
+          print('Smoke test passed!')
+          "
+
+  # ==========================================================================
+  # PUBLISH JOB - Publish to PyPI
+  # ==========================================================================
+  publish:
+    name: Publish to PyPI
+    runs-on: ubuntu-latest
+    needs: [build, test-built]
+    if: github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && github.event.inputs.dry-run == 'false')
+    environment:
+      name: pypi
+      url: https://pypi.org/project/griot-core/
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist/
+          pattern: dist-*
+          merge-multiple: true
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: dist/
+          skip-existing: true
+          # Uses OIDC trusted publishing (no token needed if configured)
+          # Or set PYPI_API_TOKEN secret
