@@ -17,8 +17,10 @@ if TYPE_CHECKING:
 __all__ = [
     "AnalyticsReport",
     "AIReadinessReport",
+    "AuditReport",
     "generate_analytics_report",
     "generate_ai_readiness_report",
+    "generate_audit_report",
 ]
 
 
@@ -317,6 +319,263 @@ class AIReadinessReport:
                 "```",
                 "",
             ])
+
+        return "\n".join(lines)
+
+
+@dataclass
+class AuditReport:
+    """
+    Compliance and privacy audit report for a data contract.
+
+    Provides comprehensive analysis of PII handling, data residency compliance,
+    legal basis coverage, and regulatory readiness (GDPR, CCPA, HIPAA).
+    """
+
+    contract_name: str
+    generated_at: str
+    version: str = "1.0"
+
+    # Overall compliance
+    compliance_score: float = 0.0
+    compliance_grade: str = "F"  # A, B, C, D, F
+    compliance_status: str = "non_compliant"  # compliant, partial, non_compliant
+
+    # PII Inventory (from T-045)
+    pii_field_count: int = 0
+    pii_fields: list[dict[str, Any]] = dataclass_field(default_factory=list)
+    pii_categories: dict[str, int] = dataclass_field(default_factory=dict)
+    sensitive_field_count: int = 0
+
+    # Data Residency (from T-047)
+    residency_configured: bool = False
+    residency_compliant: bool = False
+    default_region: str | None = None
+    residency_violations: list[str] = dataclass_field(default_factory=list)
+    region_distribution: dict[str, list[str]] = dataclass_field(default_factory=dict)
+
+    # Legal Basis (from T-045)
+    fields_with_legal_basis: int = 0
+    legal_basis_distribution: dict[str, int] = dataclass_field(default_factory=dict)
+    consent_coverage: float = 0.0  # % of PII fields with consent
+
+    # Masking/Protection
+    fields_with_masking: int = 0
+    masking_strategies: dict[str, list[str]] = dataclass_field(default_factory=dict)
+    unprotected_pii: list[str] = dataclass_field(default_factory=list)
+
+    # Retention
+    fields_with_retention: int = 0
+    retention_policies: dict[str, str] = dataclass_field(default_factory=dict)
+
+    # Lineage (from T-048)
+    lineage_configured: bool = False
+    data_sources: list[str] = dataclass_field(default_factory=list)
+    data_consumers: list[str] = dataclass_field(default_factory=list)
+    data_owner: str | None = None
+    data_steward: str | None = None
+
+    # Regulatory readiness
+    gdpr_ready: bool = False
+    ccpa_ready: bool = False
+    hipaa_ready: bool = False
+    regulatory_gaps: list[str] = dataclass_field(default_factory=list)
+
+    # Issues and recommendations
+    critical_issues: list[str] = dataclass_field(default_factory=list)
+    warnings: list[str] = dataclass_field(default_factory=list)
+    recommendations: list[str] = dataclass_field(default_factory=list)
+
+    def to_dict(self) -> dict[str, Any]:
+        """Convert report to dictionary."""
+        return {
+            "report_type": "audit",
+            "contract_name": self.contract_name,
+            "generated_at": self.generated_at,
+            "version": self.version,
+            "compliance": {
+                "score": self.compliance_score,
+                "grade": self.compliance_grade,
+                "status": self.compliance_status,
+            },
+            "pii_inventory": {
+                "field_count": self.pii_field_count,
+                "fields": self.pii_fields,
+                "categories": self.pii_categories,
+                "sensitive_count": self.sensitive_field_count,
+            },
+            "residency": {
+                "configured": self.residency_configured,
+                "compliant": self.residency_compliant,
+                "default_region": self.default_region,
+                "violations": self.residency_violations,
+                "region_distribution": self.region_distribution,
+            },
+            "legal_basis": {
+                "fields_with_basis": self.fields_with_legal_basis,
+                "distribution": self.legal_basis_distribution,
+                "consent_coverage": self.consent_coverage,
+            },
+            "protection": {
+                "fields_with_masking": self.fields_with_masking,
+                "masking_strategies": self.masking_strategies,
+                "unprotected_pii": self.unprotected_pii,
+            },
+            "retention": {
+                "fields_with_retention": self.fields_with_retention,
+                "policies": self.retention_policies,
+            },
+            "lineage": {
+                "configured": self.lineage_configured,
+                "sources": self.data_sources,
+                "consumers": self.data_consumers,
+                "owner": self.data_owner,
+                "steward": self.data_steward,
+            },
+            "regulatory": {
+                "gdpr_ready": self.gdpr_ready,
+                "ccpa_ready": self.ccpa_ready,
+                "hipaa_ready": self.hipaa_ready,
+                "gaps": self.regulatory_gaps,
+            },
+            "issues": {
+                "critical": self.critical_issues,
+                "warnings": self.warnings,
+            },
+            "recommendations": self.recommendations,
+        }
+
+    def to_json(self, indent: int = 2) -> str:
+        """Convert report to JSON string."""
+        return json.dumps(self.to_dict(), indent=indent)
+
+    def to_markdown(self) -> str:
+        """Convert report to Markdown format."""
+        lines = [
+            f"# Audit Report: {self.contract_name}",
+            "",
+            f"*Generated: {self.generated_at}*",
+            "",
+            "## Compliance Summary",
+            "",
+            f"**Score: {self.compliance_score:.1f}/100** (Grade: **{self.compliance_grade}**)",
+            f"**Status: {self.compliance_status.upper()}**",
+            "",
+            "## PII Inventory",
+            "",
+            f"| Metric | Value |",
+            f"|--------|-------|",
+            f"| PII Fields | {self.pii_field_count} |",
+            f"| Sensitive Fields | {self.sensitive_field_count} |",
+            f"| Fields with Legal Basis | {self.fields_with_legal_basis} |",
+            f"| Fields with Masking | {self.fields_with_masking} |",
+            f"| Consent Coverage | {self.consent_coverage:.1f}% |",
+            "",
+        ]
+
+        if self.pii_categories:
+            lines.extend([
+                "### PII Categories",
+                "",
+            ])
+            for cat, count in sorted(self.pii_categories.items()):
+                lines.append(f"- **{cat}**: {count} fields")
+            lines.append("")
+
+        if self.unprotected_pii:
+            lines.extend([
+                "### Unprotected PII Fields (CRITICAL)",
+                "",
+            ])
+            for field in self.unprotected_pii:
+                lines.append(f"- {field}")
+            lines.append("")
+
+        # Data Residency
+        lines.extend([
+            "## Data Residency",
+            "",
+            f"- **Configured**: {'Yes' if self.residency_configured else 'No'}",
+            f"- **Compliant**: {'Yes' if self.residency_compliant else 'No'}",
+        ])
+        if self.default_region:
+            lines.append(f"- **Default Region**: {self.default_region}")
+        lines.append("")
+
+        if self.residency_violations:
+            lines.extend([
+                "### Violations",
+                "",
+            ])
+            for v in self.residency_violations:
+                lines.append(f"- {v}")
+            lines.append("")
+
+        # Lineage
+        lines.extend([
+            "## Data Lineage",
+            "",
+            f"- **Configured**: {'Yes' if self.lineage_configured else 'No'}",
+        ])
+        if self.data_owner:
+            lines.append(f"- **Data Owner**: {self.data_owner}")
+        if self.data_steward:
+            lines.append(f"- **Data Steward**: {self.data_steward}")
+        if self.data_sources:
+            lines.append(f"- **Sources**: {', '.join(self.data_sources)}")
+        if self.data_consumers:
+            lines.append(f"- **Consumers**: {', '.join(self.data_consumers)}")
+        lines.append("")
+
+        # Regulatory Readiness
+        lines.extend([
+            "## Regulatory Readiness",
+            "",
+            "| Regulation | Ready |",
+            "|------------|-------|",
+            f"| GDPR | {'✓' if self.gdpr_ready else '✗'} |",
+            f"| CCPA | {'✓' if self.ccpa_ready else '✗'} |",
+            f"| HIPAA | {'✓' if self.hipaa_ready else '✗'} |",
+            "",
+        ])
+
+        if self.regulatory_gaps:
+            lines.extend([
+                "### Gaps",
+                "",
+            ])
+            for gap in self.regulatory_gaps:
+                lines.append(f"- {gap}")
+            lines.append("")
+
+        # Issues
+        if self.critical_issues:
+            lines.extend([
+                "## Critical Issues",
+                "",
+            ])
+            for issue in self.critical_issues:
+                lines.append(f"- ⚠️ {issue}")
+            lines.append("")
+
+        if self.warnings:
+            lines.extend([
+                "## Warnings",
+                "",
+            ])
+            for w in self.warnings:
+                lines.append(f"- {w}")
+            lines.append("")
+
+        # Recommendations
+        if self.recommendations:
+            lines.extend([
+                "## Recommendations",
+                "",
+            ])
+            for rec in self.recommendations:
+                lines.append(f"- {rec}")
+            lines.append("")
 
         return "\n".join(lines)
 
@@ -632,5 +891,325 @@ def generate_ai_readiness_report(model: type[GriotModel]) -> AIReadinessReport:
         context_lines.append(f"... and {total_fields - 10} more fields")
 
     report.suggested_context = "\n".join(context_lines)
+
+    return report
+
+
+def generate_audit_report(model: type[GriotModel]) -> AuditReport:
+    """
+    Generate a compliance and privacy audit report for a GriotModel.
+
+    Analyzes PII handling, data residency compliance, legal basis coverage,
+    and regulatory readiness (GDPR, CCPA, HIPAA).
+
+    Args:
+        model: The GriotModel class to audit.
+
+    Returns:
+        AuditReport with comprehensive compliance analysis.
+    """
+    from griot_core.types import (
+        LegalBasis,
+        MaskingStrategy,
+        PIICategory,
+        SensitivityLevel,
+    )
+
+    report = AuditReport(
+        contract_name=model.__name__,
+        generated_at=datetime.now().isoformat(),
+    )
+
+    total_fields = len(model._griot_fields)
+    if total_fields == 0:
+        report.compliance_score = 0
+        report.compliance_grade = "F"
+        report.compliance_status = "non_compliant"
+        report.critical_issues.append("No fields defined in contract")
+        return report
+
+    # 1. PII Inventory Analysis (uses pii_inventory from T-045)
+    pii_inventory = model.pii_inventory()
+    report.pii_field_count = len(pii_inventory)
+    report.pii_fields = pii_inventory
+
+    # Analyze PII categories and sensitivity
+    consent_fields = 0
+    for pii_field in pii_inventory:
+        cat = pii_field.get("category", "")
+        if cat:
+            report.pii_categories[cat] = report.pii_categories.get(cat, 0) + 1
+
+        sens = pii_field.get("sensitivity_level", "")
+        if sens in ["confidential", "restricted"]:
+            report.sensitive_field_count += 1
+
+        # Legal basis tracking
+        legal = pii_field.get("legal_basis", "")
+        if legal:
+            report.fields_with_legal_basis += 1
+            report.legal_basis_distribution[legal] = (
+                report.legal_basis_distribution.get(legal, 0) + 1
+            )
+            if legal == "consent":
+                consent_fields += 1
+
+        # Masking strategy tracking
+        masking = pii_field.get("masking_strategy", "")
+        if masking and masking != "none":
+            report.fields_with_masking += 1
+            if masking not in report.masking_strategies:
+                report.masking_strategies[masking] = []
+            report.masking_strategies[masking].append(pii_field["field"])
+        elif cat:  # PII field without masking
+            report.unprotected_pii.append(pii_field["field"])
+
+        # Retention tracking
+        retention = pii_field.get("retention_period", "")
+        if retention:
+            report.fields_with_retention += 1
+            report.retention_policies[pii_field["field"]] = retention
+
+    # Calculate consent coverage
+    if report.pii_field_count > 0:
+        report.consent_coverage = (consent_fields / report.pii_field_count) * 100
+
+    # 2. Data Residency Analysis (uses get_residency_config and check_residency from T-047)
+    residency_config = model.get_residency_config()
+    if residency_config:
+        report.residency_configured = True
+        report.default_region = residency_config.default_region.value
+
+        # Check residency compliance
+        try:
+            residency_result = model.check_residency(residency_config.default_region)
+            report.residency_compliant = residency_result.get("compliant", False)
+            if not report.residency_compliant:
+                violations = residency_result.get("violations", [])
+                report.residency_violations = [
+                    f"{v['field']}: {v['reason']}" for v in violations
+                ]
+        except Exception:
+            report.residency_compliant = False
+
+        # Build region distribution from rules
+        if residency_config.rules:
+            for rule in residency_config.rules:
+                for region in rule.allowed_regions:
+                    region_name = region.value
+                    if region_name not in report.region_distribution:
+                        report.region_distribution[region_name] = []
+                    report.region_distribution[region_name].extend(rule.fields)
+
+    # 3. Lineage Analysis (uses get_lineage_config from T-048)
+    lineage_config = model.get_lineage_config()
+    if lineage_config:
+        report.lineage_configured = True
+        report.data_owner = lineage_config.data_owner
+        report.data_steward = lineage_config.data_steward
+        report.data_sources = [s.name for s in lineage_config.sources]
+        report.data_consumers = [c.name for c in lineage_config.consumers]
+
+    # 4. Regulatory Readiness Assessment
+
+    # GDPR requires: legal basis for all PII, masking strategy, retention policy
+    gdpr_score = 0
+    gdpr_max = 4
+
+    if report.pii_field_count == 0 or report.fields_with_legal_basis == report.pii_field_count:
+        gdpr_score += 1
+    else:
+        report.regulatory_gaps.append(
+            f"GDPR: {report.pii_field_count - report.fields_with_legal_basis} PII fields lack legal basis"
+        )
+
+    if report.pii_field_count == 0 or report.fields_with_masking == report.pii_field_count:
+        gdpr_score += 1
+    else:
+        report.regulatory_gaps.append(
+            f"GDPR: {len(report.unprotected_pii)} PII fields lack masking strategy"
+        )
+
+    if report.lineage_configured:
+        gdpr_score += 1
+    else:
+        report.regulatory_gaps.append("GDPR: Data lineage not configured")
+
+    if report.pii_field_count == 0 or report.fields_with_retention >= report.pii_field_count * 0.5:
+        gdpr_score += 1
+    else:
+        report.regulatory_gaps.append("GDPR: Most PII fields lack retention policy")
+
+    report.gdpr_ready = gdpr_score >= 3
+
+    # CCPA requires: PII inventory, categories identified, consumer rights support
+    ccpa_score = 0
+    ccpa_max = 3
+
+    if report.pii_categories:
+        ccpa_score += 1
+    else:
+        report.regulatory_gaps.append("CCPA: PII categories not identified")
+
+    if report.pii_field_count == 0 or len(report.masking_strategies) > 0:
+        ccpa_score += 1
+    else:
+        report.regulatory_gaps.append("CCPA: No data masking/deletion capability")
+
+    if report.lineage_configured:
+        ccpa_score += 1
+    else:
+        report.regulatory_gaps.append("CCPA: Cannot trace data for consumer requests")
+
+    report.ccpa_ready = ccpa_score >= 2
+
+    # HIPAA requires: PHI identified, encryption/masking, audit trail (lineage)
+    has_health_data = any(
+        cat in ["health_info", "medical_record", "biometric"]
+        for cat in report.pii_categories
+    )
+
+    if has_health_data:
+        hipaa_score = 0
+        hipaa_max = 3
+
+        if report.pii_categories:
+            hipaa_score += 1
+        else:
+            report.regulatory_gaps.append("HIPAA: PHI not properly categorized")
+
+        if report.fields_with_masking > 0:
+            hipaa_score += 1
+        else:
+            report.regulatory_gaps.append("HIPAA: No PHI protection/encryption")
+
+        if report.lineage_configured:
+            hipaa_score += 1
+        else:
+            report.regulatory_gaps.append("HIPAA: No audit trail (lineage)")
+
+        report.hipaa_ready = hipaa_score >= 2
+    else:
+        report.hipaa_ready = True  # No health data, N/A
+
+    # 5. Calculate Compliance Score
+
+    # Weight components
+    pii_coverage_score = 0.0
+    if report.pii_field_count > 0:
+        # Legal basis coverage (25%)
+        legal_basis_pct = (report.fields_with_legal_basis / report.pii_field_count) * 100
+        # Masking coverage (25%)
+        masking_pct = (report.fields_with_masking / report.pii_field_count) * 100
+        pii_coverage_score = (legal_basis_pct * 0.5) + (masking_pct * 0.5)
+    else:
+        pii_coverage_score = 100.0  # No PII = no concerns
+
+    residency_score = 100.0 if report.residency_compliant or not report.residency_configured else 50.0
+    if report.residency_configured and not report.residency_compliant:
+        residency_score = 25.0
+
+    lineage_score = 100.0 if report.lineage_configured else 30.0
+
+    regulatory_score = 0.0
+    reg_count = 0
+    if report.gdpr_ready:
+        regulatory_score += 100
+    reg_count += 1
+    if report.ccpa_ready:
+        regulatory_score += 100
+    reg_count += 1
+    if has_health_data:
+        if report.hipaa_ready:
+            regulatory_score += 100
+        reg_count += 1
+    regulatory_score = regulatory_score / reg_count if reg_count > 0 else 100
+
+    # Weighted average
+    report.compliance_score = (
+        pii_coverage_score * 0.35 +
+        residency_score * 0.20 +
+        lineage_score * 0.15 +
+        regulatory_score * 0.30
+    )
+
+    # Assign grade
+    if report.compliance_score >= 90:
+        report.compliance_grade = "A"
+        report.compliance_status = "compliant"
+    elif report.compliance_score >= 80:
+        report.compliance_grade = "B"
+        report.compliance_status = "compliant"
+    elif report.compliance_score >= 70:
+        report.compliance_grade = "C"
+        report.compliance_status = "partial"
+    elif report.compliance_score >= 60:
+        report.compliance_grade = "D"
+        report.compliance_status = "partial"
+    else:
+        report.compliance_grade = "F"
+        report.compliance_status = "non_compliant"
+
+    # 6. Generate Issues and Recommendations
+
+    # Critical issues
+    if report.unprotected_pii:
+        report.critical_issues.append(
+            f"{len(report.unprotected_pii)} PII fields have no masking strategy: "
+            f"{', '.join(report.unprotected_pii[:5])}"
+            + ("..." if len(report.unprotected_pii) > 5 else "")
+        )
+
+    if report.pii_field_count > 0 and report.fields_with_legal_basis == 0:
+        report.critical_issues.append(
+            "No PII fields have defined legal basis for processing"
+        )
+
+    if report.residency_configured and not report.residency_compliant:
+        report.critical_issues.append(
+            f"Data residency violations detected: {len(report.residency_violations)} issues"
+        )
+
+    # Warnings
+    if not report.residency_configured and report.pii_field_count > 0:
+        report.warnings.append(
+            "Data residency not configured - consider defining regional requirements"
+        )
+
+    if not report.lineage_configured:
+        report.warnings.append(
+            "Data lineage not configured - required for audit trails and impact analysis"
+        )
+
+    if report.consent_coverage < 50 and report.pii_field_count > 0:
+        report.warnings.append(
+            f"Only {report.consent_coverage:.0f}% of PII fields use consent-based processing"
+        )
+
+    # Recommendations
+    if report.unprotected_pii:
+        report.recommendations.append(
+            "Add masking strategies to all PII fields for data protection"
+        )
+
+    if report.pii_field_count > report.fields_with_legal_basis:
+        report.recommendations.append(
+            "Define legal basis (consent, contract, legal_obligation, etc.) for all PII fields"
+        )
+
+    if not report.residency_configured:
+        report.recommendations.append(
+            "Configure data residency rules if processing data across regions"
+        )
+
+    if not report.lineage_configured:
+        report.recommendations.append(
+            "Add lineage configuration for data governance and audit compliance"
+        )
+
+    if report.fields_with_retention < report.pii_field_count:
+        report.recommendations.append(
+            "Define retention periods for PII fields to comply with data minimization"
+        )
 
     return report

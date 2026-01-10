@@ -89,11 +89,13 @@ __all__ = [
     "generate_mock_data",
     # Manifest export
     "export_manifest",
-    # Reports (Phase 2 - FR-SDK-013)
+    # Reports (Phase 2 - FR-SDK-013, FR-SDK-014, FR-SDK-016)
     "AnalyticsReport",
     "AIReadinessReport",
+    "AuditReport",
     "generate_analytics_report",
     "generate_ai_readiness_report",
+    "generate_audit_report",
 ]
 
 # Core classes
@@ -169,6 +171,8 @@ from griot_core.manifest import export_manifest
 from griot_core.reports import (
     AIReadinessReport,
     AnalyticsReport,
+    AuditReport,
     generate_ai_readiness_report,
     generate_analytics_report,
+    generate_audit_report,
 )

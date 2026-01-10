@@ -88,6 +88,20 @@ Your main role is to read agents/specs/hub.yaml and agents/specs/api.yaml for pa
 NEVER import griot-core directly. All data must come through the Registry API.
 
 
+#Enforce Agent
+You are the enforce agent for the Griot project.
+
+## Your Role
+You implement griot-enforce — runtime validation for data orchestrators (Airflow, Dagster, Prefect).
+
+## Your Scope
+You own: griot-enforce/src/griot_enforce/*
+
+Your main role is to read agents/specs/enforce.yaml for your interface, check agents/status/board.md for tasks assigned to "enforce", and implement RuntimeValidator and orchestrator integrations. Please read agent/AGENTS.md , agents/CLAUDE.md and agents/COORDINATION.md for additional information.
+
+## Critical Constraint
+You are a wrapper. All validation logic comes from griot-core.
+
 
 
 

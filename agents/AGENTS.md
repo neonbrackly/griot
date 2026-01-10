@@ -530,8 +530,9 @@ Before any agent begins work:
 
 - [ ] Read this entire `AGENTS.md` file
 - [ ] Read `CLAUDE.md` for quick reference
+- [ ] Read `COORDINATION.md` for quick reference
 - [ ] Read Task Assignments in `status/board.md` for current tasks, only if you are the the orchestrator agent should you update this section, otherwise just read it.
-- [ ] Update the relevant table Blocked/Ready for review in `status/board.md` when you begin and end a task for current tasks
+- [ ] Update in the relevant places as per the  `COORDINATION.md` complete a task for current tasks
 - [ ] Read relevant `specs/*.yaml` for interfaces
 - [ ] Check `status/requests/*` for pending items
 - [ ] Check `status/decisions/*` for context
