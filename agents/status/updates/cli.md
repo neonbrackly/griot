@@ -4,6 +4,71 @@
 
 ---
 
+## Session: 2026-01-11 (Phase 6 - ODCS Contract Creation & Lint)
+
+### Tasks Completed
+- T-363: Update contract creation for new ODCS schema
+  - Created new `griot init` command to scaffold ODCS-format contracts
+  - Template follows `example_contract.yaml` structure with all ODCS sections
+  - Options: --id, --purpose, --team, --contact, --jurisdiction, --force
+  - Generates timestamped contract with smart defaults
+- T-366: Update `griot lint` for new ODCS quality rules
+  - Added `--odcs-only` flag to show only ODCS-specific lint issues (G006-G015)
+  - Added `--summary` flag to show categorized issue breakdown
+  - Documented ODCS quality rules G006-G015 in help text
+  - Added `_show_lint_summary()` for category-based issue reporting
+
+### Files Created
+- `griot-cli/src/griot_cli/commands/init.py`
+  - Full ODCS template with all sections (schema, quality, legal, compliance, SLA, access, distribution, governance, team, servers, roles, timestamps)
+  - Smart defaults following audit-ready approach
+  - Pre-configured quality rules (completeness, freshness)
+
+### Files Changed
+- `griot-cli/src/griot_cli/commands/__init__.py` - Added init export
+- `griot-cli/src/griot_cli/main.py` - Registered init command
+- `griot-cli/src/griot_cli/commands/lint.py`
+  - Added ODCS_RULE_CODES constant for filtering
+  - Added --odcs-only and --summary flags
+  - Added _show_lint_summary() function
+  - Updated docstring with ODCS rule codes
+
+### Command Usage Examples
+```bash
+# Initialize new ODCS contract
+griot init "Customer Profile"
+griot init "Order Events" -o contracts/orders.yaml
+griot init "User Data" --team "Analytics" --jurisdiction EU --purpose "User analytics data"
+
+# Lint with ODCS-specific filtering
+griot lint contracts/customer.yaml --odcs-only
+griot lint contracts/ --summary
+griot lint contracts/ --strict --odcs-only
+```
+
+### ODCS Quality Rules (documented in CLI)
+- G006: No quality rules defined
+- G007: Completeness rule missing min_percent
+- G008: Freshness rule missing timestamp_field
+- G009: Custom check missing definition
+- G010: No description.purpose defined
+- G011: No SLA section defined
+- G012: No governance.producer defined
+- G013: Missing team information
+- G014: No legal.jurisdiction defined
+- G015: No compliance.data_classification defined
+
+### Tasks Remaining
+- T-364: Add `griot migrate` command for old contracts (waiting on T-330 - core migration)
+
+### Notes
+- The `griot init` command creates audit-ready contracts with privacy-preserving defaults
+- All ODCS sections included in template with sensible defaults
+- Lint command now categorizes issues as Schema (G001-G005) vs ODCS (G006-G015)
+- Core needs to implement G006-G015 rules in lint_contract() for full ODCS lint support
+
+---
+
 ## Session: 2026-01-11 (Phase 6 - Breaking Change Validation)
 
 ### Tasks Completed

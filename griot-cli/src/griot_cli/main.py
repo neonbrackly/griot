@@ -10,7 +10,7 @@ import sys
 
 import click
 
-from griot_cli.commands import diff, lint, manifest, mock, pull, push, report, residency, validate
+from griot_cli.commands import diff, init, lint, manifest, mock, pull, push, report, residency, validate
 
 
 @click.group()
@@ -31,6 +31,7 @@ def cli(ctx: click.Context, config: str | None) -> None:
     ctx.obj["config_path"] = config
 
 
+cli.add_command(init.init)
 cli.add_command(validate.validate)
 cli.add_command(lint.lint)
 cli.add_command(diff.diff)

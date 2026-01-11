@@ -1,9 +1,9 @@
 """griot lint command.
 
-Check a contract for quality issues.
+Check a contract for quality issues including ODCS compliance.
 
 SDK Method: GriotModel.lint()
-Status: Complete
+Status: Complete (T-366: ODCS quality rules support)
 """
 from __future__ import annotations
 
@@ -12,7 +12,11 @@ from pathlib import Path
 
 import click
 
-from griot_cli.output import OutputFormat, echo_error, format_lint_issues
+from griot_cli.output import OutputFormat, echo_error, echo_info, format_lint_issues
+
+
+# ODCS-specific lint rule codes (G006+)
+ODCS_RULE_CODES = {"G006", "G007", "G008", "G009", "G010", "G011", "G012", "G013", "G014", "G015"}
 
 
 @click.command()
@@ -35,6 +39,16 @@ from griot_cli.output import OutputFormat, echo_error, format_lint_issues
     is_flag=True,
     help="Fail on warnings (for CI).",
 )
+@click.option(
+    "--odcs-only",
+    is_flag=True,
+    help="Show only ODCS-specific issues (quality, compliance, governance).",
+)
+@click.option(
+    "--summary",
+    is_flag=True,
+    help="Show summary of issues by category.",
+)
 @click.pass_context
 def lint(
     ctx: click.Context,
@@ -42,10 +56,28 @@ def lint(
     format: str,
     min_severity: str,
     strict: bool,
+    odcs_only: bool,
+    summary: bool,
 ) -> None:
-    """Check CONTRACT for quality issues.
+    """Check CONTRACT for quality issues including ODCS compliance.
 
     CONTRACT is the path to a contract file or directory.
+
+    Lint Rules:
+      G001-G005: Basic schema rules (primary key, descriptions, constraints)
+      G006-G015: ODCS quality rules (quality section, SLA, governance, etc.)
+
+    ODCS Quality Rules (T-366):
+      G006: No quality rules defined
+      G007: Completeness rule missing min_percent
+      G008: Freshness rule missing timestamp_field
+      G009: Custom check missing definition
+      G010: No description.purpose defined
+      G011: No SLA section defined
+      G012: No governance.producer defined
+      G013: Missing team information
+      G014: No legal.jurisdiction defined
+      G015: No compliance.data_classification defined
 
     Exit codes:
       0 - No issues (or only below min-severity)
@@ -55,6 +87,8 @@ def lint(
     Examples:
       griot lint contracts/customer.yaml
       griot lint contracts/ --strict
+      griot lint contracts/customer.yaml --odcs-only
+      griot lint contracts/ --summary
     """
     try:
         from griot_core import GriotModel, Severity
@@ -91,6 +125,18 @@ def lint(
             if severity_order.get(issue.severity, 2) <= min_level
         ]
 
+        # T-366: Filter for ODCS-only issues if requested
+        if odcs_only:
+            filtered_issues = [
+                issue
+                for issue in filtered_issues
+                if issue.code in ODCS_RULE_CODES
+            ]
+
+        # T-366: Show summary by category if requested
+        if summary:
+            _show_lint_summary(filtered_issues, Severity)
+
         # Output result
         format_lint_issues(filtered_issues, format=OutputFormat(format))
 
@@ -111,3 +157,35 @@ def lint(
     except Exception as e:
         echo_error(f"Error: {e}")
         sys.exit(2)
+
+
+def _show_lint_summary(issues: list, severity_enum: type) -> None:
+    """Display a summary of lint issues by category (T-366)."""
+    if not issues:
+        echo_info("No lint issues found.")
+        return
+
+    # Count by severity
+    error_count = sum(1 for i in issues if i.severity == severity_enum.ERROR)
+    warning_count = sum(1 for i in issues if i.severity == severity_enum.WARNING)
+    info_count = sum(1 for i in issues if i.severity == severity_enum.INFO)
+
+    # Count by category
+    schema_issues = sum(1 for i in issues if i.code in {"G001", "G002", "G003", "G004", "G005"})
+    odcs_issues = sum(1 for i in issues if i.code in ODCS_RULE_CODES)
+
+    echo_info("\n=== Lint Summary ===")
+    echo_info(f"Total issues: {len(issues)}")
+    echo_info("")
+    echo_info("By Severity:")
+    if error_count:
+        click.secho(f"  Errors:   {error_count}", fg="red")
+    if warning_count:
+        click.secho(f"  Warnings: {warning_count}", fg="yellow")
+    if info_count:
+        click.secho(f"  Info:     {info_count}", fg="blue")
+    echo_info("")
+    echo_info("By Category:")
+    echo_info(f"  Schema Rules (G001-G005): {schema_issues}")
+    echo_info(f"  ODCS Rules (G006-G015):   {odcs_issues}")
+    echo_info("")
