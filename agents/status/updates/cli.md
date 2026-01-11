@@ -4,6 +4,62 @@
 
 ---
 
+## Session: 2026-01-11 (Phase 6 - Migration Command)
+
+### Tasks Completed
+- T-364: Add `griot migrate` command for old contracts
+  - Thin wrapper around `griot_core.migration` module
+  - Detects schema version (v0/v1.0.0)
+  - Migrates v0 contracts to ODCS v1.0.0 format
+  - Options: --output, --in-place, --dry-run, --format, --verbose
+  - Shows detailed change log and warnings
+
+### Files Created
+- `griot-cli/src/griot_cli/commands/migrate.py`
+  - `migrate` command with full CLI options
+  - Calls `detect_schema_version()` and `migrate_contract()` from core
+  - Supports YAML and JSON output formats
+
+### Files Changed
+- `griot-cli/src/griot_cli/commands/__init__.py` - Added migrate export
+- `griot-cli/src/griot_cli/main.py` - Registered migrate command
+
+### Command Usage Examples
+```bash
+# Migrate and output to stdout
+griot migrate contracts/old_customer.yaml
+
+# Migrate to specific output file
+griot migrate contracts/old_customer.yaml -o contracts/customer_v1.yaml
+
+# Migrate in place (overwrite original)
+griot migrate contracts/old_customer.yaml --in-place
+
+# Dry run with verbose output
+griot migrate contracts/old_customer.yaml --dry-run -v
+
+# Output as JSON
+griot migrate contracts/old_customer.yaml -f json
+```
+
+### Exit Codes
+- 0: Migration successful
+- 1: Already at target version (no migration needed)
+- 2: Error
+
+### CLI Phase 6 Status
+**ALL CLI TASKS COMPLETE!**
+- T-303: Push breaking change validation ✅
+- T-360: Update griot push with breaking changes ✅
+- T-361: --allow-breaking flag ✅
+- T-362: --dry-run breaking change check ✅
+- T-363: Contract creation for ODCS schema (griot init) ✅
+- T-364: Migration command (griot migrate) ✅
+- T-365: Diff output for breaking changes ✅
+- T-366: Lint for ODCS quality rules ✅
+
+---
+
 ## Session: 2026-01-11 (Phase 6 - ODCS Contract Creation & Lint)
 
 ### Tasks Completed

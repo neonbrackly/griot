@@ -10,7 +10,7 @@ import sys
 
 import click
 
-from griot_cli.commands import diff, init, lint, manifest, mock, pull, push, report, residency, validate
+from griot_cli.commands import diff, init, lint, manifest, migrate, mock, pull, push, report, residency, validate
 
 
 @click.group()
@@ -39,6 +39,7 @@ cli.add_command(mock.mock)
 cli.add_command(manifest.manifest)
 cli.add_command(push.push)
 cli.add_command(pull.pull)
+cli.add_command(migrate.migrate)
 cli.add_command(report.report)
 cli.add_command(residency.residency)
 
