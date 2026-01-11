@@ -733,7 +733,7 @@ function YamlPreviewPanel({
   };
 
   return (
-    <div className="bg-white rounded-lg border border-slate-200 overflow-hidden sticky top-4">
+    <div className="bg-white rounded-lg border border-slate-200 overflow-hidden sticky top-4 z-10">
       <div className="px-4 py-3 border-b border-slate-200 flex items-center justify-between bg-slate-50">
         <span className="font-medium text-slate-800">Live YAML Preview</span>
         <div className="flex items-center gap-2">
@@ -781,12 +781,21 @@ function YamlPreviewPanel({
 // Main Component
 // =============================================================================
 
+// Helper function to generate UUID
+function generateUUID(): string {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
+
 export default function StudioPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const editId = searchParams.get('edit');
 
-  // Form state
+  // Form state - contract ID will be set after mount to avoid hydration mismatch
   const [contractId, setContractId] = useState('');
   const [contractName, setContractName] = useState('');
   const [status, setStatus] = useState<ContractStatus>('draft');
@@ -850,11 +859,11 @@ export default function StudioPage() {
   const validateForm = useCallback((): ValidationErrors => {
     const errors: ValidationErrors = {};
 
-    // Contract ID validation
+    // Contract ID validation (UUID format)
     if (!contractId.trim()) {
       errors.contractId = 'Contract ID is required';
-    } else if (!/^[a-z0-9-]+$/.test(contractId)) {
-      errors.contractId = 'Contract ID must be lowercase letters, numbers, and hyphens only';
+    } else if (!/^[a-f0-9-]+$/i.test(contractId)) {
+      errors.contractId = 'Contract ID must be a valid UUID';
     }
 
     // Contract Name validation
@@ -985,6 +994,13 @@ export default function StudioPage() {
 
     loadContract();
   }, [editId]);
+
+  // Generate UUID for new contracts (client-side only to avoid hydration mismatch)
+  useEffect(() => {
+    if (!editId && !contractId) {
+      setContractId(generateUUID());
+    }
+  }, [editId, contractId]);
 
   // Add new schema
   const addSchema = () => {
@@ -1356,14 +1372,14 @@ ${access.default_level ? `\naccess:\n  defaultLevel: ${access.default_level}${ac
                   <FormField
                     label="Contract ID"
                     required
-                    hint="Unique identifier (lowercase, hyphens)"
+                    hint="Auto-generated unique identifier (read-only)"
                     error={validationErrors.contractId}
                   >
                     <Input
                       value={contractId}
-                      onChange={(v) => setContractId(v.toLowerCase().replace(/\s+/g, '-'))}
-                      placeholder="my-contract"
-                      disabled={!!editId}
+                      onChange={() => {}} // Read-only, no changes allowed
+                      placeholder="Auto-generated UUID"
+                      disabled={true} // Always disabled - auto-generated
                       error={!!validationErrors.contractId}
                     />
                   </FormField>

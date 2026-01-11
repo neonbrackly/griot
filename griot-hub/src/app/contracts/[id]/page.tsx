@@ -294,8 +294,14 @@ export default function ContractDetailPage() {
     }
   }, [contractId]);
 
-  // Load YAML content for editing
-  const handleEditYaml = useCallback(async () => {
+  // Navigate to studio for editing
+  const handleEditYaml = useCallback(() => {
+    // Redirect to studio with the contract ID to edit
+    router.push(`/studio?edit=${encodeURIComponent(contractId)}`);
+  }, [contractId, router]);
+
+  // Load YAML content for preview (deprecated - keeping for reference)
+  const handleLoadYamlForPreview = useCallback(async () => {
     try {
       const yaml = await api.getContractYaml(contractId);
       setYamlContent(yaml);
