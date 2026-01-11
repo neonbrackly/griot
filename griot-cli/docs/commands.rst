@@ -3,6 +3,22 @@ Commands Overview
 
 griot-cli provides the following commands for data contract management:
 
+Contract Creation & Migration
+-----------------------------
+
+.. versionadded:: 0.6.0
+
+.. list-table::
+   :header-rows: 1
+   :widths: 20 80
+
+   * - Command
+     - Description
+   * - :doc:`commands/init`
+     - Initialize a new ODCS-format data contract
+   * - :doc:`commands/migrate`
+     - Migrate old contracts to ODCS v1.0.0 format
+
 Core Commands
 -------------
 
@@ -15,7 +31,7 @@ Core Commands
    * - :doc:`commands/validate`
      - Validate data against a contract
    * - :doc:`commands/lint`
-     - Check a contract for quality issues
+     - Check a contract for quality issues (supports ODCS rules)
    * - :doc:`commands/diff`
      - Compare two contracts and detect breaking changes
    * - :doc:`commands/mock`
@@ -129,6 +145,8 @@ Command Reference
 .. toctree::
    :maxdepth: 1
 
+   commands/init
+   commands/migrate
    commands/validate
    commands/lint
    commands/diff
@@ -138,3 +156,11 @@ Command Reference
    commands/residency
    commands/push
    commands/pull
+
+Additional References
+---------------------
+
+.. toctree::
+   :maxdepth: 1
+
+   odcs_quality_rules

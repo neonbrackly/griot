@@ -3,6 +3,9 @@ griot push
 
 Push a contract to the Griot Registry.
 
+.. versionchanged:: 0.6.0
+   Added breaking change validation with ``--allow-breaking`` and enhanced ``--dry-run``.
+
 Synopsis
 --------
 
@@ -15,6 +18,15 @@ Description
 
 The ``push`` command uploads a contract to the Griot Registry server,
 making it available for discovery, validation, and version management.
+
+**Breaking Change Validation (v0.6.0+):**
+
+Before pushing, the command automatically checks for breaking changes by
+comparing against the existing contract in the registry. If breaking changes
+are detected, the push is **blocked** unless ``--allow-breaking`` is specified.
+
+This prevents accidental breaking changes from being published and ensures
+downstream consumers are notified before schema changes take effect.
 
 Arguments
 ---------
@@ -39,6 +51,17 @@ Options
 
 ``--message``, ``-m``
    Commit message describing the changes.
+
+``--major``
+   Force major version bump.
+
+``--dry-run``
+   Show what would be pushed, including breaking change analysis.
+   Does not actually push to registry.
+
+``--allow-breaking``
+   Allow push even if breaking changes are detected. Use with caution.
+   This flag acknowledges that you understand the impact on downstream consumers.
 
 ``--force``
    Overwrite existing version without confirmation.
@@ -128,6 +151,101 @@ Example configuration:
    # .griot.yaml
    registry_url: https://registry.example.com
 
+Breaking Change Validation
+--------------------------
+
+.. versionadded:: 0.6.0
+
+When pushing an update to an existing contract, Griot automatically detects
+breaking changes that could affect downstream consumers.
+
+Breaking Change Types
+~~~~~~~~~~~~~~~~~~~~~
+
+The following changes are considered breaking:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 30 70
+
+   * - Change Type
+     - Description
+   * - ``field_removed``
+     - A field was removed from the schema
+   * - ``field_renamed``
+     - A field was renamed (detected via similarity)
+   * - ``type_changed_incompatible``
+     - Field type changed to incompatible type
+   * - ``required_field_added``
+     - New non-nullable field without default added
+   * - ``enum_values_removed``
+     - Allowed enum values were removed
+   * - ``constraint_tightened``
+     - Constraints made more restrictive (e.g., reduced max_length)
+   * - ``nullable_to_required``
+     - Field changed from nullable to non-nullable
+   * - ``pattern_changed``
+     - Regex pattern changed in incompatible way
+   * - ``primary_key_changed``
+     - Primary key field was changed
+
+Example: Blocked Push
+~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: bash
+
+   $ griot push customer.yaml -m "Updated schema"
+
+   # Output:
+   BREAKING CHANGES DETECTED (3):
+     [field_removed] on 'legacy_id'
+       Field 'legacy_id' was removed from schema
+       Migration: Add legacy_id back or migrate consumers first
+     [type_changed_incompatible] on 'age'
+       Field type changed from integer to string
+       Migration: Update all consumers to handle string type
+     [constraint_tightened] on 'email'
+       max_length reduced from 255 to 100
+       Migration: Ensure no existing data exceeds 100 characters
+
+   Push blocked. Use --allow-breaking to force push.
+
+Example: Dry Run with Breaking Changes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: bash
+
+   $ griot push customer.yaml --dry-run
+
+   # Output:
+   Dry run - would push:
+     Contract: customer.yaml
+     Name: Customer
+     Registry: https://registry.example.com
+     Message: (none)
+     Major bump: False
+
+   Breaking changes detected (2):
+     [field_removed] on 'legacy_id'
+       Field 'legacy_id' was removed from schema
+       Migration: Add legacy_id back or migrate consumers first
+     [nullable_to_required] on 'email'
+       Field changed from nullable to non-nullable
+       Migration: Ensure all records have email values
+
+   Push would be BLOCKED. Use --allow-breaking to force.
+
+Example: Force Push with Breaking Changes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: bash
+
+   $ griot push customer.yaml --allow-breaking -m "Breaking: removed legacy_id"
+
+   # Output:
+   Proceeding with 1 breaking change(s)...
+   Pushed customer.yaml to https://registry.example.com
+
 Exit Codes
 ----------
 
@@ -139,7 +257,7 @@ Exit Codes
    * - 0
      - Success
    * - 1
-     - Version conflict (without ``--force``)
+     - Breaking changes detected (without ``--allow-breaking``)
    * - 2
      - Error (authentication failed, network error, etc.)
 
