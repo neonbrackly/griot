@@ -4,6 +4,73 @@
 
 ---
 
+## Session: 2026-01-11 (Phase 6 - Breaking Change Validation)
+
+### Tasks Completed
+- T-303: CLI push command: validate breaking changes
+  - Integrated `detect_breaking_changes()` from griot-core
+  - Fetches existing contract from registry for comparison
+  - Blocks push if breaking changes detected (without --allow-breaking)
+- T-361: Add `--allow-breaking` flag to push command
+  - New flag to force push despite breaking changes
+  - Passes `?allow_breaking=true` to registry API
+- T-362: Add `--dry-run` breaking change check to push
+  - Enhanced dry-run shows detected breaking changes
+  - Indicates whether push would be blocked
+- T-365: Update `griot diff` output for breaking changes
+  - Table format now shows detailed breaking changes with migration hints
+  - JSON format includes `breaking_changes` array with all details
+  - Markdown format shows structured breaking change sections
+
+### Files Changed
+- `griot-cli/src/griot_cli/commands/push.py`
+  - Added `--allow-breaking` flag
+  - Added `_fetch_existing_contract()` to get current contract from registry
+  - Added `_display_breaking_changes()` to show breaking changes with hints
+  - Integrated `detect_breaking_changes()` before push
+  - Updated `_push_to_registry()` to include `allow_breaking` query param
+- `griot-cli/src/griot_cli/output.py`
+  - Updated `_format_diff_table()` with breaking change details
+  - Updated `_format_diff_json()` to include `breaking_changes` array
+  - Updated `_format_diff_markdown()` with structured breaking change sections
+
+### Command Usage Examples
+```bash
+# Check for breaking changes before push (dry-run)
+griot push contracts/customer.yaml --dry-run
+
+# Push blocked by breaking changes
+griot push contracts/customer.yaml -m "Updated schema"
+# Output: BREAKING CHANGES DETECTED (3)
+#         Push blocked. Use --allow-breaking to force push.
+# Exit code: 1
+
+# Force push with breaking changes
+griot push contracts/customer.yaml --allow-breaking -m "Breaking: renamed user_id to customer_id"
+
+# Diff with breaking change details
+griot diff old.yaml new.yaml -f markdown
+```
+
+### Dependencies Met
+- Core agent completed T-300, T-301, T-302 (breaking change detection)
+- Core agent completed T-340-349 (ODCS enums) and T-311-326 (ODCS dataclasses)
+- Board shows these as "Waiting" but implementation is complete
+
+### Tasks Still Blocked
+- T-360: Marked as waiting on T-303 (now complete - T-360 essentially done as T-303)
+- T-363: Update contract creation for new ODCS schema (waiting on T-329)
+- T-364: Add `griot migrate` command (waiting on T-330)
+- T-366: Update `griot lint` for new ODCS quality rules (waiting on T-327)
+
+### Notes
+- Core agent has completed significant Phase 6 work that's not reflected in board.md
+- Breaking change validation now works end-to-end: core detection -> CLI display -> registry API
+- All breaking change types supported: field_removed, field_renamed, type_changed_incompatible, required_field_added, enum_values_removed, constraint_tightened, nullable_to_required, pattern_changed, primary_key_changed
+- Migration hints from core are displayed to help users resolve breaking changes
+
+---
+
 ## Session: 2026-01-10 (Session 5)
 
 ### Tasks Completed

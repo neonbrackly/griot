@@ -229,13 +229,26 @@ def format_diff(
 
 
 def _format_diff_table(diff: Any, file: TextIO) -> None:
-    """Format contract diff as a table."""
+    """Format contract diff as a table (T-365: enhanced with breaking change details)."""
     if diff.has_breaking_changes:
         click.secho("BREAKING CHANGES DETECTED", fg="red", bold=True, file=file)
     else:
         click.secho("No breaking changes", fg="green", file=file)
 
     click.echo(file=file)
+
+    # T-365: Show detailed breaking changes with migration hints
+    if hasattr(diff, "breaking_changes") and diff.breaking_changes:
+        click.secho("Breaking Changes:", bold=True, fg="red", file=file)
+        click.echo("-" * 60, file=file)
+        for change in diff.breaking_changes:
+            field_info = f" on '{change.field}'" if change.field else ""
+            change_type = getattr(change.change_type, "value", str(change.change_type))
+            click.secho(f"  [{change_type}]{field_info}", fg="red", bold=True, file=file)
+            click.echo(f"    {change.description}", file=file)
+            if change.migration_hint:
+                click.secho(f"    Migration: {change.migration_hint}", fg="yellow", file=file)
+        click.echo(file=file)
 
     if diff.added_fields:
         click.secho("Added fields:", bold=True, file=file)
@@ -268,8 +281,8 @@ def _format_diff_table(diff: Any, file: TextIO) -> None:
 
 
 def _format_diff_json(diff: Any, file: TextIO) -> None:
-    """Format contract diff as JSON."""
-    output = {
+    """Format contract diff as JSON (T-365: enhanced with breaking change details)."""
+    output: dict[str, Any] = {
         "has_breaking_changes": diff.has_breaking_changes,
         "added_fields": diff.added_fields,
         "removed_fields": diff.removed_fields,
@@ -293,20 +306,82 @@ def _format_diff_json(diff: Any, file: TextIO) -> None:
             for c in diff.constraint_changes
         ],
     }
+
+    # T-365: Include detailed breaking changes with migration hints
+    if hasattr(diff, "breaking_changes") and diff.breaking_changes:
+        output["breaking_changes"] = [
+            {
+                "change_type": getattr(c.change_type, "value", str(c.change_type)),
+                "field": c.field,
+                "description": c.description,
+                "from_value": c.from_value,
+                "to_value": c.to_value,
+                "migration_hint": c.migration_hint,
+            }
+            for c in diff.breaking_changes
+        ]
+
     click.echo(json.dumps(output, indent=2, default=str), file=file)
 
 
 def _format_diff_markdown(diff: Any, file: TextIO) -> None:
-    """Format contract diff as Markdown."""
-    if diff.has_breaking_changes:
-        click.echo("## Breaking Changes Detected", file=file)
-    else:
-        click.echo("## No Breaking Changes", file=file)
+    """Format contract diff as Markdown (T-365: enhanced with breaking change details)."""
+    click.echo("# Contract Diff Report", file=file)
+    click.echo("", file=file)
 
-    if hasattr(diff, "to_markdown"):
-        click.echo(diff.to_markdown(), file=file)
+    if diff.has_breaking_changes:
+        click.echo("**:warning: BREAKING CHANGES DETECTED**", file=file)
+        click.echo("", file=file)
     else:
-        _format_diff_table(diff, file)
+        click.echo("**:white_check_mark: No Breaking Changes**", file=file)
+        click.echo("", file=file)
+
+    # T-365: Show detailed breaking changes with migration hints
+    if hasattr(diff, "breaking_changes") and diff.breaking_changes:
+        click.echo("## Breaking Changes", file=file)
+        click.echo("", file=file)
+        for change in diff.breaking_changes:
+            field_info = f" (`{change.field}`)" if change.field else ""
+            change_type = getattr(change.change_type, "value", str(change.change_type))
+            click.echo(f"### {change_type}{field_info}", file=file)
+            click.echo(f"- **Description:** {change.description}", file=file)
+            if change.from_value is not None:
+                click.echo(f"- **From:** `{change.from_value}`", file=file)
+            if change.to_value is not None:
+                click.echo(f"- **To:** `{change.to_value}`", file=file)
+            if change.migration_hint:
+                click.echo(f"- **Migration:** {change.migration_hint}", file=file)
+            click.echo("", file=file)
+
+    if diff.added_fields:
+        click.echo("## Added Fields", file=file)
+        for field in diff.added_fields:
+            click.echo(f"- `{field}`", file=file)
+        click.echo("", file=file)
+
+    if diff.removed_fields:
+        click.echo("## Removed Fields (BREAKING)", file=file)
+        for field in diff.removed_fields:
+            click.echo(f"- `{field}`", file=file)
+        click.echo("", file=file)
+
+    if diff.type_changes:
+        click.echo("## Type Changes", file=file)
+        for change in diff.type_changes:
+            breaking = " **(BREAKING)**" if change.is_breaking else ""
+            click.echo(f"- `{change.field}`: {change.from_type} → {change.to_type}{breaking}", file=file)
+        click.echo("", file=file)
+
+    if diff.constraint_changes:
+        click.echo("## Constraint Changes", file=file)
+        for change in diff.constraint_changes:
+            breaking = " **(BREAKING)**" if change.is_breaking else ""
+            click.echo(
+                f"- `{change.field}.{change.constraint}`: "
+                f"`{change.from_value}` → `{change.to_value}`{breaking}",
+                file=file,
+            )
+        click.echo("", file=file)
 
 
 def echo_success(message: str) -> None:
