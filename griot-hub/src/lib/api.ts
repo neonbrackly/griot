@@ -33,6 +33,9 @@ import type {
   Region,
   BreakingChangesResponse,
   BreakingChangeInfo,
+  ApprovalChain,
+  ApprovalChainStatus,
+  Approval,
 } from './types';
 
 // =============================================================================
@@ -138,6 +141,26 @@ class ApiClient {
   async getContract(id: string, version?: string): Promise<Contract> {
     const query = version ? `?version=${encodeURIComponent(version)}` : '';
     return this.request<Contract>(`/contracts/${encodeURIComponent(id)}${query}`);
+  }
+
+  /**
+   * Get a contract as YAML string
+   */
+  async getContractYaml(id: string, version?: string): Promise<string> {
+    const query = version ? `?version=${encodeURIComponent(version)}` : '';
+    const response = await fetch(
+      `${this.baseUrl}/contracts/${encodeURIComponent(id)}${query}`,
+      {
+        headers: {
+          Accept: 'application/vnd.griot.v1+yaml',
+          ...(this.apiKey && { 'X-API-Key': this.apiKey }),
+        },
+      }
+    );
+    if (!response.ok) {
+      throw new Error(`Failed to fetch YAML: ${response.statusText}`);
+    }
+    return response.text();
   }
 
   async createContract(data: ContractCreate): Promise<Contract> {
@@ -295,6 +318,121 @@ class ApiClient {
 
   async getResidencyMap(): Promise<Record<Region, string[]>> {
     return this.request<Record<Region, string[]>>('/residency/map');
+  }
+
+  // ===========================================================================
+  // APPROVAL WORKFLOW
+  // ===========================================================================
+
+  /**
+   * Create an approval chain for a contract version
+   */
+  async createApprovalChain(
+    contractId: string,
+    version: string,
+    data: {
+      approvers: Array<{
+        user_id: string;
+        email: string;
+        name?: string;
+        role?: string;
+      }>;
+      require_all?: boolean;
+      notify?: boolean;
+    }
+  ): Promise<ApprovalChain> {
+    return this.request<ApprovalChain>(
+      `/contracts/${encodeURIComponent(contractId)}/versions/${encodeURIComponent(version)}/approval-chain`,
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    );
+  }
+
+  /**
+   * Get the approval chain for a contract version
+   */
+  async getApprovalChain(
+    contractId: string,
+    version: string
+  ): Promise<ApprovalChain> {
+    return this.request<ApprovalChain>(
+      `/contracts/${encodeURIComponent(contractId)}/versions/${encodeURIComponent(version)}/approval-chain`
+    );
+  }
+
+  /**
+   * Get the approval chain status for a contract version
+   */
+  async getApprovalStatus(
+    contractId: string,
+    version: string
+  ): Promise<ApprovalChainStatus> {
+    return this.request<ApprovalChainStatus>(
+      `/contracts/${encodeURIComponent(contractId)}/versions/${encodeURIComponent(version)}/approval-status`
+    );
+  }
+
+  /**
+   * Submit an approval decision
+   */
+  async submitApprovalDecision(
+    approvalId: string,
+    decision: {
+      decision: 'approve' | 'reject';
+      comment?: string;
+    }
+  ): Promise<Approval> {
+    return this.request<Approval>(
+      `/approvals/${encodeURIComponent(approvalId)}/decision`,
+      {
+        method: 'POST',
+        body: JSON.stringify(decision),
+      }
+    );
+  }
+
+  /**
+   * Cancel an approval chain
+   */
+  async cancelApprovalChain(
+    contractId: string,
+    version: string
+  ): Promise<void> {
+    return this.request<void>(
+      `/contracts/${encodeURIComponent(contractId)}/versions/${encodeURIComponent(version)}/approval-chain`,
+      {
+        method: 'DELETE',
+      }
+    );
+  }
+
+  /**
+   * Get pending approvals for the current user
+   */
+  async getPendingApprovals(params?: {
+    user_id?: string;
+    email?: string;
+  }): Promise<Approval[]> {
+    const query = this.buildQueryString(params || {});
+    return this.request<Approval[]>(`/approvals/pending${query}`);
+  }
+
+  /**
+   * Update contract status (for approval workflow)
+   */
+  async updateContractStatus(
+    contractId: string,
+    status: 'draft' | 'active' | 'deprecated' | 'retired'
+  ): Promise<Contract> {
+    return this.request<Contract>(
+      `/contracts/${encodeURIComponent(contractId)}/status`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify({ status }),
+      }
+    );
   }
 }
 

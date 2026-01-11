@@ -17,3 +17,4 @@ export { default as BreakingChangeWarning, BreakingChangeBadge } from './Breakin
 export { default as VersionComparison, VersionBadge } from './VersionComparison';
 export { default as SLAWizard, SLASummary } from './SLAWizard';
 export { default as GovernanceWorkflow, GovernanceSummary } from './GovernanceWorkflow';
+export { default as YamlEditor } from './YamlEditor';

@@ -138,7 +138,7 @@ export default function ContractsPage() {
                       {contract.description || contract.id}
                     </div>
                     <div className="text-xs text-gray-400 mt-1">
-                      {contract.fields.length} fields
+                      {(contract.schema || []).reduce((count, s) => count + (s.properties?.length || 0), 0)} fields
                       {contract.owner && ` · Owner: ${contract.owner}`}
                     </div>
                   </div>

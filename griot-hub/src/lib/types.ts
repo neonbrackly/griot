@@ -526,14 +526,11 @@ export interface Contract {
   api_version: string;
   kind: 'DataContract';
 
-  // Legacy simple fields (for backwards compatibility)
+  // Basic metadata
   description?: string;
   owner?: string;
   version: string;
   status: ContractStatus;
-
-  // Legacy field list (for backwards compatibility)
-  fields: FieldDefinition[];
 
   // ODCS sections
   description_odcs?: Description;
@@ -561,7 +558,6 @@ export interface ContractCreate {
   name: string;
   description?: string;
   owner?: string;
-  fields?: FieldDefinition[];
 
   // ODCS sections
   description_odcs?: Description;
@@ -583,7 +579,6 @@ export type ChangeType = 'patch' | 'minor' | 'major';
 export interface ContractUpdate {
   name?: string;
   description?: string;
-  fields?: FieldDefinition[];
 
   // ODCS sections
   description_odcs?: Description;
@@ -986,4 +981,63 @@ export interface DataGovernanceReport {
   mandatory_fields: PolicyCheck;
   pii_compliance: PolicyCheck;
   sla_defined: PolicyCheck;
+}
+
+// =============================================================================
+// Approval Workflow Types
+// =============================================================================
+
+export type ApprovalStatus = 'pending' | 'approved' | 'rejected' | 'cancelled';
+export type ApprovalDecisionType = 'approve' | 'reject';
+
+export interface ApproverInfo {
+  user_id: string;
+  email: string;
+  name?: string;
+  role?: string;
+}
+
+export interface Approval {
+  id: string;
+  approver: ApproverInfo;
+  status: ApprovalStatus;
+  decision_at?: string;
+  comment?: string;
+  order: number;
+}
+
+export interface ApprovalChain {
+  id: string;
+  contract_id: string;
+  contract_version: string;
+  approvals: Approval[];
+  created_at: string;
+  created_by: string;
+  status: ApprovalStatus;
+  completed_at?: string;
+}
+
+export interface ApprovalChainCreate {
+  approvers: ApproverInfo[];
+  require_all?: boolean;
+  notify?: boolean;
+}
+
+export interface ApprovalDecision {
+  decision: ApprovalDecisionType;
+  comment?: string;
+}
+
+export interface ApprovalChainStatus {
+  chain_id: string;
+  contract_id: string;
+  contract_version: string;
+  status: ApprovalStatus;
+  total_approvers: number;
+  approved_count: number;
+  pending_count: number;
+  rejected_count: number;
+  current_approver?: ApproverInfo;
+  created_at: string;
+  completed_at?: string;
 }

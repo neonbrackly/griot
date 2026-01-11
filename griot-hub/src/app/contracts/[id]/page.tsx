@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
-import { useParams } from 'next/navigation';
+import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useParams, useRouter } from 'next/navigation';
 import type {
   Contract,
   VersionSummary,
@@ -10,8 +10,11 @@ import type {
   SchemaProperty,
   PolicyCheck,
   PolicyCheckStatus,
+  BreakingChangeInfo,
+  ContractStatus,
 } from '@/lib/types';
-import api from '@/lib/api';
+import api, { ApiClientError } from '@/lib/api';
+import YamlEditor from '@/components/YamlEditor';
 
 /**
  * Contract Detail Page (T-380)
@@ -232,6 +235,7 @@ function SchemaTable({ properties }: { properties?: SchemaProperty[] }) {
 
 export default function ContractDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const contractId = params.id as string;
 
   const [contract, setContract] = useState<Contract | null>(null);
@@ -240,6 +244,18 @@ export default function ContractDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'overview' | 'schema' | 'governance' | 'versions' | 'validations'>('overview');
+
+  // YAML Editor state
+  const [showYamlEditor, setShowYamlEditor] = useState(false);
+  const [yamlContent, setYamlContent] = useState<string>('');
+
+  // Approval workflow state
+  const [approvalLoading, setApprovalLoading] = useState(false);
+  const [approvalStatus, setApprovalStatus] = useState<{
+    status: 'pending' | 'approved' | 'rejected';
+    approvedBy?: string;
+    approvedAt?: string;
+  } | null>(null);
 
   useEffect(() => {
     async function fetchContractData() {
@@ -277,6 +293,110 @@ export default function ContractDetailPage() {
       fetchContractData();
     }
   }, [contractId]);
+
+  // Load YAML content for editing
+  const handleEditYaml = useCallback(async () => {
+    try {
+      const yaml = await api.getContractYaml(contractId);
+      setYamlContent(yaml);
+      setShowYamlEditor(true);
+    } catch (err) {
+      // Generate YAML from current contract if API fails
+      if (contract) {
+        const generatedYaml = `# Data Contract: ${contract.name}
+apiVersion: ${contract.api_version || 'v1.0.0'}
+kind: DataContract
+id: ${contract.id}
+name: "${contract.name}"
+version: "${contract.version}"
+status: ${contract.status}
+${contract.description_odcs?.purpose ? `\ndescription:\n  purpose: "${contract.description_odcs.purpose}"` : ''}
+${contract.schema?.length ? `\nschema:\n${contract.schema.map(s => `  - name: ${s.name}\n    physicalType: ${s.physicalType}`).join('\n')}` : ''}
+`;
+        setYamlContent(generatedYaml);
+        setShowYamlEditor(true);
+      }
+    }
+  }, [contractId, contract]);
+
+  // Detect breaking changes for YAML editor
+  const detectBreakingChanges = useCallback(async (newData: Record<string, unknown>): Promise<BreakingChangeInfo[]> => {
+    try {
+      const response = await api.checkBreakingChanges(contractId, newData as any);
+      return response.breaking_changes || [];
+    } catch (err) {
+      if (err instanceof ApiClientError && err.isBreakingChangeError()) {
+        return err.breakingChanges || [];
+      }
+      return [];
+    }
+  }, [contractId]);
+
+  // Save YAML changes
+  const handleSaveYaml = useCallback(async (
+    parsedData: Record<string, unknown>,
+    isBreaking: boolean,
+    newVersion?: string
+  ) => {
+    try {
+      await api.updateContract(contractId, parsedData as any, { allowBreaking: isBreaking });
+      setShowYamlEditor(false);
+      // Refresh contract data
+      const updatedContract = await api.getContract(contractId);
+      setContract(updatedContract);
+      // Refresh versions
+      const versionsRes = await api.getVersions(contractId, { limit: 10 });
+      setVersions(versionsRes.items);
+    } catch (err) {
+      throw err;
+    }
+  }, [contractId]);
+
+  // Send for approval
+  const handleSendForApproval = useCallback(async () => {
+    if (!contract) return;
+
+    try {
+      setApprovalLoading(true);
+      await api.createApprovalChain(contractId, contract.version, {
+        approvers: [
+          {
+            user_id: 'data-producer',
+            email: 'producer@company.com',
+            name: 'Data Producer',
+            role: 'producer',
+          },
+        ],
+      });
+      setApprovalStatus({ status: 'pending' });
+    } catch (err) {
+      console.error('Failed to send for approval:', err);
+    } finally {
+      setApprovalLoading(false);
+    }
+  }, [contractId, contract]);
+
+  // Approve contract
+  const handleApprove = useCallback(async () => {
+    if (!contract) return;
+
+    try {
+      setApprovalLoading(true);
+      await api.updateContractStatus(contractId, 'active');
+      setApprovalStatus({
+        status: 'approved',
+        approvedBy: 'Current User',
+        approvedAt: new Date().toISOString(),
+      });
+      // Refresh contract
+      const updatedContract = await api.getContract(contractId);
+      setContract(updatedContract);
+    } catch (err) {
+      console.error('Failed to approve:', err);
+    } finally {
+      setApprovalLoading(false);
+    }
+  }, [contractId, contract]);
 
   // Compute governance checks from contract data
   const governanceChecks = useMemo(() => {
@@ -365,8 +485,8 @@ export default function ContractDetailPage() {
   // Determine domain from team/governance
   const domain = contract.team?.department || contract.governance?.producer?.team || 'General';
 
-  // Get total field count
-  const totalFields = contract.schema?.reduce((acc, s) => acc + (s.properties?.length || 0), 0) || contract.fields?.length || 0;
+  // Get total field count from ODCS schema
+  const totalFields = (contract.schema || []).reduce((acc, s) => acc + (s.properties?.length || 0), 0);
 
   return (
     <div className="space-y-6">
@@ -396,12 +516,58 @@ export default function ContractDetailPage() {
           </div>
         </div>
         <div className="flex gap-3">
-          <button className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 flex items-center gap-2">
-            <span>📝</span> Edit YAML
+          <button
+            onClick={handleEditYaml}
+            className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 flex items-center gap-2"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            </svg>
+            Edit YAML
           </button>
-          <button className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700">
-            Request Access
-          </button>
+          {contract.status === 'draft' && !approvalStatus && (
+            <button
+              onClick={handleSendForApproval}
+              disabled={approvalLoading}
+              className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            >
+              {approvalLoading ? (
+                <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+              ) : (
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                </svg>
+              )}
+              Send for Approval
+            </button>
+          )}
+          {approvalStatus?.status === 'pending' && (
+            <button
+              onClick={handleApprove}
+              disabled={approvalLoading}
+              className="px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            >
+              {approvalLoading ? (
+                <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+              ) : (
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              )}
+              Approve & Activate
+            </button>
+          )}
+          {contract.status !== 'draft' && (
+            <button className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700">
+              Request Access
+            </button>
+          )}
         </div>
       </div>
 
@@ -462,36 +628,6 @@ export default function ContractDetailPage() {
                   <SchemaTable properties={schema.properties} />
                 </div>
               ))}
-              {(!contract.schema || contract.schema.length === 0) && contract.fields && contract.fields.length > 0 && (
-                <div className="border border-slate-200 rounded-lg overflow-hidden">
-                  <table className="w-full text-sm">
-                    <thead className="bg-slate-50 border-b border-slate-200">
-                      <tr>
-                        <th className="text-left px-4 py-3 font-medium text-slate-600">Name</th>
-                        <th className="text-left px-4 py-3 font-medium text-slate-600">Type</th>
-                        <th className="text-left px-4 py-3 font-medium text-slate-600">Description</th>
-                        <th className="text-left px-4 py-3 font-medium text-slate-600">Flags</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                      {contract.fields.map((field) => (
-                        <tr key={field.name} className="hover:bg-slate-50">
-                          <td className="px-4 py-3 font-mono font-medium text-slate-800">{field.name}</td>
-                          <td className="px-4 py-3"><Tag>{field.type}</Tag></td>
-                          <td className="px-4 py-3 text-slate-600">{field.description}</td>
-                          <td className="px-4 py-3">
-                            <div className="flex gap-1">
-                              {field.nullable && <Tag>nullable</Tag>}
-                              {field.primary_key && <Tag variant="primary">PK</Tag>}
-                              {field.unique && <Tag>unique</Tag>}
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
             </Section>
           </div>
 
@@ -606,38 +742,6 @@ export default function ContractDetailPage() {
             </Section>
           ))}
 
-          {/* Legacy fields display */}
-          {(!contract.schema || contract.schema.length === 0) && contract.fields && contract.fields.length > 0 && (
-            <Section title="Fields (Legacy)" subtitle="Contract uses legacy field format">
-              <div className="border border-slate-200 rounded-lg overflow-hidden">
-                <table className="w-full text-sm">
-                  <thead className="bg-slate-50 border-b border-slate-200">
-                    <tr>
-                      <th className="text-left px-4 py-3 font-medium text-slate-600">Name</th>
-                      <th className="text-left px-4 py-3 font-medium text-slate-600">Type</th>
-                      <th className="text-left px-4 py-3 font-medium text-slate-600">Description</th>
-                      <th className="text-left px-4 py-3 font-medium text-slate-600">Constraints</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {contract.fields.map((field) => (
-                      <tr key={field.name} className="hover:bg-slate-50">
-                        <td className="px-4 py-3 font-mono font-medium text-slate-800">{field.name}</td>
-                        <td className="px-4 py-3"><Tag>{field.type}</Tag></td>
-                        <td className="px-4 py-3 text-slate-600">{field.description}</td>
-                        <td className="px-4 py-3 text-xs text-slate-500">
-                          {field.constraints && Object.entries(field.constraints)
-                            .filter(([, v]) => v !== undefined)
-                            .map(([k, v]) => `${k}=${JSON.stringify(v)}`)
-                            .join(', ') || '—'}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </Section>
-          )}
         </div>
       )}
 
@@ -912,6 +1016,56 @@ export default function ContractDetailPage() {
           ) : (
             <div className="text-slate-400 text-center py-8">No validations recorded</div>
           )}
+        </div>
+      )}
+
+      {/* YAML Editor Modal */}
+      {showYamlEditor && (
+        <YamlEditor
+          initialYaml={yamlContent}
+          contractStatus={contract.status as 'draft' | 'active' | 'deprecated' | 'retired'}
+          currentVersion={contract.version}
+          onSave={handleSaveYaml}
+          onCancel={() => setShowYamlEditor(false)}
+          detectBreakingChanges={detectBreakingChanges}
+        />
+      )}
+
+      {/* Approval Status Banner */}
+      {approvalStatus && (
+        <div className={`fixed bottom-4 right-4 p-4 rounded-lg shadow-lg max-w-sm ${
+          approvalStatus.status === 'pending'
+            ? 'bg-amber-50 border border-amber-200'
+            : approvalStatus.status === 'approved'
+            ? 'bg-emerald-50 border border-emerald-200'
+            : 'bg-red-50 border border-red-200'
+        }`}>
+          <div className="flex items-center gap-3">
+            {approvalStatus.status === 'pending' && (
+              <>
+                <svg className="w-6 h-6 text-amber-500 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div>
+                  <p className="font-medium text-amber-800">Pending Approval</p>
+                  <p className="text-sm text-amber-600">Waiting for producer approval</p>
+                </div>
+              </>
+            )}
+            {approvalStatus.status === 'approved' && (
+              <>
+                <svg className="w-6 h-6 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div>
+                  <p className="font-medium text-emerald-800">Approved!</p>
+                  <p className="text-sm text-emerald-600">
+                    {approvalStatus.approvedBy && `by ${approvalStatus.approvedBy}`}
+                  </p>
+                </div>
+              </>
+            )}
+          </div>
         </div>
       )}
     </div>

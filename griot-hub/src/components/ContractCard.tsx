@@ -52,7 +52,7 @@ export function ContractCard({ contract, onClick }: ContractCardProps) {
           )}
 
           <div className="flex items-center gap-4 mt-3 text-xs text-gray-400">
-            <span>{contract.fields.length} fields</span>
+            <span>{(contract.schema || []).reduce((count, s) => count + (s.properties?.length || 0), 0)} fields</span>
             <span>v{contract.version}</span>
             {contract.updated_at && (
               <span>
