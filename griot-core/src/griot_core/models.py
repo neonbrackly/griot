@@ -28,6 +28,7 @@ from typing import (
 
 from griot_core.types import (
     AggregationType,
+    ContractStatus,
     DataRegion,
     DataType,
     FieldFormat,
@@ -569,13 +570,306 @@ class GriotModel(metaclass=GriotModelMeta):
         if not result.passed:
             for error in result.errors:
                 print(f"{error.field}: {error.message}")
+
+    Contract-Level Metadata (T-310 - ODCS):
+        Contracts can have the following metadata attributes:
+        - _griot_api_version: API schema version (default: "v1.0.0")
+        - _griot_kind: Always "DataContract"
+        - _griot_id: Unique contract identifier
+        - _griot_version: Semantic version (MAJOR.MINOR.PATCH)
+        - _griot_status: Contract lifecycle status (draft/active/deprecated/retired)
     """
 
+    # Field metadata
     _griot_fields: ClassVar[dict[str, FieldInfo]] = {}
     _griot_field_names: ClassVar[tuple[str, ...]] = ()
     _griot_primary_key: ClassVar[str | None] = None
+
+    # Phase 6 - Contract-level metadata (T-310 - ODCS)
+    _griot_api_version: ClassVar[str] = "v1.0.0"
+    _griot_kind: ClassVar[str] = "DataContract"
+    _griot_id: ClassVar[str | None] = None
+    _griot_version: ClassVar[str] = "1.0.0"
+    _griot_status: ClassVar[ContractStatus] = ContractStatus.DRAFT
+
+    # Configuration (Phase 2)
     _griot_residency_config: ClassVar[ResidencyConfig | None] = None
     _griot_lineage_config: ClassVar[LineageConfig | None] = None
+
+    # Phase 6 - ODCS Section Composition (T-327)
+    _griot_description: ClassVar[Any | None] = None  # Description dataclass
+    _griot_quality_rules: ClassVar[list[Any]] = []  # List of QualityRule
+    _griot_custom_checks: ClassVar[list[Any]] = []  # List of CustomCheck
+    _griot_legal: ClassVar[Any | None] = None  # Legal dataclass
+    _griot_compliance: ClassVar[Any | None] = None  # Compliance dataclass
+    _griot_sla: ClassVar[Any | None] = None  # SLA dataclass
+    _griot_access: ClassVar[Any | None] = None  # AccessConfig dataclass
+    _griot_distribution: ClassVar[Any | None] = None  # Distribution dataclass
+    _griot_governance: ClassVar[Any | None] = None  # Governance dataclass
+    _griot_team: ClassVar[Any | None] = None  # Team dataclass
+    _griot_servers: ClassVar[list[Any]] = []  # List of Server
+    _griot_roles: ClassVar[list[Any]] = []  # List of Role
+    _griot_timestamps: ClassVar[Any | None] = None  # Timestamps dataclass
+
+    # =========================================================================
+    # Contract-Level Metadata Accessors (T-310 - ODCS)
+    # =========================================================================
+
+    @classmethod
+    def get_api_version(cls) -> str:
+        """Get the contract API schema version."""
+        return cls._griot_api_version
+
+    @classmethod
+    def get_kind(cls) -> str:
+        """Get the contract kind (always 'DataContract')."""
+        return cls._griot_kind
+
+    @classmethod
+    def get_id(cls) -> str | None:
+        """Get the unique contract identifier."""
+        return cls._griot_id
+
+    @classmethod
+    def set_id(cls, contract_id: str) -> None:
+        """Set the unique contract identifier."""
+        cls._griot_id = contract_id
+
+    @classmethod
+    def get_version(cls) -> str:
+        """Get the contract semantic version."""
+        return cls._griot_version
+
+    @classmethod
+    def set_version(cls, version: str) -> None:
+        """Set the contract semantic version."""
+        cls._griot_version = version
+
+    @classmethod
+    def get_status(cls) -> ContractStatus:
+        """Get the contract lifecycle status."""
+        return cls._griot_status
+
+    @classmethod
+    def set_status(cls, status: ContractStatus | str) -> None:
+        """Set the contract lifecycle status."""
+        if isinstance(status, str):
+            status = ContractStatus(status)
+        cls._griot_status = status
+
+    @classmethod
+    def get_contract_metadata(cls) -> dict[str, Any]:
+        """
+        Get all contract-level metadata as a dictionary.
+
+        Returns:
+            Dictionary containing api_version, kind, id, version, status.
+        """
+        return {
+            "api_version": cls._griot_api_version,
+            "kind": cls._griot_kind,
+            "id": cls._griot_id,
+            "name": cls.__name__,
+            "version": cls._griot_version,
+            "status": cls._griot_status.value,
+        }
+
+    # =========================================================================
+    # ODCS Section Accessors (T-327)
+    # =========================================================================
+
+    @classmethod
+    def get_description(cls) -> Any | None:
+        """Get the contract description section."""
+        return cls._griot_description
+
+    @classmethod
+    def set_description(cls, description: Any) -> None:
+        """Set the contract description section."""
+        cls._griot_description = description
+
+    @classmethod
+    def get_quality_rules(cls) -> list[Any]:
+        """Get the list of quality rules."""
+        return cls._griot_quality_rules
+
+    @classmethod
+    def set_quality_rules(cls, rules: list[Any]) -> None:
+        """Set the list of quality rules."""
+        cls._griot_quality_rules = rules
+
+    @classmethod
+    def add_quality_rule(cls, rule: Any) -> None:
+        """Add a quality rule."""
+        cls._griot_quality_rules.append(rule)
+
+    @classmethod
+    def get_custom_checks(cls) -> list[Any]:
+        """Get the list of custom checks."""
+        return cls._griot_custom_checks
+
+    @classmethod
+    def set_custom_checks(cls, checks: list[Any]) -> None:
+        """Set the list of custom checks."""
+        cls._griot_custom_checks = checks
+
+    @classmethod
+    def add_custom_check(cls, check: Any) -> None:
+        """Add a custom check."""
+        cls._griot_custom_checks.append(check)
+
+    @classmethod
+    def get_legal(cls) -> Any | None:
+        """Get the legal section."""
+        return cls._griot_legal
+
+    @classmethod
+    def set_legal(cls, legal: Any) -> None:
+        """Set the legal section."""
+        cls._griot_legal = legal
+
+    @classmethod
+    def get_compliance(cls) -> Any | None:
+        """Get the compliance section."""
+        return cls._griot_compliance
+
+    @classmethod
+    def set_compliance(cls, compliance: Any) -> None:
+        """Set the compliance section."""
+        cls._griot_compliance = compliance
+
+    @classmethod
+    def get_sla(cls) -> Any | None:
+        """Get the SLA section."""
+        return cls._griot_sla
+
+    @classmethod
+    def set_sla(cls, sla: Any) -> None:
+        """Set the SLA section."""
+        cls._griot_sla = sla
+
+    @classmethod
+    def get_access(cls) -> Any | None:
+        """Get the access configuration section."""
+        return cls._griot_access
+
+    @classmethod
+    def set_access(cls, access: Any) -> None:
+        """Set the access configuration section."""
+        cls._griot_access = access
+
+    @classmethod
+    def get_distribution(cls) -> Any | None:
+        """Get the distribution section."""
+        return cls._griot_distribution
+
+    @classmethod
+    def set_distribution(cls, distribution: Any) -> None:
+        """Set the distribution section."""
+        cls._griot_distribution = distribution
+
+    @classmethod
+    def get_governance(cls) -> Any | None:
+        """Get the governance section."""
+        return cls._griot_governance
+
+    @classmethod
+    def set_governance(cls, governance: Any) -> None:
+        """Set the governance section."""
+        cls._griot_governance = governance
+
+    @classmethod
+    def get_team(cls) -> Any | None:
+        """Get the team section."""
+        return cls._griot_team
+
+    @classmethod
+    def set_team(cls, team: Any) -> None:
+        """Set the team section."""
+        cls._griot_team = team
+
+    @classmethod
+    def get_servers(cls) -> list[Any]:
+        """Get the list of servers."""
+        return cls._griot_servers
+
+    @classmethod
+    def set_servers(cls, servers: list[Any]) -> None:
+        """Set the list of servers."""
+        cls._griot_servers = servers
+
+    @classmethod
+    def add_server(cls, server: Any) -> None:
+        """Add a server configuration."""
+        cls._griot_servers.append(server)
+
+    @classmethod
+    def get_roles(cls) -> list[Any]:
+        """Get the list of roles."""
+        return cls._griot_roles
+
+    @classmethod
+    def set_roles(cls, roles: list[Any]) -> None:
+        """Set the list of roles."""
+        cls._griot_roles = roles
+
+    @classmethod
+    def add_role(cls, role: Any) -> None:
+        """Add a role definition."""
+        cls._griot_roles.append(role)
+
+    @classmethod
+    def get_timestamps(cls) -> Any | None:
+        """Get the timestamps section."""
+        return cls._griot_timestamps
+
+    @classmethod
+    def set_timestamps(cls, timestamps: Any) -> None:
+        """Set the timestamps section."""
+        cls._griot_timestamps = timestamps
+
+    @classmethod
+    def get_odcs_sections(cls) -> dict[str, Any]:
+        """
+        Get all ODCS sections as a dictionary.
+
+        Returns:
+            Dictionary containing all ODCS sections with their values.
+        """
+        sections: dict[str, Any] = {}
+
+        if cls._griot_description:
+            sections["description"] = cls._griot_description.to_dict()
+        if cls._griot_quality_rules:
+            sections["quality"] = [r.to_dict() for r in cls._griot_quality_rules]
+        if cls._griot_custom_checks:
+            sections["custom_checks"] = [c.to_dict() for c in cls._griot_custom_checks]
+        if cls._griot_legal:
+            sections["legal"] = cls._griot_legal.to_dict()
+        if cls._griot_compliance:
+            sections["compliance"] = cls._griot_compliance.to_dict()
+        if cls._griot_sla:
+            sections["sla"] = cls._griot_sla.to_dict()
+        if cls._griot_access:
+            sections["access"] = cls._griot_access.to_dict()
+        if cls._griot_distribution:
+            sections["distribution"] = cls._griot_distribution.to_dict()
+        if cls._griot_governance:
+            sections["governance"] = cls._griot_governance.to_dict()
+        if cls._griot_team:
+            sections["team"] = cls._griot_team.to_dict()
+        if cls._griot_servers:
+            sections["servers"] = [s.to_dict() for s in cls._griot_servers]
+        if cls._griot_roles:
+            sections["roles"] = [r.to_dict() for r in cls._griot_roles]
+        if cls._griot_timestamps:
+            sections["timestamps"] = cls._griot_timestamps.to_dict()
+
+        return sections
+
+    # =========================================================================
+    # Field Accessors
+    # =========================================================================
 
     @classmethod
     def list_fields(cls) -> list[FieldInfo]:
@@ -634,15 +928,15 @@ class GriotModel(metaclass=GriotModelMeta):
 
     @classmethod
     def to_dict(cls) -> dict[str, Any]:
-        """Export contract as a dictionary."""
-        return {
-            "name": cls.__name__,
-            "description": cls.__doc__ or "",
-            "fields": {
-                name: info.to_dict() for name, info in cls._griot_fields.items()
-            },
-            "primary_key": cls._griot_primary_key,
-        }
+        """
+        Export contract as a dictionary in registry-compatible format.
+
+        Returns fields as a list with nested constraints/metadata structure
+        matching the registry API schema.
+        """
+        from griot_core.contract import model_to_dict
+
+        return model_to_dict(cls)
 
     @classmethod
     def to_yaml(cls) -> str:

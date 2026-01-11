@@ -1,0 +1,632 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="./">
+  <head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="index" title="Index" href="genindex.html"><link rel="search" title="Search" href="search.html"><link rel="next" title="Dagster Integration" href="dagster.html"><link rel="prev" title="API Reference" href="api-reference.html">
+
+    <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+        <title>Apache Airflow Integration - griot-enforce 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=d111a655" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?v=8dab3a3b" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f2f2f2;
+  --color-code-foreground: #1e1e1e;
+  --color-brand-primary: #2563eb;
+  --color-brand-content: #2563eb;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  --color-brand-primary: #60a5fa;
+  --color-brand-content: #60a5fa;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  --color-brand-primary: #60a5fa;
+  --color-brand-content: #60a5fa;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
+    <title>Auto light/dark, in light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path style="opacity: 50%" d="M 5.411 14.504 C 5.471 14.504 5.532 14.504 5.591 14.504 C 3.639 16.319 4.383 19.569 6.931 20.352 C 7.693 20.586 8.512 20.551 9.25 20.252 C 8.023 23.207 4.056 23.725 2.11 21.184 C 0.166 18.642 1.702 14.949 4.874 14.536 C 5.051 14.512 5.231 14.5 5.411 14.5 L 5.411 14.504 Z"/>
+      <line x1="14.5" y1="3.25" x2="14.5" y2="1.25"/>
+      <line x1="14.5" y1="15.85" x2="14.5" y2="17.85"/>
+      <line x1="10.044" y1="5.094" x2="8.63" y2="3.68"/>
+      <line x1="19" y1="14.05" x2="20.414" y2="15.464"/>
+      <line x1="8.2" y1="9.55" x2="6.2" y2="9.55"/>
+      <line x1="20.8" y1="9.55" x2="22.8" y2="9.55"/>
+      <line x1="10.044" y1="14.006" x2="8.63" y2="15.42"/>
+      <line x1="19" y1="5.05" x2="20.414" y2="3.636"/>
+      <circle cx="14.5" cy="9.55" r="3.6"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon-with-sun" viewBox="0 0 24 24">
+    <title>Auto light/dark, in dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path d="M 8.282 7.007 C 8.385 7.007 8.494 7.007 8.595 7.007 C 5.18 10.184 6.481 15.869 10.942 17.24 C 12.275 17.648 13.706 17.589 15 17.066 C 12.851 22.236 5.91 23.143 2.505 18.696 C -0.897 14.249 1.791 7.786 7.342 7.063 C 7.652 7.021 7.965 7 8.282 7 L 8.282 7.007 Z"/>
+      <line style="opacity: 50%" x1="18" y1="3.705" x2="18" y2="2.5"/>
+      <line style="opacity: 50%" x1="18" y1="11.295" x2="18" y2="12.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="4.816" x2="14.464" y2="3.964"/>
+      <line style="opacity: 50%" x1="20.711" y1="10.212" x2="21.563" y2="11.063"/>
+      <line style="opacity: 50%" x1="14.205" y1="7.5" x2="13.001" y2="7.5"/>
+      <line style="opacity: 50%" x1="21.795" y1="7.5" x2="23" y2="7.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="10.184" x2="14.464" y2="11.036"/>
+      <line style="opacity: 50%" x1="20.711" y1="4.789" x2="21.563" y2="3.937"/>
+      <circle style="opacity: 50%" cx="18" cy="7.5" r="2.169"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-pencil" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-pencil-code">
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+  <symbol id="svg-eye" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-eye-code">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path
+        d="M11.11 17.958c-3.209 -.307 -5.91 -2.293 -8.11 -5.958c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6c-.21 .352 -.427 .688 -.647 1.008" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle site navigation sidebar">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc" aria-label="Toggle table of contents sidebar">
+<label class="overlay sidebar-overlay" for="__navigation"></label>
+<label class="overlay toc-overlay" for="__toc"></label>
+
+<a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <span class="icon"><svg><use href="#svg-menu"></use></svg></span>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="index.html"><div class="brand">griot-enforce 0.1.0 documentation</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+          <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+          <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+        <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="index.html">
+  
+  <span class="sidebar-brand-text">griot-enforce 0.1.0 documentation</span>
+  
+</a><form class="sidebar-search-container" method="get" action="search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="getting-started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api-reference.html">API Reference</a></li>
+<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Apache Airflow Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dagster.html">Dagster Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="prefect.html">Prefect Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="error-handling.html">Error Handling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="view-this-page">
+  <a class="muted-link" href="_sources/airflow.rst.txt" title="View this page">
+    <svg><use href="#svg-eye"></use></svg>
+    <span class="visually-hidden">View this page</span>
+  </a>
+</div>
+<div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+              <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+              <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+            <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+          </label>
+        </div>
+        <article role="main" id="furo-main-content">
+          <section id="apache-airflow-integration">
+<h1>Apache Airflow Integration<a class="headerlink" href="#apache-airflow-integration" title="Link to this heading">¶</a></h1>
+<p>griot-enforce provides native Apache Airflow operators and sensors for validating
+data contracts within your DAGs.</p>
+<section id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Link to this heading">¶</a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>griot-enforce<span class="o">[</span>airflow<span class="o">]</span>
+</pre></div>
+</div>
+<p>This installs griot-enforce with Apache Airflow as a dependency.</p>
+</section>
+<section id="operators">
+<h2>Operators<a class="headerlink" href="#operators" title="Link to this heading">¶</a></h2>
+<section id="griotvalidateoperator">
+<h3>GriotValidateOperator<a class="headerlink" href="#griotvalidateoperator" title="Link to this heading">¶</a></h3>
+<p>Validates data against a Griot contract. Fails the task if validation fails.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="GriotValidateOperator">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">GriotValidateOperator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">task_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">contract_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">registry_url</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">version</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fail_on_error</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">error_threshold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verify_masking</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">environment</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#GriotValidateOperator" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>task_id</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Airflow task ID.</p></li>
+<li><p><strong>contract_id</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Contract ID in the registry.</p></li>
+<li><p><strong>data_path</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Path to data file. Supports Jinja templating.</p></li>
+<li><p><strong>registry_url</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><em>None</em>) – Registry URL (or from <code class="docutils literal notranslate"><span class="pre">GRIOT_REGISTRY_URL</span></code> env var).</p></li>
+<li><p><strong>version</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><em>None</em>) – Specific contract version.</p></li>
+<li><p><strong>fail_on_error</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>) – Fail task on validation error. Default: True.</p></li>
+<li><p><strong>error_threshold</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a><em> | </em><em>None</em>) – Fail only if error rate exceeds this threshold.</p></li>
+<li><p><strong>verify_masking</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>) – Verify PII masking compliance. Default: False.</p></li>
+<li><p><strong>environment</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><em>None</em>) – Environment name for masking checks.</p></li>
+</ul>
+</dd>
+</dl>
+<p><strong>Template Fields:</strong> <code class="docutils literal notranslate"><span class="pre">data_path</span></code>, <code class="docutils literal notranslate"><span class="pre">contract_id</span></code>, <code class="docutils literal notranslate"><span class="pre">version</span></code>, <code class="docutils literal notranslate"><span class="pre">environment</span></code></p>
+<p><strong>UI Color:</strong> Light green (#e4f0e8)</p>
+</dd></dl>
+
+<p><strong>Basic Example:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">airflow</span><span class="w"> </span><span class="kn">import</span> <span class="n">DAG</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">airflow.operators.python</span><span class="w"> </span><span class="kn">import</span> <span class="n">PythonOperator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">griot_enforce.airflow</span><span class="w"> </span><span class="kn">import</span> <span class="n">GriotValidateOperator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
+
+<span class="k">with</span> <span class="n">DAG</span><span class="p">(</span>
+    <span class="s2">&quot;customer_etl&quot;</span><span class="p">,</span>
+    <span class="n">start_date</span><span class="o">=</span><span class="n">datetime</span><span class="p">(</span><span class="mi">2024</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+    <span class="n">schedule_interval</span><span class="o">=</span><span class="s2">&quot;@daily&quot;</span><span class="p">,</span>
+<span class="p">)</span> <span class="k">as</span> <span class="n">dag</span><span class="p">:</span>
+
+    <span class="n">extract</span> <span class="o">=</span> <span class="n">PythonOperator</span><span class="p">(</span>
+        <span class="n">task_id</span><span class="o">=</span><span class="s2">&quot;extract_customers&quot;</span><span class="p">,</span>
+        <span class="n">python_callable</span><span class="o">=</span><span class="n">extract_customers</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">validate</span> <span class="o">=</span> <span class="n">GriotValidateOperator</span><span class="p">(</span>
+        <span class="n">task_id</span><span class="o">=</span><span class="s2">&quot;validate_customers&quot;</span><span class="p">,</span>
+        <span class="n">contract_id</span><span class="o">=</span><span class="s2">&quot;customer-profile&quot;</span><span class="p">,</span>
+        <span class="n">data_path</span><span class="o">=</span><span class="s2">&quot;{{ ti.xcom_pull(&#39;extract_customers&#39;) }}&quot;</span><span class="p">,</span>
+        <span class="n">registry_url</span><span class="o">=</span><span class="s2">&quot;https://registry.example.com&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">load</span> <span class="o">=</span> <span class="n">PythonOperator</span><span class="p">(</span>
+        <span class="n">task_id</span><span class="o">=</span><span class="s2">&quot;load_customers&quot;</span><span class="p">,</span>
+        <span class="n">python_callable</span><span class="o">=</span><span class="n">load_customers</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">extract</span> <span class="o">&gt;&gt;</span> <span class="n">validate</span> <span class="o">&gt;&gt;</span> <span class="n">load</span>
+</pre></div>
+</div>
+<p><strong>With Error Threshold:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Allow up to 1% error rate</span>
+<span class="n">validate</span> <span class="o">=</span> <span class="n">GriotValidateOperator</span><span class="p">(</span>
+    <span class="n">task_id</span><span class="o">=</span><span class="s2">&quot;validate_customers&quot;</span><span class="p">,</span>
+    <span class="n">contract_id</span><span class="o">=</span><span class="s2">&quot;customer-profile&quot;</span><span class="p">,</span>
+    <span class="n">data_path</span><span class="o">=</span><span class="s2">&quot;/data/customers.parquet&quot;</span><span class="p">,</span>
+    <span class="n">error_threshold</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span>  <span class="c1"># 1% threshold</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>With Masking Verification:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">validate</span> <span class="o">=</span> <span class="n">GriotValidateOperator</span><span class="p">(</span>
+    <span class="n">task_id</span><span class="o">=</span><span class="s2">&quot;validate_customers&quot;</span><span class="p">,</span>
+    <span class="n">contract_id</span><span class="o">=</span><span class="s2">&quot;customer-profile&quot;</span><span class="p">,</span>
+    <span class="n">data_path</span><span class="o">=</span><span class="s2">&quot;/data/customers.csv&quot;</span><span class="p">,</span>
+    <span class="n">verify_masking</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">environment</span><span class="o">=</span><span class="s2">&quot;{{ var.value.environment }}&quot;</span><span class="p">,</span>  <span class="c1"># From Airflow variables</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="griotresidencyoperator">
+<h3>GriotResidencyOperator<a class="headerlink" href="#griotresidencyoperator" title="Link to this heading">¶</a></h3>
+<p>Checks data residency compliance before allowing data writes.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="GriotResidencyOperator">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">GriotResidencyOperator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">task_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">contract_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">destination</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">region</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">registry_url</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">version</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fail_on_violation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#GriotResidencyOperator" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>task_id</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Airflow task ID.</p></li>
+<li><p><strong>contract_id</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Contract ID in the registry.</p></li>
+<li><p><strong>destination</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><em>None</em>) – Cloud URI to auto-detect region (e.g., <code class="docutils literal notranslate"><span class="pre">s3://bucket-eu-west-1/</span></code>).</p></li>
+<li><p><strong>region</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><em>None</em>) – Explicit region to check.</p></li>
+<li><p><strong>registry_url</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><em>None</em>) – Registry URL.</p></li>
+<li><p><strong>version</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><em>None</em>) – Specific contract version.</p></li>
+<li><p><strong>fail_on_violation</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>) – Fail task on residency violation. Default: True.</p></li>
+</ul>
+</dd>
+</dl>
+<p><strong>Template Fields:</strong> <code class="docutils literal notranslate"><span class="pre">contract_id</span></code>, <code class="docutils literal notranslate"><span class="pre">version</span></code>, <code class="docutils literal notranslate"><span class="pre">destination</span></code>, <code class="docutils literal notranslate"><span class="pre">region</span></code></p>
+<p><strong>UI Color:</strong> Light pink (#f0e4e8)</p>
+</dd></dl>
+
+<p><strong>Example:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">griot_enforce.airflow</span><span class="w"> </span><span class="kn">import</span> <span class="n">GriotResidencyOperator</span>
+
+<span class="n">check_residency</span> <span class="o">=</span> <span class="n">GriotResidencyOperator</span><span class="p">(</span>
+    <span class="n">task_id</span><span class="o">=</span><span class="s2">&quot;check_residency&quot;</span><span class="p">,</span>
+    <span class="n">contract_id</span><span class="o">=</span><span class="s2">&quot;customer-profile&quot;</span><span class="p">,</span>
+    <span class="n">destination</span><span class="o">=</span><span class="s2">&quot;{{ params.output_path }}&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">extract</span> <span class="o">&gt;&gt;</span> <span class="n">validate</span> <span class="o">&gt;&gt;</span> <span class="n">check_residency</span> <span class="o">&gt;&gt;</span> <span class="n">load_to_s3</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="sensors">
+<h2>Sensors<a class="headerlink" href="#sensors" title="Link to this heading">¶</a></h2>
+<section id="griotfreshnesssensor">
+<h3>GriotFreshnessSensor<a class="headerlink" href="#griotfreshnesssensor" title="Link to this heading">¶</a></h3>
+<p>Waits for fresh data based on contract validation history in the registry.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="GriotFreshnessSensor">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">GriotFreshnessSensor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">task_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">contract_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_age_minutes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">60</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">registry_url</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">version</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">require_passed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#GriotFreshnessSensor" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>task_id</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Airflow task ID.</p></li>
+<li><p><strong>contract_id</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Contract ID in the registry.</p></li>
+<li><p><strong>max_age_minutes</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Maximum age of validation in minutes. Default: 60.</p></li>
+<li><p><strong>registry_url</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><em>None</em>) – Registry URL.</p></li>
+<li><p><strong>version</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><em>None</em>) – Specific contract version.</p></li>
+<li><p><strong>require_passed</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>) – Only consider passed validations. Default: True.</p></li>
+</ul>
+</dd>
+</dl>
+<p><strong>Template Fields:</strong> <code class="docutils literal notranslate"><span class="pre">contract_id</span></code>, <code class="docutils literal notranslate"><span class="pre">version</span></code></p>
+</dd></dl>
+
+<p><strong>Example:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">griot_enforce.airflow</span><span class="w"> </span><span class="kn">import</span> <span class="n">GriotFreshnessSensor</span>
+
+<span class="k">with</span> <span class="n">DAG</span><span class="p">(</span><span class="s2">&quot;downstream_pipeline&quot;</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span> <span class="k">as</span> <span class="n">dag</span><span class="p">:</span>
+
+    <span class="n">wait_for_customers</span> <span class="o">=</span> <span class="n">GriotFreshnessSensor</span><span class="p">(</span>
+        <span class="n">task_id</span><span class="o">=</span><span class="s2">&quot;wait_for_customers&quot;</span><span class="p">,</span>
+        <span class="n">contract_id</span><span class="o">=</span><span class="s2">&quot;customer-profile&quot;</span><span class="p">,</span>
+        <span class="n">max_age_minutes</span><span class="o">=</span><span class="mi">120</span><span class="p">,</span>  <span class="c1"># Wait for data validated within 2 hours</span>
+        <span class="n">poke_interval</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span>    <span class="c1"># Check every 5 minutes</span>
+        <span class="n">timeout</span><span class="o">=</span><span class="mi">3600</span><span class="p">,</span>         <span class="c1"># Timeout after 1 hour</span>
+    <span class="p">)</span>
+
+    <span class="n">process</span> <span class="o">=</span> <span class="n">PythonOperator</span><span class="p">(</span>
+        <span class="n">task_id</span><span class="o">=</span><span class="s2">&quot;process_customers&quot;</span><span class="p">,</span>
+        <span class="n">python_callable</span><span class="o">=</span><span class="n">process_customers</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">wait_for_customers</span> <span class="o">&gt;&gt;</span> <span class="n">process</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="complete-dag-example">
+<h2>Complete DAG Example<a class="headerlink" href="#complete-dag-example" title="Link to this heading">¶</a></h2>
+<p>Here’s a complete example DAG with validation, residency checking, and freshness sensing:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">airflow</span><span class="w"> </span><span class="kn">import</span> <span class="n">DAG</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">airflow.operators.python</span><span class="w"> </span><span class="kn">import</span> <span class="n">PythonOperator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">airflow.providers.amazon.aws.operators.s3</span><span class="w"> </span><span class="kn">import</span> <span class="n">S3CreateObjectOperator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">griot_enforce.airflow</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">GriotValidateOperator</span><span class="p">,</span>
+    <span class="n">GriotResidencyOperator</span><span class="p">,</span>
+    <span class="n">GriotFreshnessSensor</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timedelta</span>
+
+<span class="n">default_args</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;owner&quot;</span><span class="p">:</span> <span class="s2">&quot;data-team&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;retries&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="s2">&quot;retry_delay&quot;</span><span class="p">:</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">minutes</span><span class="o">=</span><span class="mi">5</span><span class="p">),</span>
+<span class="p">}</span>
+
+<span class="k">with</span> <span class="n">DAG</span><span class="p">(</span>
+    <span class="s2">&quot;customer_data_pipeline&quot;</span><span class="p">,</span>
+    <span class="n">default_args</span><span class="o">=</span><span class="n">default_args</span><span class="p">,</span>
+    <span class="n">start_date</span><span class="o">=</span><span class="n">datetime</span><span class="p">(</span><span class="mi">2024</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+    <span class="n">schedule_interval</span><span class="o">=</span><span class="s2">&quot;@daily&quot;</span><span class="p">,</span>
+    <span class="n">catchup</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span> <span class="k">as</span> <span class="n">dag</span><span class="p">:</span>
+
+    <span class="c1"># Wait for upstream data to be fresh</span>
+    <span class="n">wait_for_raw_data</span> <span class="o">=</span> <span class="n">GriotFreshnessSensor</span><span class="p">(</span>
+        <span class="n">task_id</span><span class="o">=</span><span class="s2">&quot;wait_for_raw_data&quot;</span><span class="p">,</span>
+        <span class="n">contract_id</span><span class="o">=</span><span class="s2">&quot;raw-customer-events&quot;</span><span class="p">,</span>
+        <span class="n">max_age_minutes</span><span class="o">=</span><span class="mi">60</span><span class="p">,</span>
+        <span class="n">poke_interval</span><span class="o">=</span><span class="mi">120</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Extract and transform</span>
+    <span class="n">extract</span> <span class="o">=</span> <span class="n">PythonOperator</span><span class="p">(</span>
+        <span class="n">task_id</span><span class="o">=</span><span class="s2">&quot;extract_transform&quot;</span><span class="p">,</span>
+        <span class="n">python_callable</span><span class="o">=</span><span class="n">extract_and_transform</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Validate transformed data</span>
+    <span class="n">validate</span> <span class="o">=</span> <span class="n">GriotValidateOperator</span><span class="p">(</span>
+        <span class="n">task_id</span><span class="o">=</span><span class="s2">&quot;validate_data&quot;</span><span class="p">,</span>
+        <span class="n">contract_id</span><span class="o">=</span><span class="s2">&quot;customer-profile&quot;</span><span class="p">,</span>
+        <span class="n">data_path</span><span class="o">=</span><span class="s2">&quot;{{ ti.xcom_pull(&#39;extract_transform&#39;) }}&quot;</span><span class="p">,</span>
+        <span class="n">error_threshold</span><span class="o">=</span><span class="mf">0.001</span><span class="p">,</span>  <span class="c1"># 0.1% threshold</span>
+        <span class="n">verify_masking</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">environment</span><span class="o">=</span><span class="s2">&quot;production&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Check residency before writing to S3</span>
+    <span class="n">check_residency</span> <span class="o">=</span> <span class="n">GriotResidencyOperator</span><span class="p">(</span>
+        <span class="n">task_id</span><span class="o">=</span><span class="s2">&quot;check_residency&quot;</span><span class="p">,</span>
+        <span class="n">contract_id</span><span class="o">=</span><span class="s2">&quot;customer-profile&quot;</span><span class="p">,</span>
+        <span class="n">destination</span><span class="o">=</span><span class="s2">&quot;s3://customer-data-eu-west-1/profiles/&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Load to S3</span>
+    <span class="n">load</span> <span class="o">=</span> <span class="n">S3CreateObjectOperator</span><span class="p">(</span>
+        <span class="n">task_id</span><span class="o">=</span><span class="s2">&quot;load_to_s3&quot;</span><span class="p">,</span>
+        <span class="n">s3_bucket</span><span class="o">=</span><span class="s2">&quot;customer-data-eu-west-1&quot;</span><span class="p">,</span>
+        <span class="n">s3_key</span><span class="o">=</span><span class="s2">&quot;profiles/{{ ds }}/data.parquet&quot;</span><span class="p">,</span>
+        <span class="n">data</span><span class="o">=</span><span class="s2">&quot;{{ ti.xcom_pull(&#39;extract_transform&#39;) }}&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">wait_for_raw_data</span> <span class="o">&gt;&gt;</span> <span class="n">extract</span> <span class="o">&gt;&gt;</span> <span class="n">validate</span> <span class="o">&gt;&gt;</span> <span class="n">check_residency</span> <span class="o">&gt;&gt;</span> <span class="n">load</span>
+</pre></div>
+</div>
+</section>
+<section id="xcom-integration">
+<h2>XCom Integration<a class="headerlink" href="#xcom-integration" title="Link to this heading">¶</a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">GriotValidateOperator</span></code> pushes the validation result to XCom:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Access validation result in downstream tasks</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">process_result</span><span class="p">(</span><span class="o">**</span><span class="n">context</span><span class="p">):</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">context</span><span class="p">[</span><span class="s2">&quot;ti&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">xcom_pull</span><span class="p">(</span><span class="n">task_ids</span><span class="o">=</span><span class="s2">&quot;validate_data&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Validated </span><span class="si">{</span><span class="n">result</span><span class="p">[</span><span class="s1">&#39;row_count&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> rows&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error rate: </span><span class="si">{</span><span class="n">result</span><span class="p">[</span><span class="s1">&#39;error_rate&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.2%</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;masking_result&#39;</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Masking compliant: </span><span class="si">{</span><span class="n">result</span><span class="p">[</span><span class="s1">&#39;masking_result&#39;</span><span class="p">][</span><span class="s1">&#39;compliant&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="connection-configuration">
+<h2>Connection Configuration<a class="headerlink" href="#connection-configuration" title="Link to this heading">¶</a></h2>
+<p>You can configure the registry URL via Airflow connections:</p>
+<ol class="arabic simple">
+<li><p>Create a connection with ID <code class="docutils literal notranslate"><span class="pre">griot_registry</span></code></p></li>
+<li><p>Set the host to your registry URL</p></li>
+<li><p>Set the password to your API key</p></li>
+</ol>
+<p>Then reference it in your operators:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">airflow.hooks.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseHook</span>
+
+<span class="n">conn</span> <span class="o">=</span> <span class="n">BaseHook</span><span class="o">.</span><span class="n">get_connection</span><span class="p">(</span><span class="s2">&quot;griot_registry&quot;</span><span class="p">)</span>
+
+<span class="n">validate</span> <span class="o">=</span> <span class="n">GriotValidateOperator</span><span class="p">(</span>
+    <span class="n">task_id</span><span class="o">=</span><span class="s2">&quot;validate&quot;</span><span class="p">,</span>
+    <span class="n">contract_id</span><span class="o">=</span><span class="s2">&quot;customer-profile&quot;</span><span class="p">,</span>
+    <span class="n">data_path</span><span class="o">=</span><span class="s2">&quot;/data/customers.csv&quot;</span><span class="p">,</span>
+    <span class="n">registry_url</span><span class="o">=</span><span class="n">conn</span><span class="o">.</span><span class="n">host</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="best-practices">
+<h2>Best Practices<a class="headerlink" href="#best-practices" title="Link to this heading">¶</a></h2>
+<ol class="arabic simple">
+<li><p><strong>Use error thresholds</strong> for large datasets to allow minor data quality issues</p></li>
+<li><p><strong>Enable masking verification</strong> in non-production environments</p></li>
+<li><p><strong>Use freshness sensors</strong> to ensure upstream data dependencies are met</p></li>
+<li><p><strong>Check residency</strong> before writing to cloud storage to ensure compliance</p></li>
+<li><p><strong>Template contract versions</strong> to pin versions in production DAGs</p></li>
+</ol>
+</section>
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          <a class="next-page" href="dagster.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">Dagster Integration</div>
+              </div>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+            </a>
+          <a class="prev-page" href="api-reference.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">API Reference</div>
+                
+              </div>
+            </a>
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2024, Griot Team
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer">
+      
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">Apache Airflow Integration</a><ul>
+<li><a class="reference internal" href="#installation">Installation</a></li>
+<li><a class="reference internal" href="#operators">Operators</a><ul>
+<li><a class="reference internal" href="#griotvalidateoperator">GriotValidateOperator</a><ul>
+<li><a class="reference internal" href="#GriotValidateOperator"><code class="docutils literal notranslate"><span class="pre">GriotValidateOperator</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#griotresidencyoperator">GriotResidencyOperator</a><ul>
+<li><a class="reference internal" href="#GriotResidencyOperator"><code class="docutils literal notranslate"><span class="pre">GriotResidencyOperator</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#sensors">Sensors</a><ul>
+<li><a class="reference internal" href="#griotfreshnesssensor">GriotFreshnessSensor</a><ul>
+<li><a class="reference internal" href="#GriotFreshnessSensor"><code class="docutils literal notranslate"><span class="pre">GriotFreshnessSensor</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#complete-dag-example">Complete DAG Example</a></li>
+<li><a class="reference internal" href="#xcom-integration">XCom Integration</a></li>
+<li><a class="reference internal" href="#connection-configuration">Connection Configuration</a></li>
+<li><a class="reference internal" href="#best-practices">Best Practices</a></li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
+      
+      
+    </aside>
+  </div>
+</div><script src="_static/documentation_options.js?v=01f34227"></script>
+    <script src="_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/scripts/furo.js?v=46bd48cc"></script>
+    </body>
+</html>

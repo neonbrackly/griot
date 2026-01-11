@@ -18,6 +18,7 @@ from griot_registry.schemas import (
     FieldDefinition,
     SearchHit,
     SearchResults,
+    SectionChange,
     TypeChange,
     ValidationList,
     ValidationRecord,
@@ -170,14 +171,24 @@ class FilesystemStorage(StorageBackend):
         self,
         contract_id: str,
         update: ContractUpdate,
+        is_breaking: bool = False,
+        breaking_changes: list[dict[str, Any]] | None = None,
     ) -> Contract:
-        """Update contract, creating new version."""
+        """Update contract, creating new version (T-373 enhanced).
+
+        Tracks breaking changes in version history for audit purposes.
+        """
         contract_dir = self.contracts_dir / contract_id
         metadata = self._load_json(contract_dir / "metadata.json")
         current_version = metadata["latest_version"]
 
         # Calculate new version
-        new_version = self._bump_version(current_version, update.change_type)
+        # If breaking changes exist and change_type is not major, force major version
+        change_type = update.change_type
+        if is_breaking and change_type != "major":
+            change_type = "major"  # Breaking changes require major version bump
+
+        new_version = self._bump_version(current_version, change_type)
 
         # Load current contract and apply updates
         current = await self.get_contract(contract_id)
@@ -201,14 +212,21 @@ class FilesystemStorage(StorageBackend):
         version_file = contract_dir / "versions" / f"{new_version}.yaml"
         self._save_contract_yaml(version_file, updated)
 
-        # Update metadata
-        metadata["latest_version"] = new_version
-        metadata["versions"].append({
+        # T-373: Update metadata with breaking change tracking
+        version_entry: dict[str, Any] = {
             "version": new_version,
             "created_at": now.isoformat(),
-            "change_type": update.change_type,
+            "change_type": change_type,
             "change_notes": update.change_notes,
-        })
+            "is_breaking": is_breaking,
+        }
+
+        # Store breaking change details if present
+        if is_breaking and breaking_changes:
+            version_entry["breaking_changes"] = breaking_changes
+
+        metadata["latest_version"] = new_version
+        metadata["versions"].append(version_entry)
         self._save_json(contract_dir / "metadata.json", metadata)
 
         return updated
@@ -267,7 +285,10 @@ class FilesystemStorage(StorageBackend):
         limit: int = 50,
         offset: int = 0,
     ) -> VersionList:
-        """List all versions of a contract."""
+        """List all versions of a contract (T-373 enhanced).
+
+        Now includes accurate is_breaking flag from version metadata.
+        """
         contract_dir = self.contracts_dir / contract_id
         metadata = self._load_json(contract_dir / "metadata.json")
 
@@ -281,7 +302,8 @@ class FilesystemStorage(StorageBackend):
                 created_at=datetime.fromisoformat(v["created_at"]),
                 change_type=v.get("change_type"),
                 change_notes=v.get("change_notes"),
-                is_breaking=v.get("change_type") == "major",
+                # T-373: Use stored is_breaking flag, fall back to major check for old data
+                is_breaking=v.get("is_breaking", v.get("change_type") == "major"),
             )
             for v in versions_data
         ]
@@ -299,7 +321,7 @@ class FilesystemStorage(StorageBackend):
         from_contract: Contract,
         to_contract: Contract,
     ) -> ContractDiff:
-        """Compute diff between two contract versions."""
+        """Compute diff between two contract versions (T-374 enhanced for ODCS)."""
         from_fields = {f.name: f for f in from_contract.fields}
         to_fields = {f.name: f for f in to_contract.fields}
 
@@ -329,10 +351,77 @@ class FilesystemStorage(StorageBackend):
             # Constraint changes
             self._compare_constraints(name, from_f, to_f, constraint_changes)
 
+        # T-374: Detect ODCS section changes
+        section_changes: list[SectionChange] = []
+        added_schemas: list[str] = []
+        removed_schemas: list[str] = []
+        modified_schemas: list[str] = []
+
+        # Compare ODCS sections
+        odcs_sections = [
+            ("legal", "Legal requirements"),
+            ("compliance", "Compliance settings"),
+            ("sla", "Service level agreements"),
+            ("access", "Access control"),
+            ("distribution", "Distribution channels"),
+            ("governance", "Governance settings"),
+            ("lineage", "Data lineage"),
+            ("team", "Team information"),
+        ]
+
+        for section_name, section_desc in odcs_sections:
+            from_section = getattr(from_contract, section_name, None)
+            to_section = getattr(to_contract, section_name, None)
+
+            if from_section is None and to_section is not None:
+                section_changes.append(SectionChange(
+                    section=section_name,
+                    change_type="added",
+                    summary=f"{section_desc} section added",
+                    is_breaking=False,
+                ))
+            elif from_section is not None and to_section is None:
+                section_changes.append(SectionChange(
+                    section=section_name,
+                    change_type="removed",
+                    summary=f"{section_desc} section removed",
+                    is_breaking=True,  # Removing sections is breaking
+                ))
+            elif from_section is not None and to_section is not None:
+                # Compare section contents (simplified - just check if different)
+                from_dict = from_section.model_dump() if hasattr(from_section, 'model_dump') else {}
+                to_dict = to_section.model_dump() if hasattr(to_section, 'model_dump') else {}
+                if from_dict != to_dict:
+                    section_changes.append(SectionChange(
+                        section=section_name,
+                        change_type="modified",
+                        summary=f"{section_desc} section modified",
+                        is_breaking=False,
+                    ))
+
+        # Compare schema definitions (ODCS schema section)
+        from_schemas = {s.name: s for s in (from_contract.schema or [])}
+        to_schemas = {s.name: s for s in (to_contract.schema or [])}
+
+        added_schemas = [name for name in to_schemas if name not in from_schemas]
+        removed_schemas = [name for name in from_schemas if name not in to_schemas]
+
+        for name in from_schemas:
+            if name in to_schemas:
+                from_s = from_schemas[name]
+                to_s = to_schemas[name]
+                from_dict = from_s.model_dump() if hasattr(from_s, 'model_dump') else {}
+                to_dict = to_s.model_dump() if hasattr(to_s, 'model_dump') else {}
+                if from_dict != to_dict:
+                    modified_schemas.append(name)
+
+        # Calculate breaking changes
         has_breaking = (
             len(removed) > 0
+            or len(removed_schemas) > 0
             or any(tc.is_breaking for tc in type_changes)
             or any(cc.is_breaking for cc in constraint_changes)
+            or any(sc.is_breaking for sc in section_changes)
         )
 
         return ContractDiff(
@@ -343,6 +432,10 @@ class FilesystemStorage(StorageBackend):
             removed_fields=removed,
             type_changes=type_changes,
             constraint_changes=constraint_changes,
+            section_changes=section_changes,
+            added_schemas=added_schemas,
+            removed_schemas=removed_schemas,
+            modified_schemas=modified_schemas,
         )
 
     # =========================================================================

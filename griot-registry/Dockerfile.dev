@@ -1,0 +1,40 @@
+# =============================================================================
+# Griot Registry Dockerfile (Development)
+# =============================================================================
+# Development image with hot-reload support
+# Build from monorepo root:
+#   docker build -f griot-registry/Dockerfile.dev -t griot-registry:dev .
+# =============================================================================
+
+FROM python:3.12-slim
+
+WORKDIR /app
+
+# Install UV package manager
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+
+# Copy workspace configuration
+COPY pyproject.toml uv.lock* ./
+
+# Copy packages
+COPY griot-core/ ./griot-core/
+COPY griot-registry/ ./griot-registry/
+
+# Create virtual environment and install in editable mode
+RUN uv venv /app/.venv && \
+    . /app/.venv/bin/activate && \
+    uv pip install -e ./griot-core && \
+    uv pip install -e ./griot-registry
+
+# Create data directory
+RUN mkdir -p /app/data/contracts
+
+# Set environment
+ENV PATH="/app/.venv/bin:$PATH" \
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1
+
+EXPOSE 8000
+
+# Run with reload enabled (uvicorn watches for file changes)
+CMD ["uvicorn", "griot_registry.server:create_app", "--factory", "--host", "0.0.0.0", "--port", "8000", "--reload", "--reload-dir", "/app/griot-registry/src", "--reload-dir", "/app/griot-core/src"]

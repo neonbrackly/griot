@@ -1,0 +1,221 @@
+# Griot Contract Schema v1.0.0 - This should always be defined
+api_version: v1.0.0 # Griot Contract Schema version
+kind: DataContract # Always DataContract
+id: string                          # Unique identifier for the contract
+name: string                        # Human-readable name
+version: string                     # Semantic version (MAJOR.MINOR.PATCH)
+status: enum                     # draft | active | deprecated | retired
+description:
+  purpose: string                 # Why this contract exists
+  usage: string                # Intended use cases
+  limitations: string           # Known limitations or caveats
+  customProperties:               # Optional custom key-value pairs
+    - name: string               # Custom property name eg sensitivity
+      value: string              # Custom property value eg high
+      description: string       # Description of the custom property - Contains PII, GDPR relevant, etc.
+
+schema:
+  - name: string                     # Required. Name of the dataset/table
+    physicalType: enum                # table | view | file | stream
+    properties: object               # Optional key-value pairs for dataset properties
+      - name: string                # Property name
+        description: string        # Description of the property
+        logicalType: string       # Logical type of the property string, integer, date, etc.
+        physicalType: UUID          # Physical type of the property in the data store
+        nullable: boolean
+        examples:
+          99e8bb10-3785-4634-9664-8dc79eb69d43
+        primary_key: boolean
+        foreign_key:
+          contract: string        # Referenced contract ID
+          field: string          # Referenced field name
+        constraints:  # Defined per-field within schema.fields[].properties.constraints
+          pattern: string          # Regex for string validation
+          min_length: integer  # minimum string length
+          max_length: integer # maximum string length
+          enum: [any]            #  List of allowed values
+          unique: boolean         # Whether field values must be unique
+        semantic:
+          description: string               # plain-language explanation
+          unit: string                     # unit of measure
+          precision: integer               # decimal places of significance
+          business_term: string            # glossary term/
+          glossary_uri: string              # link to business glossary
+        privacy:
+          contains_pii: boolean
+          pii_category: enum                # Type of PII (email, phone, national_id) if contains_pii is true
+          sensitivity_level: enum          # public | internal | confidential | restricted
+          masking: enum                    # none | redact | hash_sha256 | hash_md5 | tokenize | generalize | k_anonymize | differential_privacy | encrypt
+          retention_days: integer         # Number of days to retain data
+          legal_basis: enum                  # consent | contract | legal_obligation | vital_interest | public_task | legitimate_interest
+
+    quality:                      # Data quality rules
+      - rule: completeness  # Check for missing values
+        min_percent: number          # e.g., 99.9
+        critical_fields: [string]    # Optional. Fields to specifically check
+      - rule: accuracy      # Check for data accuracy
+        max_error_rate: number      # e.g., 0.001 (0.1%)
+        validation_method: string   # How accuracy is measured
+      - rule: freshness    # Check for data freshness
+        max_age: duration            # e.g., PT24H (24 hours)
+        timestamp_field: string    # Field to check freshness against
+      - rule: volume      # Check for expected data volume
+        min_rows: integer            # Minimum expected rows
+        max_rows: integer           # Maximum expected rows
+      - rule: distribution # Check for expected value distribution
+        field: string                # Field to check
+        expected_distribution: object # e.g., histogram, percentiles
+      - custom_checks:                # User-defined checks
+        - name: string                 # Name of the custom check
+          type: enum                      # sql | python | great_expectations
+          definition: string              # The check logic
+          severity: enum                  # error | warning
+
+legal:
+  jurisdiction: [string]            # Countries/regions governing this data
+  basis: enum                       # consent | contract | legal_obligation | vital_interest |public_task | legitimate_interest
+  consent_id: string                # Reference to consent record if basis is consent
+  regulations: [string]             # Applicable regulations: GDPR, CCPA, HIPAA, etc.
+  cross_border:
+    restrictions: [string]            # Countries/regions where data cannot go
+    transfer_mechanisms: [string]     # SCCs, BCRs, adequacy decisions
+    data_residency: string            # Where data must be stored
+
+# Dataset-level compliance
+compliance:
+  data_classification: enum           # public | internal | confidential | restricted
+  regulatory_scope: [string]          # GDPR, CCPA, HIPAA, PCI-DSS, SOX, etc.
+  audit_requirements:
+    logging: boolean                  # Whether access must be logged
+    log_retention: duration           # How long to keep access logs
+  certification_requirements: [string] # SOC2, ISO27001, etc.
+  export_restrictions:
+    allow_download: boolean         # Whether data can be downloaded
+    allow_external_transfer: boolean # Whether data can be transferred outside org
+    allowed_destinations: [ string ]    # If external transfer is conditional
+
+lineage:
+  sources:
+    - type: enum                      # system | contract | file | api | stream
+      identifier: string              # System name, contract ID, path, URL, topic
+      description: string             # What this source provides
+      fields_used: [string]           # Which fields come from this source
+      extraction:
+        method: enum                  # full | incremental | cdc
+        filter: string                # Any filtering applied
+
+sla:
+  availability:
+    target_percent: number            # e.g., 99.9
+    measurement_window: duration      # e.g., P30D (30 days)
+
+  freshness:
+    target: duration                  # e.g., PT4H (4 hours)
+    measurement_field: string         # Field to measure against
+
+  completeness:
+    target_percent: number            # e.g., 99.5
+    critical_fields: [string]         # Fields with stricter requirements
+    critical_target_percent: number   # e.g., 99.99
+
+  accuracy:
+    error_rate_target: number         # e.g., 0.001 (0.1%)
+    validation_method: string         # How accuracy is measured
+
+  response_time:                      # For API-style access
+    p50_ms: integer
+    p99_ms: integer
+
+access:
+  default_level: enum                 # public | internal | restricted | denied
+
+  grants:
+    - principal: string               # team://, role://, user://, service://
+      level: enum                     # read | write | admin
+      fields: [string]                # Optional. Specific fields (default: all)
+      expiry: date                    # Optional. When grant expires
+      conditions: object              # Optional. Additional conditions
+
+  approval:
+    required: boolean                 # Whether access requires approval
+    approvers: [string]               # Who can approve
+    workflow: string                  # Reference to approval workflow
+
+  authentication:
+    methods: [string]                 # oauth2, api_key, mtls, etc.
+    provider: string                  # Identity provider
+
+distribution:
+  channels:
+    - type: enum                      # warehouse | lake | api | stream | file
+      identifier: string              # Project.dataset.table, s3://path, topic, etc.
+      format: string                  # parquet, json, avro, etc.
+      partitioning:
+        fields: [string]
+        strategy: enum                # date | hash | range
+
+governance:
+  producer:
+    team: string                 # Producer team name
+    contact: string                # Who to contact for questions
+    responsibilities: [string]        # What producer commits to
+
+  consumers:
+    - team: string                  # Consumer team name
+      contact: string                 # Who to contact for questions
+      use_case: string                # Why they need this data
+      approved_date: date          # When approved
+      approved_by: string              # Who approved
+
+  approval_chain:
+    - role: string                    # data_owner | privacy_officer | security | legal
+      approver: string                # Who approved
+      approved_date: datetime
+      comments: string
+
+  review:
+    cadence: enum                     # monthly | quarterly | annually
+    last_review: date
+    next_review: date
+    reviewers: [string]
+
+  change_management:
+    breaking_change_notice: duration  # e.g., P30D (30 days notice)
+    deprecation_notice: duration      # e.g., P90D (90 days notice)
+    communication_channels: [string]  # Where changes are announced
+    migration_support: boolean        # Whether team helps consumers migrate
+
+  dispute_resolution:
+    process: string                   # Description or link to process
+    escalation_path: [string]         # Who to escalate to
+
+  documentation:
+    wiki: string                      # Link to detailed documentation
+    runbook: string                   # Link to operational runbook
+    changelog: string                 # Link to change history
+
+team:
+  name: string                      # Required. Accountable team
+  department: string                # Optional. Organizational unit
+  steward:                          # Optional. Individual contact
+    name: string
+    email: string
+
+servers:
+  - server: production                 # Required. Unique server name
+    environment: production        # Required. e.g., development | staging | production
+    type: bigquery                  # Required. e.g., bigquery | redshift | snowflake | s3 | kafka
+    project: acme_shipments_prod   # Required. Cloud project or account
+    dataset: shipments_v1        # Required. Dataset, database, or bucket name
+
+roles:
+  - role: analyst_us_read  # Required. Role name
+    access: read  # Required. e.g., read | write | admin
+  - role: analyst_eu_read # Required. Role name
+    access: read # Required. e.g., read | write | admin
+
+timestamps:
+  created_at: datetime              # Required. ISO 8601
+  updated_at: datetime              # Required. ISO 8601
+  effective_from: date              # Optional. When contract becomes active
+  effective_until: date             # Optional. When contract expires

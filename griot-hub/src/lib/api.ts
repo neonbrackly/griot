@@ -3,6 +3,9 @@
  *
  * Provides typed methods for all Registry API endpoints.
  * All data in griot-hub comes through this client - never import griot-core directly.
+ *
+ * T-388: Updated for ODCS schema support
+ * T-305, T-384: Added breaking change detection support
  */
 
 import type {
@@ -28,13 +31,17 @@ import type {
   ReportParams,
   ResidencyStatus,
   Region,
+  BreakingChangesResponse,
+  BreakingChangeInfo,
 } from './types';
 
 // =============================================================================
 // CONFIGURATION
 // =============================================================================
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_REGISTRY_API_URL || '/api/v1';
+// NEXT_PUBLIC_REGISTRY_API_URL must be set at build time via .env.local or build args
+// Default to localhost:8000 for local development without Docker
+const API_BASE_URL = process.env.NEXT_PUBLIC_REGISTRY_API_URL || 'http://localhost:8000/api/v1';
 
 // =============================================================================
 // FETCH WRAPPER
@@ -73,11 +80,23 @@ class ApiClient {
     });
 
     if (!response.ok) {
-      const error: ApiError = await response.json().catch(() => ({
+      const errorData = await response.json().catch(() => ({
         code: 'UNKNOWN_ERROR',
         message: `Request failed with status ${response.status}`,
       }));
-      throw new ApiClientError(error.code, error.message, response.status);
+
+      // Check for breaking changes response (T-305, T-384)
+      if (response.status === 409 && errorData.code === 'BREAKING_CHANGES_DETECTED') {
+        const breakingChangesResponse = errorData as BreakingChangesResponse;
+        throw new ApiClientError(
+          errorData.code,
+          errorData.message,
+          response.status,
+          breakingChangesResponse.breaking_changes
+        );
+      }
+
+      throw new ApiClientError(errorData.code, errorData.message, response.status);
     }
 
     // Handle 204 No Content
@@ -128,11 +147,41 @@ class ApiClient {
     });
   }
 
-  async updateContract(id: string, data: ContractUpdate): Promise<Contract> {
-    return this.request<Contract>(`/contracts/${encodeURIComponent(id)}`, {
+  async updateContract(
+    id: string,
+    data: ContractUpdate,
+    options?: { allowBreaking?: boolean }
+  ): Promise<Contract> {
+    const query = options?.allowBreaking ? '?allow_breaking=true' : '';
+    return this.request<Contract>(`/contracts/${encodeURIComponent(id)}${query}`, {
       method: 'PUT',
       body: JSON.stringify(data),
     });
+  }
+
+  /**
+   * Check for breaking changes before updating a contract (dry run)
+   * T-305, T-384: Breaking change detection
+   */
+  async checkBreakingChanges(
+    id: string,
+    data: ContractUpdate
+  ): Promise<BreakingChangeInfo[]> {
+    try {
+      // Attempt update without allow_breaking - will fail if breaking changes exist
+      await this.request<Contract>(`/contracts/${encodeURIComponent(id)}?dry_run=true`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      });
+      return []; // No breaking changes
+    } catch (err) {
+      if (err instanceof ApiClientError && err.status === 409) {
+        // Parse breaking changes from response
+        const response = err as ApiClientError & { breakingChanges?: BreakingChangeInfo[] };
+        return response.breakingChanges || [];
+      }
+      throw err;
+    }
   }
 
   async deprecateContract(id: string): Promise<void> {
@@ -254,13 +303,24 @@ class ApiClient {
 // =============================================================================
 
 export class ApiClientError extends Error {
+  public breakingChanges?: BreakingChangeInfo[];
+
   constructor(
     public code: string,
     message: string,
-    public status: number
+    public status: number,
+    breakingChanges?: BreakingChangeInfo[]
   ) {
     super(message);
     this.name = 'ApiClientError';
+    this.breakingChanges = breakingChanges;
+  }
+
+  /**
+   * Check if this error is due to breaking changes being detected
+   */
+  isBreakingChangeError(): boolean {
+    return this.code === 'BREAKING_CHANGES_DETECTED' && this.status === 409;
   }
 }
 

@@ -1,8 +1,8 @@
 # Griot Implementation Status Board
 
-> **Last Updated:** 2026-01-10 by orchestrator (review #7 - ALL PHASES COMPLETE!)
-> **Current Phase:** ALL PHASES COMPLETE
-> **Status:** 🎉 ALL 95 TASKS COMPLETE - FULL PROJECT WITH DOCUMENTATION FINISHED! 🎉
+> **Last Updated:** 2026-01-11 by orchestrator (Phase 6 - Open Data Contract Standard)
+> **Current Phase:** Phase 6 - Contract Schema Overhaul
+> **Status:** 🔄 Phase 6 Initiated - Open Data Contract Standard Implementation
 
 ---
 
@@ -193,6 +193,143 @@
 - **Component Reference**: Props and usage for reusable components
 - **Deployment**: Vercel, Docker, static export options
 
+### Phase 6 - Open Data Contract Standard (ODCS) Overhaul 🆕
+
+> **Goal:** Reimplement the DataContract model based on Open Data Contract Standard (example_contract.yaml), add breaking change validation across all modules.
+
+#### Epic 6.1: Breaking Change Validation
+
+| Task ID | Task | Agent | Priority | Status | Dependencies | Requirement |
+|---------|------|-------|----------|--------|--------------|-------------|
+| T-300 | Define breaking change rules (schema diff) | core | High | ✅ Done | None | — |
+| T-301 | Implement `detect_breaking_changes()` in core | core | High | ✅ Done | T-300 | — |
+| T-302 | Update `ContractDiff` to flag breaking changes | core | High | ✅ Done | T-301 | — |
+| T-303 | CLI push command: validate breaking changes | cli | High | ✅ Done | T-302 | — |
+| T-304 | Registry API: validate breaking changes on update | registry | High | ✅ Done | T-302 | — |
+| T-305 | Hub: breaking change warnings in UI | hub | Medium | ✅ Done | T-304 | — |
+
+**Breaking Change Rules (T-300):**
+- Field removal = BREAKING
+- Field type change (incompatible) = BREAKING
+- Field rename = BREAKING
+- Adding required (non-nullable) field without default = BREAKING
+- Removing enum values = BREAKING
+- Tightening constraints (e.g., reducing max_length, adding stricter pattern) = BREAKING
+- Making nullable field non-nullable = BREAKING
+
+#### Epic 6.2: Core Schema Remodel (griot-core)
+
+| Task ID | Task | Agent | Priority | Status | Dependencies | Requirement |
+|---------|------|-------|----------|--------|--------------|-------------|
+| T-310 | Add contract-level metadata (api_version, kind, id, version, status) | core | High | ✅ Done | None | — |
+| T-311 | Create `Description` dataclass (purpose, usage, limitations, customProperties) | core | High | ✅ Done | T-310 | — |
+| T-312 | Create `SchemaProperty` with semantic, privacy, constraints nested | core | High | ✅ Done | T-311 | — |
+| T-313 | Add `foreign_key` support (contract ref, field ref) | core | Medium | ✅ Done | T-312 | — |
+| T-314 | Create `QualityRule` classes (completeness, accuracy, freshness, volume, distribution) | core | High | ✅ Done | T-312 | — |
+| T-315 | Create `CustomCheck` class (sql, python, great_expectations) | core | Medium | ✅ Done | T-314 | — |
+| T-316 | Create `Legal` dataclass (jurisdiction, basis, regulations, cross_border) | core | High | ✅ Done | T-310 | — |
+| T-317 | Create `Compliance` dataclass (classification, regulatory_scope, audit_requirements) | core | High | ✅ Done | T-316 | — |
+| T-318 | Create `SLA` dataclass (availability, freshness, completeness, accuracy, response_time) | core | High | ✅ Done | T-310 | — |
+| T-319 | Create `Access` dataclass (default_level, grants, approval, authentication) | core | Medium | ✅ Done | T-310 | — |
+| T-320 | Create `Distribution` dataclass (channels, partitioning) | core | Medium | ✅ Done | T-310 | — |
+| T-321 | Create `Governance` dataclass (producer, consumers, approval_chain, review) | core | High | ✅ Done | T-310 | — |
+| T-322 | Add change_management, dispute_resolution, documentation to Governance | core | Medium | ✅ Done | T-321 | — |
+| T-323 | Create `Team` dataclass (name, department, steward) | core | Medium | ✅ Done | T-310 | — |
+| T-324 | Create `Server` dataclass (server, environment, type, project, dataset) | core | Medium | ✅ Done | T-310 | — |
+| T-325 | Create `Role` dataclass (role, access) | core | Low | ✅ Done | T-310 | — |
+| T-326 | Create `Timestamps` dataclass (created_at, updated_at, effective_from/until) | core | Medium | ✅ Done | T-310 | — |
+| T-327 | Update `GriotModel` to compose all ODCS sections | core | High | ✅ Done | T-312, T-314, T-316, T-317, T-318, T-319, T-320, T-321, T-323, T-324, T-325, T-326 | — |
+| T-328 | Update YAML serialization for new schema | core | High | ✅ Done | T-327 | — |
+| T-329 | Update YAML deserialization for new schema | core | High | ✅ Done | T-328 | — |
+| T-330 | Add schema migration support (v0 → v1) | core | Medium | ✅ Done | T-329 | — |
+| T-331 | Update validation engine for new schema | core | High | ✅ Done | T-327 | — |
+
+#### Epic 6.3: New Enums and Types (griot-core)
+
+| Task ID | Task | Agent | Priority | Status | Dependencies | Requirement |
+|---------|------|-------|----------|--------|--------------|-------------|
+| T-340 | Add `ContractStatus` enum (draft, active, deprecated, retired) | core | High | ✅ Done | None | — |
+| T-341 | Add `PhysicalType` enum (table, view, file, stream) | core | High | ✅ Done | None | — |
+| T-342 | Add `QualityRuleType` enum (completeness, accuracy, freshness, volume, distribution) | core | High | ✅ Done | None | — |
+| T-343 | Add `CheckType` enum (sql, python, great_expectations) | core | Medium | ✅ Done | None | — |
+| T-344 | Add `ExtractionMethod` enum (full, incremental, cdc) | core | Medium | ✅ Done | None | — |
+| T-345 | Add `PartitioningStrategy` enum (date, hash, range) | core | Medium | ✅ Done | None | — |
+| T-346 | Add `ReviewCadence` enum (monthly, quarterly, annually) | core | Low | ✅ Done | None | — |
+| T-347 | Add `AccessLevel` enum (read, write, admin) | core | Medium | ✅ Done | None | — |
+| T-348 | Add `DistributionType` enum (warehouse, lake, api, stream, file) | core | Medium | ✅ Done | None | — |
+| T-349 | Add `SourceType` enum (system, contract, file, api, stream) | core | Medium | ✅ Done | None | — |
+
+#### Epic 6.4: CLI Updates (griot-cli)
+
+| Task ID | Task | Agent | Priority | Status | Dependencies | Requirement |
+|---------|------|-------|----------|--------|--------------|-------------|
+| T-360 | Update `griot push` with breaking change validation | cli | High | ✅ Done | T-303 | — |
+| T-361 | Add `--allow-breaking` flag to push command | cli | High | ✅ Done | T-360 | — |
+| T-362 | Add `--dry-run` breaking change check to push | cli | Medium | ✅ Done | T-360 | — |
+| T-363 | Update contract creation for new ODCS schema | cli | High | ✅ Done | T-329 | — |
+| T-364 | Add `griot migrate` command for old contracts | cli | Medium | ✅ Done | T-330 | — |
+| T-365 | Update `griot diff` output for new schema sections | cli | Medium | ✅ Done | T-302 | — |
+| T-366 | Update `griot lint` for new ODCS quality rules | cli | Medium | ✅ Done | T-327 | — |
+
+#### Epic 6.5: Registry Updates (griot-registry)
+
+| Task ID | Task | Agent | Priority | Status | Dependencies | Requirement |
+|---------|------|-------|----------|--------|--------------|-------------|
+| T-370 | Update Pydantic schemas for ODCS structure | registry | High | ✅ Done | T-327 | — |
+| T-371 | Add breaking change validation to PUT /contracts/{id} | registry | High | ✅ Done | T-304 | — |
+| T-372 | Add `?allow_breaking=true` query param for force update | registry | High | ✅ Done | T-371 | — |
+| T-373 | Add breaking change history tracking | registry | Medium | ✅ Done | T-371 | — |
+| T-374 | Update diff endpoint for new schema | registry | Medium | ✅ Done | T-370 | — |
+| T-375 | Add schema version negotiation (Accept: application/vnd.griot.v1+yaml) | registry | Low | ✅ Done | T-370 | — |
+
+#### Epic 6.6: Hub Updates (griot-hub)
+
+| Task ID | Task | Agent | Priority | Status | Dependencies | Requirement |
+|---------|------|-------|----------|--------|--------------|-------------|
+| T-380 | Redesign Contract Studio for ODCS schema | hub | High | ✅ Done | T-370 | — |
+| T-381 | Add section editors: Description, Schema, Quality, Legal, etc. | hub | High | ✅ Done | T-380 | — |
+| T-382 | Add smart defaults for audit-ready approach | hub | High | ✅ Done | T-381 | — |
+| T-383 | Add privacy-aligning defaults for enums/booleans | hub | High | ✅ Done | T-382 | — |
+| T-384 | Add breaking change warnings on contract edit | hub | High | ✅ Done | T-305 | — |
+| T-385 | Add version comparison view with breaking change highlights | hub | Medium | ✅ Done | T-384 | — |
+| T-386 | Add SLA configuration wizard | hub | Medium | ✅ Done | T-381 | — |
+| T-387 | Add Governance/Approval workflow UI | hub | Medium | ✅ Done | T-381 | — |
+| T-388 | Update TypeScript types for new schema | hub | High | ✅ Done | T-370 | — |
+
+#### Epic 6.7: Testing & Quality
+
+| Task ID | Task | Agent | Priority | Status | Dependencies | Requirement |
+|---------|------|-------|----------|--------|--------------|-------------|
+| T-390 | Unit tests for breaking change detection | quality | High | ✅ Done | T-302 | — |
+| T-391 | Integration tests for push with breaking changes | quality | High | ✅ Done | T-360 | — |
+| T-392 | E2E tests for Hub breaking change warnings | quality | Medium | ✅ Done | T-384 | — |
+| T-393 | Update all existing tests for new schema | quality | High | ✅ Done | T-327 | — |
+| T-394 | Performance tests for schema migration | quality | Low | ✅ Done | T-330 | — |
+
+#### Smart Defaults for Hub (T-382, T-383)
+
+When creating contracts in griot-hub, apply these audit-ready defaults:
+
+**Privacy Defaults:**
+- `contains_pii: false` (explicit opt-in required)
+- `sensitivity_level: "internal"` (safe default)
+- Boolean fields: Default to privacy-preserving option
+- Enum fields with privacy implications: Default to most restrictive
+
+**Compliance Defaults:**
+- `data_classification: "internal"`
+- `audit_requirements.logging: true`
+- `audit_requirements.log_retention: "P365D"` (1 year)
+
+**SLA Defaults:**
+- `availability.target_percent: 99.0`
+- `freshness.target: "P1D"` (daily)
+
+**Governance Defaults:**
+- `review.cadence: "quarterly"`
+- `change_management.breaking_change_notice: "P30D"`
+- `change_management.deprecation_notice: "P90D"`
+
 **Status Legend:**
 - 📋 Ready — No dependencies, can start now
 - 🔄 In Progress — Currently being worked on
@@ -211,8 +348,19 @@
 | 3 | Runtime | ✅ Complete | 100% | Enforce (✅), Registry API (✅), All Orchestrators (✅) |
 | 4 | UI | ✅ Complete | 100% | Hub (✅), All Dashboards (✅), Settings (✅) |
 | 5 | Documentation | ✅ Complete | 100% | Sphinx docs (✅), All modules documented (✅) |
+| 6 | **ODCS Overhaul** | ✅ Complete | 100% | Core (✅), CLI (✅), Registry (✅), Hub (✅), Tests (✅) |
 
-**🎉 FULL PROJECT COMPLETE: 100%** (95/95 tasks - Implementation + Documentation)
+**Phase 6 Progress:** 65/65 tasks complete (100%) 🎉🎉🎉
+
+- Epic 6.1: Breaking Change Validation - 6/6 ✅ COMPLETE
+- Epic 6.2: Core Schema Remodel - 22/22 ✅ COMPLETE
+- Epic 6.3: New Enums and Types - 10/10 ✅ COMPLETE
+- Epic 6.4: CLI Updates - 7/7 ✅ COMPLETE
+- Epic 6.5: Registry Updates - 6/6 ✅ COMPLETE
+- Epic 6.6: Hub Updates - 9/9 ✅ COMPLETE
+- Epic 6.7: Testing & Quality - 5/5 ✅ COMPLETE
+
+**🎉 TOTAL PROJECT TASKS: 160/160 (100%) - PROJECT COMPLETE! 🎉**
 
 ---
 
@@ -236,11 +384,15 @@
 
 ## 🔄 In Progress
 
-Active work items.
+## 🎉🎉🎉 ALL TASKS COMPLETE! PROJECT FINISHED! 🎉🎉🎉
 
-| Task ID | Task | Agent | Started | Branch | Notes |
-|---------|------|-------|---------|--------|-------|
-| *None* | — | — | — | — | — |
+**No remaining tasks - all 160 tasks across 6 phases are complete!**
+
+### Final Completions (Review #13)
+| Task ID | Task | Agent | Completed |
+|---------|------|-------|-----------|
+| T-364 | `griot migrate` command | cli | 2026-01-11 |
+| T-392 | E2E tests for Hub breaking change warnings | quality | 2026-01-11 |
 
 ---
 
@@ -433,6 +585,300 @@ See `status/requests/` for full details.
 ---
 
 ## 📝 Notes
+
+### 2026-01-11 (orchestrator - Review #13) 🎉🎉🎉
+
+## 🏆 PROJECT COMPLETE - ALL 160 TASKS DONE! 🏆
+
+**Final 2 Tasks Completed:**
+
+**CLI Agent - T-364: `griot migrate` command** ✅
+- Created `griot-cli/src/griot_cli/commands/migrate.py`
+- Thin wrapper around `griot_core.migration` module
+- Options: --output, --in-place, --dry-run, --format, --verbose
+- Detects v0/v1.0.0 schema versions automatically
+- Exit codes: 0=success, 1=already migrated, 2=error
+
+**Quality Agent - T-392: E2E tests for Hub breaking change warnings** ✅
+- Set up Jest infrastructure for griot-hub
+- Created 72 new Hub component/integration tests:
+  - BreakingChangeWarning component tests (20 tests)
+  - VersionComparison component tests (23 tests)
+  - API client breaking change tests (15 tests)
+  - Integration flow tests (14 tests)
+- Updated CI/CD pipeline with Hub test job
+
+**Final Test Count:**
+- Python tests: 525
+- Hub tests: 72
+- **Total: 597 tests, all passing** ✅
+
+**Project Summary:**
+| Phase | Tasks | Status |
+|-------|-------|--------|
+| Phase 1: Foundation | 26 | ✅ Complete |
+| Phase 2: Compliance | 19 | ✅ Complete |
+| Phase 3: Runtime | 27 | ✅ Complete |
+| Phase 4: UI | 13 | ✅ Complete |
+| Phase 5: Documentation | 6 | ✅ Complete |
+| Phase 6: ODCS Overhaul | 65 | ✅ Complete |
+| **TOTAL** | **160** | **✅ 100%** |
+
+---
+
+### 2026-01-11 (orchestrator - Review #12) 🎉
+
+**MAJOR MILESTONE: Phase 6 at 97% - Only 2 tasks remaining!**
+
+**Hub Agent - 5 NEW Completions:**
+- T-382: Smart defaults for audit-ready approach ✅
+  - Created `lib/defaults.ts` (~400 lines)
+  - DEFAULT_PRIVACY, DEFAULT_COMPLIANCE, DEFAULT_SLA presets
+  - Compliance presets: GDPR, CCPA, HIPAA, PCI-DSS, SOX
+  - SLA presets: critical, standard, basic, realtime
+- T-383: Privacy-aligning defaults for enums/booleans ✅
+  - Auto-PII detection from field names (email, phone, SSN, etc.)
+  - `inferPrivacyFromFieldName()` function
+- T-385: Version comparison view ✅
+  - `VersionComparison.tsx` (~380 lines)
+  - Breaking change highlights with from/to visualization
+- T-386: SLA configuration wizard ✅
+  - `SLAWizard.tsx` (~430 lines)
+  - 3-step wizard with preset tiers
+- T-387: Governance/Approval workflow UI ✅
+  - `GovernanceWorkflow.tsx` (~500 lines)
+  - Tabbed interface for full governance management
+
+**Quality Agent - 4 NEW Completions:**
+- T-390: Unit tests for breaking change detection ✅ (48 tests)
+- T-391: Integration tests for CLI push ✅ (16 tests)
+- T-393: ODCS schema compatibility tests ✅ (31 tests)
+- T-394: Performance benchmarks for schema ops ✅ (16 tests)
+- Total: 111 new tests, 525 tests overall
+
+**Epic Status:**
+- Epic 6.6 (Hub): 9/9 ✅ COMPLETE
+- Epic 6.7 (Tests): 4/5 (T-392 remaining)
+
+**Remaining Tasks (2):**
+| Task | Agent | Status |
+|------|-------|--------|
+| T-364 | cli | 📋 Ready - `griot migrate` command |
+| T-392 | quality | 📋 Ready - E2E tests for Hub warnings |
+
+---
+
+### 2026-01-11 (orchestrator - Review #11)
+
+**Reconnaissance complete - Hub tasks verified**
+
+Confirmed Hub agent completions from `status/updates/hub.md`:
+- T-305: Hub breaking change warnings in UI ✅
+- T-380: Redesign Contract Studio for ODCS schema ✅ (complete rewrite, 1063 lines)
+- T-381: Add section editors for ODCS sections ✅
+- T-384: Breaking change warnings on contract edit ✅
+- T-388: Update TypeScript types for ODCS schema ✅ (990 lines)
+
+**Hub Improvements (beyond task scope):**
+- Contract Detail page redesign with interactive schema visualization
+- Data Governance AI policy checks sidebar
+- Modern tabbed interface (Overview, Schema, Governance, Versions, Validations)
+- Quick Stats sidebar and Implementation section
+
+**Current Status:**
+- Phase 6: 54/65 tasks (83%)
+- All implementation epics progressing well
+- All 11 remaining tasks are unblocked and ready
+
+**Remaining Work by Agent:**
+| Agent | Tasks | IDs |
+|-------|-------|-----|
+| cli | 1 | T-364 |
+| hub | 5 | T-382, T-383, T-385, T-386, T-387 |
+| quality | 5 | T-390, T-391, T-392, T-393, T-394 |
+
+---
+
+### 2026-01-11 (orchestrator - Review #10)
+
+**Reconnaissance complete - Near completion!**
+
+**Newly Completed Tasks (7 tasks):**
+
+*Core Agent:*
+- T-330: Schema migration support (v0 → v1) ✅
+  - Created `griot-core/src/griot_core/migration.py`
+  - `migrate_contract()`, `detect_schema_version()`, `migrate_v0_to_v1()`
+- T-331: Validation engine for ODCS schema ✅
+  - `validate_quality_rules()`, `validate_completeness()`, `validate_volume()`, `validate_freshness()`
+
+*CLI Agent:*
+- T-363: Update contract creation for ODCS schema ✅
+  - Created `griot init` command with full ODCS template
+  - Smart defaults for audit-ready contracts
+- T-366: Update griot lint for ODCS quality rules ✅
+  - Added --odcs-only and --summary flags
+  - ODCS rules G006-G015 documented
+
+*Registry Agent:*
+- T-370: Update Pydantic schemas for ODCS structure ✅
+  - 50+ new Pydantic models for all ODCS sections
+- T-374: Update diff endpoint for new schema ✅
+  - ODCS section change tracking
+- T-375: Add schema version negotiation ✅
+  - Content negotiation via Accept header
+  - `application/vnd.griot.v1+json/yaml` support
+
+**Epics Complete:**
+- Epic 6.2: Core Schema Remodel - 22/22 ✅
+- Epic 6.3: New Enums and Types - 10/10 ✅
+- Epic 6.5: Registry Updates - 6/6 ✅
+
+**Phase 6 Progress: 91% (50/55 tasks)**
+
+**Remaining Tasks (5 implementation + 9 blocked):**
+
+| Task | Agent | Status |
+|------|-------|--------|
+| T-305 | hub | 📋 Ready |
+| T-364 | cli | 📋 Ready |
+| T-380 | hub | 📋 Ready (critical) |
+| T-384 | hub | 📋 Ready |
+| T-388 | hub | 📋 Ready |
+
+**Quality tests ready (4):** T-390, T-391, T-393, T-394
+
+**Critical Path Update:**
+Hub is now the sole blocker. T-380 (Contract Studio redesign) unblocks 5 more tasks.
+
+---
+
+### 2026-01-11 (orchestrator - Review #9)
+
+**Reconnaissance complete - Major progress update:**
+
+**Newly Completed Tasks (14 tasks):**
+
+*Core Agent:*
+- T-327: GriotModel ODCS composition ✅
+- T-328: YAML serialization for new schema ✅
+- T-329: YAML deserialization for new schema ✅
+
+*CLI Agent:*
+- T-303: Push command breaking change validation ✅
+- T-360: Update griot push with breaking change validation ✅
+- T-361: --allow-breaking flag ✅
+- T-362: --dry-run breaking change check ✅
+- T-365: Diff output with breaking change details ✅
+
+*Registry Agent:*
+- T-304: API breaking change validation on update ✅
+- T-371: Breaking change validation in PUT /contracts/{id} ✅
+- T-372: ?allow_breaking=true query parameter ✅
+- T-373: Breaking change history tracking ✅
+
+**End-to-End Breaking Change Flow Complete:**
+- Core: `detect_breaking_changes()` returns detailed `BreakingChange` objects
+- CLI: `griot push` blocks breaking changes, `--allow-breaking` to override
+- Registry: PUT /contracts returns 409 with breaking change details
+- All storage backends track breaking change history
+
+**Phase 6 Progress: 80% (44/55 tasks)**
+
+**Remaining Tasks (11):**
+- Core: T-330 (migration), T-331 (validation engine)
+- CLI: T-363, T-364, T-366
+- Registry: T-370, T-374, T-375
+- Hub: T-305, T-380-388 (9 tasks, most waiting)
+- Quality: T-390-394 (5 tasks, 3 ready)
+
+**Priority for completion:**
+1. Registry T-370 (unblocks hub tasks T-380, T-388)
+2. Core T-330, T-331 (unblocks CLI T-364)
+3. Quality T-390, T-391, T-393 (test coverage)
+4. Hub tasks (final UI work)
+
+---
+
+### 2026-01-11 (orchestrator - Review #8)
+
+**Reconnaissance complete - Phase 6 progress verified:**
+
+**Core Agent Completed (30 tasks):**
+- T-300, T-301, T-302: Breaking change detection fully implemented
+  - `BreakingChangeType` enum with all rule types
+  - `BreakingChange` dataclass with migration hints
+  - `detect_breaking_changes()` function with comprehensive rules
+  - `ContractDiff.breaking_changes` property
+- T-310-326: All ODCS dataclasses implemented in types.py
+  - Description, SchemaProperty, QualityRule, CustomCheck
+  - Legal, Compliance, SLA (all subtypes)
+  - AccessConfig, Distribution, Governance
+  - Team, Server, Role, Timestamps
+- T-340-349: All 10 new enums added
+  - ContractStatus, PhysicalType, QualityRuleType, CheckType
+  - ExtractionMethod, PartitioningStrategy, ReviewCadence
+  - AccessLevel, DistributionType, SourceType
+
+**Verified in codebase:**
+- `griot-core/src/griot_core/types.py`: 1600+ lines with all ODCS dataclasses
+- `griot-core/src/griot_core/contract.py`: Breaking change detection with full rule set
+- Version bumped to 0.5.0 for ODCS overhaul
+
+**Tasks Now Unblocked:**
+- T-303 (cli): Push command breaking change validation
+- T-304 (registry): API breaking change validation
+- T-327 (core): GriotModel ODCS composition
+- T-365 (cli): Diff output for new schema
+- T-390 (quality): Breaking change unit tests
+
+**Next priorities:**
+1. Core: T-327 → T-328 → T-329 → T-330 → T-331
+2. CLI: T-303 → T-360-362
+3. Registry: T-304 → T-370-375
+4. Quality: T-390
+
+---
+
+### 2026-01-11 (orchestrator - Phase 6 Initiation)
+
+**Phase 6: Open Data Contract Standard (ODCS) Overhaul Initiated**
+
+Based on user requirements, created comprehensive implementation plan for:
+
+1. **Breaking Change Validation** (Epic 6.1)
+   - Defined breaking change rules: field removal, type changes, constraint tightening
+   - Implementation in griot-core, griot-cli push, griot-registry, griot-hub
+   - Added `--allow-breaking` flag for force updates
+
+2. **Contract Schema Overhaul** (Epic 6.2)
+   - Complete reimplementation based on `agents/example_contract.yaml`
+   - New sections: Description, Quality, Legal, Compliance, SLA, Access, Distribution, Governance
+   - Team, Servers, Roles, Timestamps metadata
+
+3. **Smart Defaults for Hub** (Epic 6.6)
+   - Privacy-aligning defaults for enums/booleans
+   - Audit-ready approach with compliance defaults
+   - SLA and Governance defaults for quick contract creation
+
+**Key Architecture Decisions:**
+- Breaking changes block push/update by default (must use `--allow-breaking` or `?allow_breaking=true`)
+- Schema migration support (v0 → v1) for backwards compatibility
+- Foreign key references to other contracts supported
+- Quality rules with custom checks (SQL, Python, Great Expectations)
+
+**Task Assignment Priority:**
+1. **core** agent: Start with T-300 (breaking change rules), T-310 (contract metadata), T-340-349 (enums)
+2. **cli** agent: Wait for T-302 completion
+3. **registry** agent: Wait for T-327 completion
+4. **hub** agent: Wait for T-370 completion
+5. **quality** agent: Wait for implementations to write tests
+
+**Reference Documents:**
+- Example contract schema: `agents/example_contract.yaml`
+- Open Data Contract Standard inspiration
+
+---
 
 ### 2026-01-10 (orchestrator)
 - Completed comprehensive requirements breakdown (T-001)

@@ -1,0 +1,79 @@
+# =============================================================================
+# Griot Platform - Docker Compose (Development)
+# =============================================================================
+# Development configuration with:
+#   - Hot-reload for both services
+#   - Source code mounted as volumes
+#   - Debug mode enabled
+#
+# Usage:
+#   docker-compose -f docker-compose.dev.yml up
+#
+# Note: First run may require: docker-compose -f docker-compose.dev.yml build
+# =============================================================================
+
+services:
+  # ---------------------------------------------------------------------------
+  # Griot Registry - FastAPI Backend (Development)
+  # ---------------------------------------------------------------------------
+  griot-registry:
+    build:
+      context: .
+      dockerfile: griot-registry/Dockerfile.dev
+    container_name: griot-registry-dev
+    ports:
+      - "${GRIOT_REGISTRY_PORT:-8000}:8000"
+    environment:
+      - GRIOT_REGISTRY_HOST=0.0.0.0
+      - GRIOT_REGISTRY_PORT=8000
+      - GRIOT_REGISTRY_DEBUG=true
+      - GRIOT_REGISTRY_LOG_LEVEL=DEBUG
+      - GRIOT_REGISTRY_CORS_ORIGINS=["*"]
+      - GRIOT_REGISTRY_STORAGE_BACKEND=filesystem
+      - GRIOT_REGISTRY_STORAGE_PATH=/app/data/contracts
+      - GRIOT_REGISTRY_AUTH_ENABLED=false
+    volumes:
+      # Mount source for hot-reload
+      - ./griot-registry/src:/app/griot-registry/src:ro
+      - ./griot-core/src:/app/griot-core/src:ro
+      # Persist data
+      - griot-registry-data-dev:/app/data/contracts
+    networks:
+      - griot-network-dev
+
+  # ---------------------------------------------------------------------------
+  # Griot Hub - Next.js Frontend (Development)
+  # ---------------------------------------------------------------------------
+  griot-hub:
+    build:
+      context: ./griot-hub
+      dockerfile: Dockerfile.dev
+    container_name: griot-hub-dev
+    ports:
+      - "${GRIOT_HUB_PORT:-3000}:3000"
+    environment:
+      - NODE_ENV=development
+      # In dev mode, this can be set at runtime since we're not using standalone
+      - NEXT_PUBLIC_REGISTRY_API_URL=http://localhost:8000/api/v1
+    volumes:
+      # Mount source for hot-reload (exclude node_modules and .next)
+      - ./griot-hub/src:/app/src:ro
+      - ./griot-hub/public:/app/public:ro
+    depends_on:
+      - griot-registry
+    networks:
+      - griot-network-dev
+
+# -----------------------------------------------------------------------------
+# Volumes
+# -----------------------------------------------------------------------------
+volumes:
+  griot-registry-data-dev:
+    driver: local
+
+# -----------------------------------------------------------------------------
+# Networks
+# -----------------------------------------------------------------------------
+networks:
+  griot-network-dev:
+    driver: bridge

@@ -1,0 +1,33 @@
+# =============================================================================
+# Griot Hub Dockerfile (Development)
+# =============================================================================
+# Development image with hot-reload support via Next.js dev server
+# Build from griot-hub directory:
+#   docker build -f Dockerfile.dev -t griot-hub:dev .
+# =============================================================================
+
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Install dependencies
+COPY package.json package-lock.json* yarn.lock* pnpm-lock.yaml* ./
+
+RUN \
+    if [ -f yarn.lock ]; then yarn --frozen-lockfile; \
+    elif [ -f package-lock.json ]; then npm ci; \
+    elif [ -f pnpm-lock.yaml ]; then corepack enable pnpm && pnpm i --frozen-lockfile; \
+    else npm install; \
+    fi
+
+# Copy application code
+COPY . .
+
+# Set development environment
+ENV NODE_ENV=development \
+    NEXT_TELEMETRY_DISABLED=1
+
+EXPOSE 3000
+
+# Run Next.js dev server with hot-reload
+CMD ["npm", "run", "dev"]

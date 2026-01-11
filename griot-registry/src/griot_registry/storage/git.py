@@ -6,7 +6,7 @@ import json
 import os
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 from uuid import uuid4
 
 import yaml
@@ -239,15 +239,23 @@ class GitStorage(StorageBackend):
         self,
         contract_id: str,
         update: ContractUpdate,
+        is_breaking: bool = False,
+        breaking_changes: list[dict[str, Any]] | None = None,
     ) -> Contract:
-        """Update contract with new commit."""
+        """Update contract with new commit (T-373 enhanced).
+
+        Includes breaking change information in commit message.
+        """
         contract = self._load_contract(contract_id)
         if not contract:
             raise ValueError(f"Contract not found: {contract_id}")
 
-        # Bump version
+        # Bump version - force major for breaking changes
         parts = contract.version.split(".")
-        new_version = f"{parts[0]}.{int(parts[1]) + 1}.0"
+        if is_breaking:
+            new_version = f"{int(parts[0]) + 1}.0.0"
+        else:
+            new_version = f"{parts[0]}.{int(parts[1]) + 1}.0"
 
         updated = Contract(
             id=contract.id,
@@ -268,13 +276,27 @@ class GitStorage(StorageBackend):
         rel_contract = f"contracts/{contract_id}.yaml"
         rel_metadata = f"contracts/{contract_id}.meta.json"
         self.repo.index.add([rel_contract, rel_metadata])
-        commit = self.repo.index.commit(f"Update contract: {contract_id} to v{new_version}")
 
-        # Tag new version
+        # T-373: Include breaking change info in commit message
+        commit_msg = f"Update contract: {contract_id} to v{new_version}"
+        if is_breaking:
+            commit_msg = f"BREAKING: {commit_msg}"
+            if breaking_changes:
+                commit_msg += f"\n\nBreaking changes:\n"
+                for bc in breaking_changes:
+                    commit_msg += f"- {bc.get('description', 'Unknown change')}\n"
+
+        commit = self.repo.index.commit(commit_msg)
+
+        # Tag new version with breaking change annotation
+        tag_message = f"Version {new_version} of {contract_id}"
+        if is_breaking:
+            tag_message = f"BREAKING: {tag_message}"
+
         self.repo.create_tag(
             f"{contract_id}/v{new_version}",
             commit,
-            message=f"Version {new_version} of {contract_id}",
+            message=tag_message,
         )
 
         return updated

@@ -1,0 +1,30 @@
+id: '100100'
+name: customers
+description: This is a contract between data engineers and the customer insights team
+version: 1.6.0
+status: draft
+owner: customer_insights
+fields:
+- name: cust_name
+  type: string
+  description: The name of the customer
+  nullable: false
+  primary_key: false
+  unique: false
+  constraints: {}
+- name: cust_id
+  type: string
+  description: This is the customer id field
+  nullable: false
+  primary_key: true
+  unique: true
+  constraints: {}
+- name: customer_email
+  type: string
+  description: The email of the customer
+  nullable: true
+  primary_key: false
+  unique: true
+  constraints: {}
+created_at: '2026-01-11T07:59:20.126402+00:00'
+updated_at: '2026-01-11T10:08:00.768901+00:00'

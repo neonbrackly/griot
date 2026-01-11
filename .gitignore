@@ -19,5 +19,18 @@ coverage.xml
 htmlcov/
 test-output.xml
 
+# IDE
 .idea/
 .vscode/
+
+# Documentation
+griot-core/html-docs/*
+
+# Environment files (keep .env.example tracked)
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Docker volumes
+data/

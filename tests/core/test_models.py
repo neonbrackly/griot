@@ -298,9 +298,13 @@ class TestGriotModel:
         result = DictModel.to_dict()
 
         assert result["name"] == "DictModel"
-        assert "field1" in result["fields"]
-        assert "field2" in result["fields"]
-        assert result["fields"]["field2"]["ge"] == 0
+        # Fields are now in list format (ODCS)
+        assert isinstance(result["fields"], list)
+        field_names = [f["name"] for f in result["fields"]]
+        assert "field1" in field_names
+        assert "field2" in field_names
+        field2 = next(f for f in result["fields"] if f["name"] == "field2")
+        assert field2["constraints"]["ge"] == 0
 
     def test_model_repr(self) -> None:
         """Test model string representation."""
@@ -880,9 +884,10 @@ class TestGriotModelMethods:
 
         assert "name: YAMLModel" in yaml_str
         assert "description: A model for YAML export." in yaml_str
-        assert "id:" in yaml_str
+        # Fields are in list format (ODCS)
+        assert "- name: id" in yaml_str
         assert "primary_key: true" in yaml_str
-        assert "value:" in yaml_str
+        assert "- name: value" in yaml_str
         assert "ge: 0" in yaml_str
         assert "le: 100" in yaml_str
 

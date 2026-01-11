@@ -4,6 +4,175 @@
 
 ---
 
+## Session: 2026-01-11 (Phase 6 Implementation)
+
+### Discovery
+Upon re-checking griot-core, discovered that **T-300, T-301, T-302 are already complete!**
+- `BreakingChangeType` enum defined (T-300)
+- `detect_breaking_changes()` function fully implemented (T-301)
+- `ContractDiff` has `has_breaking_changes` and `breaking_changes` fields (T-302)
+
+This unblocked registry tasks T-304, T-371, T-372, T-373!
+
+### Tasks Completed This Session
+
+#### T-304: Registry API - validate breaking changes on update
+- Integrated griot-core's `detect_breaking_changes()` into `PUT /contracts/{id}`
+- Added helper functions to convert registry Contract to griot-core models
+- Falls back to basic detection if griot-core not available
+
+#### T-371: Add breaking change validation to PUT /contracts/{id}
+- Endpoint now detects all breaking change types from ODCS spec
+- Returns detailed `BreakingChangesResponse` with 409 status when blocked
+
+#### T-372: Add `?allow_breaking=true` query parameter
+- Added query parameter to force updates with breaking changes
+- Default is `false` - breaking changes blocked without explicit acknowledgment
+- Proper OpenAPI documentation for the new parameter
+
+#### T-373: Add breaking change history tracking
+- Version metadata now stores `is_breaking` flag
+- Breaking change details stored for audit purposes
+- `list_versions` endpoint returns accurate `is_breaking` flag
+- All storage backends updated (filesystem, git, postgres)
+- Breaking changes force major version bump
+
+### Files Changed
+- `griot-registry/src/griot_registry/schemas.py`
+  - Added `BreakingChangeInfo` schema
+  - Added `BreakingChangesResponse` schema
+- `griot-registry/src/griot_registry/api/contracts.py`
+  - Added breaking change detection helpers
+  - Updated `update_contract` with validation and `allow_breaking` param
+  - Added 409 response for breaking changes
+- `griot-registry/src/griot_registry/storage/base.py`
+  - Updated `update_contract` signature with breaking change params
+- `griot-registry/src/griot_registry/storage/filesystem.py`
+  - Breaking change tracking in version metadata
+  - Auto-bump to major version for breaking changes
+- `griot-registry/src/griot_registry/storage/git.py`
+  - Breaking change info in commit messages and tags
+- `griot-registry/src/griot_registry/storage/postgres.py`
+  - Breaking change metadata in version records
+
+### API Behavior
+```
+# Without breaking changes - normal update
+PUT /api/v1/contracts/my-contract
+-> 200 OK (new version created)
+
+# With breaking changes (field removed)
+PUT /api/v1/contracts/my-contract
+-> 409 Conflict
+{
+  "code": "BREAKING_CHANGES_DETECTED",
+  "message": "Update contains 1 breaking change(s)...",
+  "breaking_changes": [
+    {
+      "change_type": "field_removed",
+      "field": "old_field",
+      "description": "Field 'old_field' was removed",
+      "migration_hint": "Add the field back or migrate consumers"
+    }
+  ],
+  "allow_breaking_hint": "Add ?allow_breaking=true to force the update"
+}
+
+# Force update with breaking changes
+PUT /api/v1/contracts/my-contract?allow_breaking=true
+-> 200 OK (major version bump, breaking changes tracked)
+```
+
+### Tasks Still Blocked
+| Task ID | Task | Blocked By |
+|---------|------|------------|
+| T-370 | Update Pydantic schemas for ODCS structure | T-327 (core) |
+| T-374 | Update diff endpoint for new schema | T-370 |
+| T-375 | Add schema version negotiation | T-370 |
+
+### Registry Progress (Session 1)
+- **Phase 6 Tasks**: 4 of 7 complete (57%)
+- **T-304, T-371, T-372, T-373**: ✅ Complete
+- **T-370, T-374, T-375**: ⏳ Waiting on T-327 (core)
+
+---
+
+## Session: 2026-01-11 (Phase 6 Completion - Session 2)
+
+### Discovery
+T-327 (core) is now complete, which unblocked T-370, T-374, and T-375!
+
+### Tasks Completed This Session
+
+#### T-370: Update Pydantic schemas for ODCS structure ✅
+Comprehensive ODCS schema implementation with 50+ new Pydantic models:
+
+**Enums/Literals Added:**
+- `ContractStatusType`, `PhysicalTypeValue`, `QualityRuleTypeValue`
+- `CheckTypeValue`, `SeverityValue`, `ExtractionMethodValue`
+- `PartitioningStrategyValue`, `ReviewCadenceValue`, `AccessLevelValue`
+- `DistributionTypeValue`, `SourceTypeValue`, `SensitivityLevelValue`
+- `MaskingStrategyValue`, `LegalBasisValue`, `PIICategoryValue`
+
+**ODCS Section Models:**
+- **Description**: `CustomProperty`, `Description`
+- **Schema Property**: `ForeignKey`, `SemanticInfo`, `PrivacyInfo`, `SchemaProperty`
+- **Quality**: `CompletenessRule`, `AccuracyRule`, `FreshnessRule`, `VolumeRule`, `DistributionRule`, `CustomCheck`, `QualityRules`, `SchemaDefinition`
+- **Legal**: `CrossBorder`, `Legal`
+- **Compliance**: `AuditRequirements`, `ExportRestrictions`, `Compliance`
+- **Lineage**: `ExtractionConfig`, `LineageSource`, `Lineage`
+- **SLA**: `AvailabilitySLA`, `FreshnessSLA`, `CompletenessSLA`, `AccuracySLA`, `ResponseTimeSLA`, `SLA`
+- **Access**: `AccessGrant`, `AccessApproval`, `AccessAuthentication`, `Access`
+- **Distribution**: `PartitioningConfig`, `DistributionChannel`, `Distribution`
+- **Governance**: `ProducerInfo`, `ConsumerInfo`, `ApprovalEntry`, `ReviewConfig`, `ChangeManagement`, `DisputeResolution`, `Documentation`, `Governance`
+- **Team**: `Steward`, `Team`
+- **Server/Role/Timestamps**: `Server`, `Role`, `Timestamps`
+- **Full ODCS**: `ODCSContract`
+
+**Updated Contract Schemas:**
+- `ContractBase`, `ContractCreate`, `ContractUpdate`, `Contract` include all ODCS sections
+- Backwards compatible with legacy `fields` array
+- Supports both simple and full ODCS structure
+
+#### T-374: Update diff endpoint for new schema ✅
+- Added `SectionChange` schema for tracking ODCS section changes
+- Updated `ContractDiff` with new fields:
+  - `section_changes`: List of ODCS section changes
+  - `added_schemas`, `removed_schemas`, `modified_schemas`
+- Updated `diff_contracts()` in filesystem storage to compare all ODCS sections
+- Mark removed sections as breaking changes
+
+#### T-375: Add schema version negotiation ✅
+- Added `parse_accept_header()` helper function
+- Supports content negotiation via Accept header:
+  - `application/json` - Default JSON response
+  - `application/x-yaml` - YAML response
+  - `application/vnd.griot.v1+json` - Versioned JSON
+  - `application/vnd.griot.v1+yaml` - Versioned YAML
+- Returns `X-Griot-Schema-Version` response header
+- Returns 406 for unsupported schema versions
+
+### Files Changed
+- `griot-registry/src/griot_registry/schemas.py` - 50+ new ODCS models
+- `griot-registry/src/griot_registry/api/contracts.py` - Schema version negotiation
+- `griot-registry/src/griot_registry/storage/filesystem.py` - ODCS diff detection
+
+### Registry Progress - FINAL
+- **Phase 6 Tasks**: 7 of 7 complete (100%) 🎉
+- **ALL REGISTRY TASKS COMPLETE!**
+
+| Task | Status |
+|------|--------|
+| T-304 | ✅ Breaking change validation on update |
+| T-370 | ✅ ODCS Pydantic schemas |
+| T-371 | ✅ Breaking change validation in PUT |
+| T-372 | ✅ ?allow_breaking=true parameter |
+| T-373 | ✅ Breaking change history tracking |
+| T-374 | ✅ Diff endpoint for ODCS sections |
+| T-375 | ✅ Schema version negotiation |
+
+---
+
 ## Session: 2026-01-10 (Session 4)
 
 ### Tasks Completed This Session

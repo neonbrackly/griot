@@ -1,0 +1,96 @@
+# =============================================================================
+# Griot Platform - Docker Compose
+# =============================================================================
+# Orchestrates the Griot platform services:
+#   - griot-registry: FastAPI backend (port 8000)
+#   - griot-hub: Next.js frontend (port 3000)
+#
+# Usage:
+#   1. Copy .env.example to .env and configure
+#   2. Run: docker-compose up --build
+#
+# For development with hot-reload, use docker-compose.dev.yml instead.
+# =============================================================================
+
+services:
+  # ---------------------------------------------------------------------------
+  # Griot Registry - FastAPI Backend
+  # ---------------------------------------------------------------------------
+  griot-registry:
+    build:
+      context: .
+      dockerfile: griot-registry/Dockerfile
+    container_name: griot-registry
+    ports:
+      - "${GRIOT_REGISTRY_PORT:-8000}:8000"
+    environment:
+      # Server configuration
+      - GRIOT_REGISTRY_HOST=0.0.0.0
+      - GRIOT_REGISTRY_PORT=8000
+      - GRIOT_REGISTRY_DEBUG=${GRIOT_REGISTRY_DEBUG:-false}
+      - GRIOT_REGISTRY_LOG_LEVEL=${GRIOT_REGISTRY_LOG_LEVEL:-INFO}
+      # CORS - allow the hub frontend
+      - GRIOT_REGISTRY_CORS_ORIGINS=["http://localhost:3000","http://griot-hub:3000","http://localhost:${GRIOT_HUB_PORT:-3000}"]
+      # Storage configuration
+      - GRIOT_REGISTRY_STORAGE_BACKEND=${GRIOT_REGISTRY_STORAGE_BACKEND:-filesystem}
+      - GRIOT_REGISTRY_STORAGE_PATH=/app/data/contracts
+      # PostgreSQL (optional)
+      - GRIOT_REGISTRY_POSTGRES_DSN=${GRIOT_REGISTRY_POSTGRES_DSN:-}
+      # Authentication (optional)
+      - GRIOT_REGISTRY_AUTH_ENABLED=${GRIOT_REGISTRY_AUTH_ENABLED:-false}
+      - GRIOT_REGISTRY_API_KEYS=${GRIOT_REGISTRY_API_KEYS:-[]}
+    volumes:
+      # Persist contract data
+      - griot-registry-data:/app/data/contracts
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+    networks:
+      - griot-network
+
+  # ---------------------------------------------------------------------------
+  # Griot Hub - Next.js Frontend
+  # ---------------------------------------------------------------------------
+  griot-hub:
+    build:
+      context: ./griot-hub
+      dockerfile: Dockerfile
+      args:
+        # CRITICAL: NEXT_PUBLIC_* vars are baked in at build time
+        # Use Docker service name for inter-container communication
+        NEXT_PUBLIC_REGISTRY_API_URL: ${REGISTRY_URL_FOR_BUILD:-http://localhost:8000/api/v1}
+    container_name: griot-hub
+    ports:
+      - "${GRIOT_HUB_PORT:-3000}:3000"
+    environment:
+      - NODE_ENV=production
+    depends_on:
+      griot-registry:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    restart: unless-stopped
+    networks:
+      - griot-network
+
+# -----------------------------------------------------------------------------
+# Volumes
+# -----------------------------------------------------------------------------
+volumes:
+  griot-registry-data:
+    driver: local
+
+# -----------------------------------------------------------------------------
+# Networks
+# -----------------------------------------------------------------------------
+networks:
+  griot-network:
+    driver: bridge

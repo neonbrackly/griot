@@ -97,7 +97,7 @@ fields:
     type: string
     description: Unique customer identifier
     primary_key: true
-    pattern: "^CUST-\\d{6}$"
+    pattern: '^CUST-\\d{6}$'
   email:
     type: string
     description: Customer email address

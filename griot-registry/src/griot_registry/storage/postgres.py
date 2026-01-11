@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 from uuid import uuid4
 
 from griot_registry.schemas import (
@@ -287,17 +287,25 @@ class PostgresStorage(StorageBackend):
         self,
         contract_id: str,
         update: ContractUpdate,
+        is_breaking: bool = False,
+        breaking_changes: list[dict[str, Any]] | None = None,
     ) -> Contract:
-        """Update a contract."""
+        """Update a contract (T-373 enhanced).
+
+        Tracks breaking changes in version history.
+        """
         from sqlalchemy import insert, update as sql_update
 
         contract = await self.get_contract(contract_id)
         if not contract:
             raise ValueError(f"Contract not found: {contract_id}")
 
-        # Bump version
+        # Bump version - force major for breaking changes
         parts = contract.version.split(".")
-        new_version = f"{parts[0]}.{int(parts[1]) + 1}.0"
+        if is_breaking:
+            new_version = f"{int(parts[0]) + 1}.0.0"
+        else:
+            new_version = f"{parts[0]}.{int(parts[1]) + 1}.0"
         now = datetime.now(timezone.utc)
 
         updated = Contract(
@@ -312,6 +320,11 @@ class PostgresStorage(StorageBackend):
             created_at=contract.created_at,
             updated_at=now,
         )
+
+        # T-373: Build version message with breaking change info
+        message = f"Updated to version {new_version}"
+        if is_breaking:
+            message = f"BREAKING: {message}"
 
         async with self.engine.begin() as conn:
             # Update contract
@@ -329,16 +342,25 @@ class PostgresStorage(StorageBackend):
                 )
             )
 
-            # Insert new version
+            # Insert new version with breaking change info
+            version_data = {
+                "id": str(uuid4()),
+                "contract_id": contract_id,
+                "version": new_version,
+                "fields": [f.model_dump() for f in updated.fields],
+                "created_at": now,
+                "message": message,
+            }
+
+            # T-373: Store breaking change details in metadata if available
+            if is_breaking and breaking_changes:
+                version_data["metadata"] = {
+                    "is_breaking": True,
+                    "breaking_changes": breaking_changes,
+                }
+
             await conn.execute(
-                insert(self._versions_table).values(
-                    id=str(uuid4()),
-                    contract_id=contract_id,
-                    version=new_version,
-                    fields=[f.model_dump() for f in updated.fields],
-                    created_at=now,
-                    message=f"Updated to version {new_version}",
-                )
+                insert(self._versions_table).values(**version_data)
             )
 
         return updated

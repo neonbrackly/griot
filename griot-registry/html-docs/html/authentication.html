@@ -1,0 +1,793 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="./">
+  <head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="index" title="Index" href="genindex.html"><link rel="search" title="Search" href="search.html"><link rel="next" title="Administration" href="administration.html"><link rel="prev" title="Storage Backends" href="storage.html">
+
+    <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+        <title>Authentication - griot-registry 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=d111a655" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?v=8dab3a3b" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f2f2f2;
+  --color-code-foreground: #1e1e1e;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
+    <title>Auto light/dark, in light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path style="opacity: 50%" d="M 5.411 14.504 C 5.471 14.504 5.532 14.504 5.591 14.504 C 3.639 16.319 4.383 19.569 6.931 20.352 C 7.693 20.586 8.512 20.551 9.25 20.252 C 8.023 23.207 4.056 23.725 2.11 21.184 C 0.166 18.642 1.702 14.949 4.874 14.536 C 5.051 14.512 5.231 14.5 5.411 14.5 L 5.411 14.504 Z"/>
+      <line x1="14.5" y1="3.25" x2="14.5" y2="1.25"/>
+      <line x1="14.5" y1="15.85" x2="14.5" y2="17.85"/>
+      <line x1="10.044" y1="5.094" x2="8.63" y2="3.68"/>
+      <line x1="19" y1="14.05" x2="20.414" y2="15.464"/>
+      <line x1="8.2" y1="9.55" x2="6.2" y2="9.55"/>
+      <line x1="20.8" y1="9.55" x2="22.8" y2="9.55"/>
+      <line x1="10.044" y1="14.006" x2="8.63" y2="15.42"/>
+      <line x1="19" y1="5.05" x2="20.414" y2="3.636"/>
+      <circle cx="14.5" cy="9.55" r="3.6"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon-with-sun" viewBox="0 0 24 24">
+    <title>Auto light/dark, in dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path d="M 8.282 7.007 C 8.385 7.007 8.494 7.007 8.595 7.007 C 5.18 10.184 6.481 15.869 10.942 17.24 C 12.275 17.648 13.706 17.589 15 17.066 C 12.851 22.236 5.91 23.143 2.505 18.696 C -0.897 14.249 1.791 7.786 7.342 7.063 C 7.652 7.021 7.965 7 8.282 7 L 8.282 7.007 Z"/>
+      <line style="opacity: 50%" x1="18" y1="3.705" x2="18" y2="2.5"/>
+      <line style="opacity: 50%" x1="18" y1="11.295" x2="18" y2="12.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="4.816" x2="14.464" y2="3.964"/>
+      <line style="opacity: 50%" x1="20.711" y1="10.212" x2="21.563" y2="11.063"/>
+      <line style="opacity: 50%" x1="14.205" y1="7.5" x2="13.001" y2="7.5"/>
+      <line style="opacity: 50%" x1="21.795" y1="7.5" x2="23" y2="7.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="10.184" x2="14.464" y2="11.036"/>
+      <line style="opacity: 50%" x1="20.711" y1="4.789" x2="21.563" y2="3.937"/>
+      <circle style="opacity: 50%" cx="18" cy="7.5" r="2.169"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-pencil" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-pencil-code">
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+  <symbol id="svg-eye" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-eye-code">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path
+        d="M11.11 17.958c-3.209 -.307 -5.91 -2.293 -8.11 -5.958c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6c-.21 .352 -.427 .688 -.647 1.008" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle site navigation sidebar">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc" aria-label="Toggle table of contents sidebar">
+<label class="overlay sidebar-overlay" for="__navigation"></label>
+<label class="overlay toc-overlay" for="__toc"></label>
+
+<a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <span class="icon"><svg><use href="#svg-menu"></use></svg></span>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="index.html"><div class="brand">griot-registry 0.1.0 documentation</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+          <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+          <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+        <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="index.html">
+  
+  <span class="sidebar-brand-text">griot-registry 0.1.0 documentation</span>
+  
+</a><form class="sidebar-search-container" method="get" action="search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="getting-started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="deployment.html">Deployment Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api-reference.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="storage.html">Storage Backends</a></li>
+<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Authentication</a></li>
+<li class="toctree-l1"><a class="reference internal" href="administration.html">Administration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="client-integration.html">Client Integration</a></li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="view-this-page">
+  <a class="muted-link" href="_sources/authentication.rst.txt" title="View this page">
+    <svg><use href="#svg-eye"></use></svg>
+    <span class="visually-hidden">View this page</span>
+  </a>
+</div>
+<div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+              <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+              <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+            <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+          </label>
+        </div>
+        <article role="main" id="furo-main-content">
+          <section id="authentication">
+<h1>Authentication<a class="headerlink" href="#authentication" title="Link to this heading">¶</a></h1>
+<p>griot-registry supports multiple authentication methods to secure API access.</p>
+<nav class="contents local" id="table-of-contents">
+<p class="topic-title">Table of Contents</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#authentication-overview" id="id2">Authentication Overview</a></p></li>
+<li><p><a class="reference internal" href="#disabling-authentication" id="id3">Disabling Authentication</a></p></li>
+<li><p><a class="reference internal" href="#api-key-authentication" id="id4">API Key Authentication</a></p>
+<ul>
+<li><p><a class="reference internal" href="#configuration" id="id5">Configuration</a></p></li>
+<li><p><a class="reference internal" href="#using-api-keys" id="id6">Using API Keys</a></p></li>
+<li><p><a class="reference internal" href="#python-client-example" id="id7">Python Client Example</a></p></li>
+<li><p><a class="reference internal" href="#api-key-best-practices" id="id8">API Key Best Practices</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#oauth2-oidc-authentication" id="id9">OAuth2/OIDC Authentication</a></p>
+<ul>
+<li><p><a class="reference internal" href="#installation" id="id10">Installation</a></p></li>
+<li><p><a class="reference internal" href="#id1" id="id11">Configuration</a></p></li>
+<li><p><a class="reference internal" href="#provider-specific-setup" id="id12">Provider-Specific Setup</a></p></li>
+<li><p><a class="reference internal" href="#using-oauth2-tokens" id="id13">Using OAuth2 Tokens</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#role-based-access-control" id="id14">Role-Based Access Control</a></p>
+<ul>
+<li><p><a class="reference internal" href="#roles" id="id15">Roles</a></p></li>
+<li><p><a class="reference internal" href="#configuring-roles" id="id16">Configuring Roles</a></p></li>
+<li><p><a class="reference internal" href="#jwt-claims-example" id="id17">JWT Claims Example</a></p></li>
+<li><p><a class="reference internal" href="#endpoint-permissions" id="id18">Endpoint Permissions</a></p></li>
+<li><p><a class="reference internal" href="#custom-role-requirements" id="id19">Custom Role Requirements</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#scope-based-access-control" id="id20">Scope-Based Access Control</a></p>
+<ul>
+<li><p><a class="reference internal" href="#configuring-scopes" id="id21">Configuring Scopes</a></p></li>
+<li><p><a class="reference internal" href="#using-scopes" id="id22">Using Scopes</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#security-headers" id="id23">Security Headers</a></p></li>
+<li><p><a class="reference internal" href="#cors-configuration" id="id24">CORS Configuration</a></p></li>
+<li><p><a class="reference internal" href="#troubleshooting" id="id25">Troubleshooting</a></p></li>
+</ul>
+</nav>
+<section id="authentication-overview">
+<h2><a class="toc-backref" href="#id2" role="doc-backlink">Authentication Overview</a><a class="headerlink" href="#authentication-overview" title="Link to this heading">¶</a></h2>
+<div class="table-wrapper colwidths-given docutils container">
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 25.0%" />
+<col style="width: 35.0%" />
+<col style="width: 40.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Method</p></th>
+<th class="head"><p>Best For</p></th>
+<th class="head"><p>Configuration</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><strong>None</strong></p></td>
+<td><p>Development only</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">GRIOT_AUTH_ENABLED=false</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>API Key</strong></p></td>
+<td><p>Service-to-service, CI/CD</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">GRIOT_API_KEYS=[...]</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><strong>OAuth2/OIDC</strong></p></td>
+<td><p>User authentication, SSO</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">GRIOT_OIDC_ISSUER=...</span></code></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="disabling-authentication">
+<h2><a class="toc-backref" href="#id3" role="doc-backlink">Disabling Authentication</a><a class="headerlink" href="#disabling-authentication" title="Link to this heading">¶</a></h2>
+<p>For local development, authentication can be disabled:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">GRIOT_AUTH_ENABLED</span><span class="o">=</span><span class="nb">false</span>
+</pre></div>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Never disable authentication in production environments.</p>
+</div>
+</section>
+<section id="api-key-authentication">
+<h2><a class="toc-backref" href="#id4" role="doc-backlink">API Key Authentication</a><a class="headerlink" href="#api-key-authentication" title="Link to this heading">¶</a></h2>
+<p>Simple token-based authentication for service accounts and automation.</p>
+<section id="configuration">
+<h3><a class="toc-backref" href="#id5" role="doc-backlink">Configuration</a><a class="headerlink" href="#configuration" title="Link to this heading">¶</a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">GRIOT_AUTH_ENABLED</span><span class="o">=</span><span class="nb">true</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">GRIOT_API_KEYS</span><span class="o">=</span><span class="s1">&#39;[&quot;sk_live_abc123&quot;, &quot;sk_live_def456&quot;]&#39;</span>
+</pre></div>
+</div>
+<p>Each key in the array is a valid API key. Generate secure keys:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Generate a random API key</span>
+openssl<span class="w"> </span>rand<span class="w"> </span>-hex<span class="w"> </span><span class="m">32</span>
+<span class="c1"># Output: a1b2c3d4e5f6...</span>
+</pre></div>
+</div>
+</section>
+<section id="using-api-keys">
+<h3><a class="toc-backref" href="#id6" role="doc-backlink">Using API Keys</a><a class="headerlink" href="#using-api-keys" title="Link to this heading">¶</a></h3>
+<p>Include the key in the <code class="docutils literal notranslate"><span class="pre">X-API-Key</span></code> header:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>curl<span class="w"> </span>-X<span class="w"> </span>GET<span class="w"> </span>http://localhost:8000/api/v1/contracts<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;X-API-Key: sk_live_abc123&quot;</span>
+</pre></div>
+</div>
+<p>Or use the <code class="docutils literal notranslate"><span class="pre">Authorization</span></code> header with Bearer scheme:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>curl<span class="w"> </span>-X<span class="w"> </span>GET<span class="w"> </span>http://localhost:8000/api/v1/contracts<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Authorization: Bearer sk_live_abc123&quot;</span>
+</pre></div>
+</div>
+</section>
+<section id="python-client-example">
+<h3><a class="toc-backref" href="#id7" role="doc-backlink">Python Client Example</a><a class="headerlink" href="#python-client-example" title="Link to this heading">¶</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">httpx</span>
+
+<span class="n">client</span> <span class="o">=</span> <span class="n">httpx</span><span class="o">.</span><span class="n">Client</span><span class="p">(</span>
+    <span class="n">base_url</span><span class="o">=</span><span class="s2">&quot;http://localhost:8000/api/v1&quot;</span><span class="p">,</span>
+    <span class="n">headers</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;X-API-Key&quot;</span><span class="p">:</span> <span class="s2">&quot;sk_live_abc123&quot;</span><span class="p">}</span>
+<span class="p">)</span>
+
+<span class="n">response</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/contracts&quot;</span><span class="p">)</span>
+<span class="n">contracts</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+<section id="api-key-best-practices">
+<h3><a class="toc-backref" href="#id8" role="doc-backlink">API Key Best Practices</a><a class="headerlink" href="#api-key-best-practices" title="Link to this heading">¶</a></h3>
+<ol class="arabic simple">
+<li><p><strong>Rotate keys regularly</strong>: Replace keys every 90 days</p></li>
+<li><p><strong>Use separate keys</strong>: Different keys for different services/environments</p></li>
+<li><p><strong>Store securely</strong>: Use secrets management (Vault, AWS Secrets Manager)</p></li>
+<li><p><strong>Monitor usage</strong>: Log which key is used for audit trails</p></li>
+<li><p><strong>Revoke compromised keys</strong>: Remove from array immediately if exposed</p></li>
+</ol>
+</section>
+</section>
+<section id="oauth2-oidc-authentication">
+<h2><a class="toc-backref" href="#id9" role="doc-backlink">OAuth2/OIDC Authentication</a><a class="headerlink" href="#oauth2-oidc-authentication" title="Link to this heading">¶</a></h2>
+<p>Enterprise-grade authentication using OpenID Connect providers.</p>
+<section id="installation">
+<h3><a class="toc-backref" href="#id10" role="doc-backlink">Installation</a><a class="headerlink" href="#installation" title="Link to this heading">¶</a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>griot-registry<span class="o">[</span>oauth<span class="o">]</span>
+</pre></div>
+</div>
+</section>
+<section id="id1">
+<h3><a class="toc-backref" href="#id11" role="doc-backlink">Configuration</a><a class="headerlink" href="#id1" title="Link to this heading">¶</a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">GRIOT_AUTH_ENABLED</span><span class="o">=</span><span class="nb">true</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">GRIOT_OIDC_ISSUER</span><span class="o">=</span>https://your-provider.com
+<span class="nb">export</span><span class="w"> </span><span class="nv">GRIOT_OIDC_AUDIENCE</span><span class="o">=</span>griot-registry
+<span class="nb">export</span><span class="w"> </span><span class="nv">GRIOT_OIDC_ALGORITHMS</span><span class="o">=</span><span class="s1">&#39;[&quot;RS256&quot;]&#39;</span>
+</pre></div>
+</div>
+</section>
+<section id="provider-specific-setup">
+<h3><a class="toc-backref" href="#id12" role="doc-backlink">Provider-Specific Setup</a><a class="headerlink" href="#provider-specific-setup" title="Link to this heading">¶</a></h3>
+<p><strong>Okta</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">GRIOT_OIDC_ISSUER</span><span class="o">=</span>https://your-org.okta.com/oauth2/default
+<span class="nb">export</span><span class="w"> </span><span class="nv">GRIOT_OIDC_AUDIENCE</span><span class="o">=</span>api://griot
+</pre></div>
+</div>
+<ol class="arabic simple">
+<li><p>Create an API application in Okta Admin Console</p></li>
+<li><p>Note the Issuer URI from Authorization Servers</p></li>
+<li><p>Set the audience to match your API identifier</p></li>
+<li><p>Configure scopes: <code class="docutils literal notranslate"><span class="pre">openid</span></code>, <code class="docutils literal notranslate"><span class="pre">profile</span></code>, <code class="docutils literal notranslate"><span class="pre">griot:read</span></code>, <code class="docutils literal notranslate"><span class="pre">griot:write</span></code></p></li>
+</ol>
+<p><strong>Auth0</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">GRIOT_OIDC_ISSUER</span><span class="o">=</span>https://your-tenant.auth0.com/
+<span class="nb">export</span><span class="w"> </span><span class="nv">GRIOT_OIDC_AUDIENCE</span><span class="o">=</span>https://api.griot.your-domain.com
+</pre></div>
+</div>
+<ol class="arabic simple">
+<li><p>Create an API in Auth0 Dashboard</p></li>
+<li><p>Set the identifier as your audience</p></li>
+<li><p>Create a Machine-to-Machine application</p></li>
+<li><p>Authorize the application to access the API</p></li>
+</ol>
+<p><strong>Keycloak</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">GRIOT_OIDC_ISSUER</span><span class="o">=</span>https://keycloak.your-domain.com/realms/griot
+<span class="nb">export</span><span class="w"> </span><span class="nv">GRIOT_OIDC_AUDIENCE</span><span class="o">=</span>griot-registry
+</pre></div>
+</div>
+<ol class="arabic simple">
+<li><p>Create a new realm called <code class="docutils literal notranslate"><span class="pre">griot</span></code></p></li>
+<li><p>Create a client called <code class="docutils literal notranslate"><span class="pre">griot-registry</span></code></p></li>
+<li><p>Set Access Type to <code class="docutils literal notranslate"><span class="pre">confidential</span></code></p></li>
+<li><p>Enable Service Accounts</p></li>
+</ol>
+<p><strong>Azure AD</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">GRIOT_OIDC_ISSUER</span><span class="o">=</span>https://login.microsoftonline.com/<span class="o">{</span>tenant-id<span class="o">}</span>/v2.0
+<span class="nb">export</span><span class="w"> </span><span class="nv">GRIOT_OIDC_AUDIENCE</span><span class="o">=</span>api://griot-registry
+</pre></div>
+</div>
+<ol class="arabic simple">
+<li><p>Register an application in Azure Portal</p></li>
+<li><p>Expose an API and define scopes</p></li>
+<li><p>Configure API permissions for client apps</p></li>
+</ol>
+</section>
+<section id="using-oauth2-tokens">
+<h3><a class="toc-backref" href="#id13" role="doc-backlink">Using OAuth2 Tokens</a><a class="headerlink" href="#using-oauth2-tokens" title="Link to this heading">¶</a></h3>
+<p>Obtain an access token from your OIDC provider and include it:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Get token (example with client credentials)</span>
+<span class="nv">TOKEN</span><span class="o">=</span><span class="k">$(</span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>https://your-provider.com/oauth/token<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-d<span class="w"> </span><span class="s2">&quot;grant_type=client_credentials&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-d<span class="w"> </span><span class="s2">&quot;client_id=YOUR_CLIENT_ID&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-d<span class="w"> </span><span class="s2">&quot;client_secret=YOUR_CLIENT_SECRET&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-d<span class="w"> </span><span class="s2">&quot;audience=griot-registry&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span>-r<span class="w"> </span><span class="s1">&#39;.access_token&#39;</span><span class="k">)</span>
+
+<span class="c1"># Use token</span>
+curl<span class="w"> </span>-X<span class="w"> </span>GET<span class="w"> </span>http://localhost:8000/api/v1/contracts<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Authorization: Bearer </span><span class="nv">$TOKEN</span><span class="s2">&quot;</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="role-based-access-control">
+<h2><a class="toc-backref" href="#id14" role="doc-backlink">Role-Based Access Control</a><a class="headerlink" href="#role-based-access-control" title="Link to this heading">¶</a></h2>
+<p>griot-registry supports role-based access control (RBAC) with three built-in roles.</p>
+<section id="roles">
+<h3><a class="toc-backref" href="#id15" role="doc-backlink">Roles</a><a class="headerlink" href="#roles" title="Link to this heading">¶</a></h3>
+<div class="table-wrapper colwidths-given docutils container">
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 20.0%" />
+<col style="width: 30.0%" />
+<col style="width: 50.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Role</p></th>
+<th class="head"><p>Claim Value</p></th>
+<th class="head"><p>Permissions</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><strong>Admin</strong></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">griot:admin</span></code></p></td>
+<td><p>Full access, user management, settings</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Editor</strong></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">griot:editor</span></code></p></td>
+<td><p>Create, update, delete contracts</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Viewer</strong></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">griot:viewer</span></code></p></td>
+<td><p>Read-only access to contracts</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="configuring-roles">
+<h3><a class="toc-backref" href="#id16" role="doc-backlink">Configuring Roles</a><a class="headerlink" href="#configuring-roles" title="Link to this heading">¶</a></h3>
+<p>Roles are read from the JWT claims. Configure the claim name:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">GRIOT_OIDC_ROLES_CLAIM</span><span class="o">=</span>roles
+<span class="c1"># Or for nested claims</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">GRIOT_OIDC_ROLES_CLAIM</span><span class="o">=</span>resource_access.griot.roles
+</pre></div>
+</div>
+</section>
+<section id="jwt-claims-example">
+<h3><a class="toc-backref" href="#id17" role="doc-backlink">JWT Claims Example</a><a class="headerlink" href="#jwt-claims-example" title="Link to this heading">¶</a></h3>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;sub&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;user123&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;email&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;user@example.com&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;roles&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;griot:editor&quot;</span><span class="p">],</span>
+<span class="w">  </span><span class="nt">&quot;exp&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1704931200</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="endpoint-permissions">
+<h3><a class="toc-backref" href="#id18" role="doc-backlink">Endpoint Permissions</a><a class="headerlink" href="#endpoint-permissions" title="Link to this heading">¶</a></h3>
+<div class="table-wrapper colwidths-given docutils container">
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 40.0%" />
+<col style="width: 20.0%" />
+<col style="width: 20.0%" />
+<col style="width: 20.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Endpoint</p></th>
+<th class="head"><p>Viewer</p></th>
+<th class="head"><p>Editor</p></th>
+<th class="head"><p>Admin</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">GET</span> <span class="pre">/contracts</span></code></p></td>
+<td><p>Yes</p></td>
+<td><p>Yes</p></td>
+<td><p>Yes</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">GET</span> <span class="pre">/contracts/{id}</span></code></p></td>
+<td><p>Yes</p></td>
+<td><p>Yes</p></td>
+<td><p>Yes</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">POST</span> <span class="pre">/contracts</span></code></p></td>
+<td><p>No</p></td>
+<td><p>Yes</p></td>
+<td><p>Yes</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">PUT</span> <span class="pre">/contracts/{id}</span></code></p></td>
+<td><p>No</p></td>
+<td><p>Yes</p></td>
+<td><p>Yes</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">DELETE</span> <span class="pre">/contracts/{id}</span></code></p></td>
+<td><p>No</p></td>
+<td><p>No</p></td>
+<td><p>Yes</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">POST</span> <span class="pre">/approvals/{id}/decision</span></code></p></td>
+<td><p>No</p></td>
+<td><p>Yes</p></td>
+<td><p>Yes</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">GET</span> <span class="pre">/admin/*</span></code></p></td>
+<td><p>No</p></td>
+<td><p>No</p></td>
+<td><p>Yes</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="custom-role-requirements">
+<h3><a class="toc-backref" href="#id19" role="doc-backlink">Custom Role Requirements</a><a class="headerlink" href="#custom-role-requirements" title="Link to this heading">¶</a></h3>
+<p>Protect endpoints with specific roles:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">fastapi</span><span class="w"> </span><span class="kn">import</span> <span class="n">Depends</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">griot_registry.auth.oauth</span><span class="w"> </span><span class="kn">import</span> <span class="n">require_role</span><span class="p">,</span> <span class="n">AdminRole</span><span class="p">,</span> <span class="n">EditorRole</span>
+
+<span class="nd">@router</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="s2">&quot;/contracts/</span><span class="si">{contract_id}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">delete_contract</span><span class="p">(</span>
+    <span class="n">contract_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">_</span><span class="p">:</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">require_role</span><span class="p">(</span><span class="n">AdminRole</span><span class="p">))</span>
+<span class="p">):</span>
+    <span class="c1"># Only admins can delete</span>
+    <span class="o">...</span>
+
+<span class="nd">@router</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">&quot;/contracts&quot;</span><span class="p">)</span>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">create_contract</span><span class="p">(</span>
+    <span class="n">contract</span><span class="p">:</span> <span class="n">ContractCreate</span><span class="p">,</span>
+    <span class="n">_</span><span class="p">:</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">require_role</span><span class="p">(</span><span class="n">EditorRole</span><span class="p">))</span>
+<span class="p">):</span>
+    <span class="c1"># Editors and admins can create</span>
+    <span class="o">...</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="scope-based-access-control">
+<h2><a class="toc-backref" href="#id20" role="doc-backlink">Scope-Based Access Control</a><a class="headerlink" href="#scope-based-access-control" title="Link to this heading">¶</a></h2>
+<p>For finer-grained control, use OAuth2 scopes.</p>
+<section id="configuring-scopes">
+<h3><a class="toc-backref" href="#id21" role="doc-backlink">Configuring Scopes</a><a class="headerlink" href="#configuring-scopes" title="Link to this heading">¶</a></h3>
+<p>Define required scopes for operations:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">GRIOT_REQUIRED_SCOPES</span><span class="o">=</span><span class="s1">&#39;{&quot;read&quot;: &quot;griot:read&quot;, &quot;write&quot;: &quot;griot:write&quot;, &quot;admin&quot;: &quot;griot:admin&quot;}&#39;</span>
+</pre></div>
+</div>
+</section>
+<section id="using-scopes">
+<h3><a class="toc-backref" href="#id22" role="doc-backlink">Using Scopes</a><a class="headerlink" href="#using-scopes" title="Link to this heading">¶</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">griot_registry.auth.oauth</span><span class="w"> </span><span class="kn">import</span> <span class="n">require_scope</span>
+
+<span class="nd">@router</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/contracts&quot;</span><span class="p">)</span>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">list_contracts</span><span class="p">(</span>
+    <span class="n">_</span><span class="p">:</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">require_scope</span><span class="p">(</span><span class="s2">&quot;griot:read&quot;</span><span class="p">))</span>
+<span class="p">):</span>
+    <span class="o">...</span>
+
+<span class="nd">@router</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">&quot;/contracts&quot;</span><span class="p">)</span>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">create_contract</span><span class="p">(</span>
+    <span class="n">_</span><span class="p">:</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">require_scope</span><span class="p">(</span><span class="s2">&quot;griot:write&quot;</span><span class="p">))</span>
+<span class="p">):</span>
+    <span class="o">...</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="security-headers">
+<h2><a class="toc-backref" href="#id23" role="doc-backlink">Security Headers</a><a class="headerlink" href="#security-headers" title="Link to this heading">¶</a></h2>
+<p>griot-registry sets security headers by default:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>X-Content-Type-Options: nosniff
+X-Frame-Options: DENY
+X-XSS-Protection: 1; mode=block
+Strict-Transport-Security: max-age=31536000; includeSubDomains
+</pre></div>
+</div>
+<p>Configure additional headers:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">GRIOT_SECURITY_HEADERS</span><span class="o">=</span><span class="s1">&#39;{&quot;X-Custom-Header&quot;: &quot;value&quot;}&#39;</span>
+</pre></div>
+</div>
+</section>
+<section id="cors-configuration">
+<h2><a class="toc-backref" href="#id24" role="doc-backlink">CORS Configuration</a><a class="headerlink" href="#cors-configuration" title="Link to this heading">¶</a></h2>
+<p>Configure Cross-Origin Resource Sharing for web clients:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Allow specific origins</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">GRIOT_CORS_ORIGINS</span><span class="o">=</span><span class="s1">&#39;[&quot;https://hub.griot.io&quot;, &quot;http://localhost:3000&quot;]&#39;</span>
+
+<span class="c1"># Allow all origins (development only!)</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">GRIOT_CORS_ORIGINS</span><span class="o">=</span><span class="s1">&#39;[&quot;*&quot;]&#39;</span>
+
+<span class="c1"># Additional CORS settings</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">GRIOT_CORS_ALLOW_CREDENTIALS</span><span class="o">=</span><span class="nb">true</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">GRIOT_CORS_ALLOW_METHODS</span><span class="o">=</span><span class="s1">&#39;[&quot;GET&quot;, &quot;POST&quot;, &quot;PUT&quot;, &quot;DELETE&quot;]&#39;</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">GRIOT_CORS_ALLOW_HEADERS</span><span class="o">=</span><span class="s1">&#39;[&quot;*&quot;]&#39;</span>
+</pre></div>
+</div>
+</section>
+<section id="troubleshooting">
+<h2><a class="toc-backref" href="#id25" role="doc-backlink">Troubleshooting</a><a class="headerlink" href="#troubleshooting" title="Link to this heading">¶</a></h2>
+<p><strong>“401 Unauthorized” with valid API key</strong></p>
+<ul class="simple">
+<li><p>Verify the key is in <code class="docutils literal notranslate"><span class="pre">GRIOT_API_KEYS</span></code> array</p></li>
+<li><p>Check for whitespace in the key</p></li>
+<li><p>Ensure <code class="docutils literal notranslate"><span class="pre">GRIOT_AUTH_ENABLED=true</span></code></p></li>
+</ul>
+<p><strong>“401 Unauthorized” with valid JWT</strong></p>
+<ul class="simple">
+<li><p>Check token expiration (<code class="docutils literal notranslate"><span class="pre">exp</span></code> claim)</p></li>
+<li><p>Verify issuer matches <code class="docutils literal notranslate"><span class="pre">GRIOT_OIDC_ISSUER</span></code></p></li>
+<li><p>Confirm audience matches <code class="docutils literal notranslate"><span class="pre">GRIOT_OIDC_AUDIENCE</span></code></p></li>
+<li><p>Test token at <a class="reference external" href="https://jwt.io">https://jwt.io</a></p></li>
+</ul>
+<p><strong>“403 Forbidden” - insufficient permissions</strong></p>
+<ul class="simple">
+<li><p>Check user’s roles in JWT claims</p></li>
+<li><p>Verify roles claim path (<code class="docutils literal notranslate"><span class="pre">GRIOT_OIDC_ROLES_CLAIM</span></code>)</p></li>
+<li><p>Ensure user has required role for endpoint</p></li>
+</ul>
+<p><strong>CORS errors in browser</strong></p>
+<ul class="simple">
+<li><p>Add your frontend origin to <code class="docutils literal notranslate"><span class="pre">GRIOT_CORS_ORIGINS</span></code></p></li>
+<li><p>Check for protocol mismatch (http vs https)</p></li>
+<li><p>Verify credentials setting matches frontend</p></li>
+</ul>
+</section>
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          <a class="next-page" href="administration.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">Administration</div>
+              </div>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+            </a>
+          <a class="prev-page" href="storage.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">Storage Backends</div>
+                
+              </div>
+            </a>
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2024, Griot Team
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer">
+      
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">Authentication</a><ul>
+<li><a class="reference internal" href="#authentication-overview">Authentication Overview</a></li>
+<li><a class="reference internal" href="#disabling-authentication">Disabling Authentication</a></li>
+<li><a class="reference internal" href="#api-key-authentication">API Key Authentication</a><ul>
+<li><a class="reference internal" href="#configuration">Configuration</a></li>
+<li><a class="reference internal" href="#using-api-keys">Using API Keys</a></li>
+<li><a class="reference internal" href="#python-client-example">Python Client Example</a></li>
+<li><a class="reference internal" href="#api-key-best-practices">API Key Best Practices</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#oauth2-oidc-authentication">OAuth2/OIDC Authentication</a><ul>
+<li><a class="reference internal" href="#installation">Installation</a></li>
+<li><a class="reference internal" href="#id1">Configuration</a></li>
+<li><a class="reference internal" href="#provider-specific-setup">Provider-Specific Setup</a></li>
+<li><a class="reference internal" href="#using-oauth2-tokens">Using OAuth2 Tokens</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#role-based-access-control">Role-Based Access Control</a><ul>
+<li><a class="reference internal" href="#roles">Roles</a></li>
+<li><a class="reference internal" href="#configuring-roles">Configuring Roles</a></li>
+<li><a class="reference internal" href="#jwt-claims-example">JWT Claims Example</a></li>
+<li><a class="reference internal" href="#endpoint-permissions">Endpoint Permissions</a></li>
+<li><a class="reference internal" href="#custom-role-requirements">Custom Role Requirements</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#scope-based-access-control">Scope-Based Access Control</a><ul>
+<li><a class="reference internal" href="#configuring-scopes">Configuring Scopes</a></li>
+<li><a class="reference internal" href="#using-scopes">Using Scopes</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#security-headers">Security Headers</a></li>
+<li><a class="reference internal" href="#cors-configuration">CORS Configuration</a></li>
+<li><a class="reference internal" href="#troubleshooting">Troubleshooting</a></li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
+      
+      
+    </aside>
+  </div>
+</div><script src="_static/documentation_options.js?v=01f34227"></script>
+    <script src="_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/scripts/furo.js?v=46bd48cc"></script>
+    </body>
+</html>

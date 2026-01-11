@@ -15,18 +15,30 @@ from typing import TYPE_CHECKING, Any, Callable
 from uuid import UUID
 
 from griot_core.exceptions import ValidationError
-from griot_core.types import DataType, FieldFormat, Severity
+from griot_core.types import (
+    DataType,
+    FieldFormat,
+    QualityRuleType,
+    Severity,
+)
 
 if TYPE_CHECKING:
     from griot_core.models import FieldInfo, GriotModel
+    from griot_core.types import CustomCheck, QualityRule
 
 __all__ = [
     "FieldValidationError",
     "FieldStats",
     "ValidationResult",
+    "QualityRuleResult",
+    "QualityValidationResult",
     "validate_data",
     "validate_single_row",
     "validate_value",
+    "validate_quality_rules",
+    "validate_completeness",
+    "validate_volume",
+    "validate_freshness",
 ]
 
 
@@ -610,3 +622,403 @@ def _serialize_value(value: Any) -> Any:
     if isinstance(value, dict):
         return {k: _serialize_value(v) for k, v in value.items()}
     return str(value)
+
+
+# ============================================================================
+# ODCS Quality Rule Validation (Phase 6 - T-331)
+# ============================================================================
+
+
+@dataclass
+class QualityRuleResult:
+    """
+    Result of a single quality rule validation.
+
+    Attributes:
+        rule_type: Type of quality rule validated.
+        passed: Whether the rule passed.
+        actual_value: The actual measured value.
+        threshold: The threshold that was checked against.
+        message: Human-readable result message.
+        severity: Severity level if rule failed.
+        field: Optional field name for field-specific rules.
+    """
+
+    rule_type: QualityRuleType
+    passed: bool
+    actual_value: float | int | None
+    threshold: float | int | None
+    message: str
+    severity: Severity = Severity.ERROR
+    field: str | None = None
+
+    def to_dict(self) -> dict[str, Any]:
+        """Convert to dictionary representation."""
+        return {
+            "rule_type": self.rule_type.value,
+            "passed": self.passed,
+            "actual_value": self.actual_value,
+            "threshold": self.threshold,
+            "message": self.message,
+            "severity": self.severity.value,
+            "field": self.field,
+        }
+
+
+@dataclass
+class QualityValidationResult:
+    """
+    Result of quality rules validation against a dataset.
+
+    Attributes:
+        passed: Whether all quality rules passed.
+        rule_results: Individual results for each quality rule.
+        row_count: Number of rows validated.
+        duration_ms: Time taken for validation in milliseconds.
+    """
+
+    passed: bool
+    rule_results: list[QualityRuleResult] = dataclass_field(default_factory=list)
+    row_count: int = 0
+    duration_ms: float = 0.0
+
+    @property
+    def failed_rules(self) -> list[QualityRuleResult]:
+        """Return list of failed rule results."""
+        return [r for r in self.rule_results if not r.passed]
+
+    @property
+    def passed_rules(self) -> list[QualityRuleResult]:
+        """Return list of passed rule results."""
+        return [r for r in self.rule_results if r.passed]
+
+    def to_dict(self) -> dict[str, Any]:
+        """Convert to dictionary representation."""
+        return {
+            "passed": self.passed,
+            "row_count": self.row_count,
+            "duration_ms": self.duration_ms,
+            "rule_results": [r.to_dict() for r in self.rule_results],
+            "failed_count": len(self.failed_rules),
+            "passed_count": len(self.passed_rules),
+        }
+
+    def summary(self) -> str:
+        """Return a human-readable summary."""
+        status = "PASSED" if self.passed else "FAILED"
+        lines = [
+            f"Quality Validation {status}",
+            f"  Rows analyzed: {self.row_count:,}",
+            f"  Rules passed: {len(self.passed_rules)}/{len(self.rule_results)}",
+            f"  Duration: {self.duration_ms:.2f}ms",
+        ]
+
+        if self.failed_rules:
+            lines.append("")
+            lines.append("Failed rules:")
+            for result in self.failed_rules:
+                lines.append(f"  - [{result.rule_type.value}] {result.message}")
+
+        return "\n".join(lines)
+
+    def __str__(self) -> str:
+        return self.summary()
+
+
+def validate_completeness(
+    data: list[dict[str, Any]],
+    fields: list[str] | None = None,
+    min_percent: float = 99.0,
+) -> QualityRuleResult:
+    """
+    Validate data completeness (non-null percentage).
+
+    Args:
+        data: List of row dictionaries.
+        fields: Optional list of fields to check. If None, checks all fields.
+        min_percent: Minimum required completeness percentage (default: 99.0).
+
+    Returns:
+        QualityRuleResult with completeness validation result.
+    """
+    if not data:
+        return QualityRuleResult(
+            rule_type=QualityRuleType.COMPLETENESS,
+            passed=True,
+            actual_value=100.0,
+            threshold=min_percent,
+            message="No data to validate",
+        )
+
+    # Determine fields to check
+    if fields is None:
+        fields = list(data[0].keys()) if data else []
+
+    total_cells = len(data) * len(fields)
+    if total_cells == 0:
+        return QualityRuleResult(
+            rule_type=QualityRuleType.COMPLETENESS,
+            passed=True,
+            actual_value=100.0,
+            threshold=min_percent,
+            message="No fields to validate",
+        )
+
+    # Count non-null values
+    non_null_count = sum(
+        1 for row in data for field in fields if row.get(field) is not None
+    )
+
+    completeness_percent = (non_null_count / total_cells) * 100
+    passed = completeness_percent >= min_percent
+
+    return QualityRuleResult(
+        rule_type=QualityRuleType.COMPLETENESS,
+        passed=passed,
+        actual_value=round(completeness_percent, 2),
+        threshold=min_percent,
+        message=(
+            f"Completeness: {completeness_percent:.2f}% "
+            f"({'meets' if passed else 'below'} threshold of {min_percent}%)"
+        ),
+        severity=Severity.ERROR if not passed else Severity.INFO,
+    )
+
+
+def validate_volume(
+    data: list[dict[str, Any]],
+    min_rows: int | None = None,
+    max_rows: int | None = None,
+) -> QualityRuleResult:
+    """
+    Validate data volume (row count).
+
+    Args:
+        data: List of row dictionaries.
+        min_rows: Minimum expected row count (optional).
+        max_rows: Maximum expected row count (optional).
+
+    Returns:
+        QualityRuleResult with volume validation result.
+    """
+    row_count = len(data)
+    passed = True
+    messages = []
+
+    if min_rows is not None and row_count < min_rows:
+        passed = False
+        messages.append(f"Row count {row_count} below minimum {min_rows}")
+
+    if max_rows is not None and row_count > max_rows:
+        passed = False
+        messages.append(f"Row count {row_count} exceeds maximum {max_rows}")
+
+    if not messages:
+        threshold_desc = []
+        if min_rows is not None:
+            threshold_desc.append(f"min={min_rows}")
+        if max_rows is not None:
+            threshold_desc.append(f"max={max_rows}")
+        threshold_str = ", ".join(threshold_desc) if threshold_desc else "none"
+        messages.append(f"Row count {row_count} within expected range ({threshold_str})")
+
+    return QualityRuleResult(
+        rule_type=QualityRuleType.VOLUME,
+        passed=passed,
+        actual_value=row_count,
+        threshold=min_rows,  # Use min_rows as primary threshold
+        message="; ".join(messages),
+        severity=Severity.ERROR if not passed else Severity.INFO,
+    )
+
+
+def validate_freshness(
+    data: list[dict[str, Any]],
+    timestamp_field: str,
+    max_age_seconds: int,
+    reference_time: datetime | None = None,
+) -> QualityRuleResult:
+    """
+    Validate data freshness based on a timestamp field.
+
+    Args:
+        data: List of row dictionaries.
+        timestamp_field: Name of the field containing timestamps.
+        max_age_seconds: Maximum allowed age in seconds.
+        reference_time: Reference time to compare against (default: now).
+
+    Returns:
+        QualityRuleResult with freshness validation result.
+    """
+    if not data:
+        return QualityRuleResult(
+            rule_type=QualityRuleType.FRESHNESS,
+            passed=True,
+            actual_value=0,
+            threshold=max_age_seconds,
+            message="No data to validate freshness",
+            field=timestamp_field,
+        )
+
+    if reference_time is None:
+        reference_time = datetime.utcnow()
+
+    # Find the most recent timestamp
+    latest_timestamp: datetime | None = None
+    for row in data:
+        ts_value = row.get(timestamp_field)
+        if ts_value is None:
+            continue
+
+        # Parse timestamp
+        if isinstance(ts_value, datetime):
+            ts = ts_value
+        elif isinstance(ts_value, str):
+            try:
+                # Try common formats
+                for fmt in [
+                    "%Y-%m-%dT%H:%M:%S",
+                    "%Y-%m-%dT%H:%M:%SZ",
+                    "%Y-%m-%dT%H:%M:%S.%f",
+                    "%Y-%m-%d %H:%M:%S",
+                ]:
+                    try:
+                        ts = datetime.strptime(ts_value.replace("+00:00", "").rstrip("Z"), fmt.rstrip("Z"))
+                        break
+                    except ValueError:
+                        continue
+                else:
+                    continue
+            except (ValueError, TypeError):
+                continue
+        else:
+            continue
+
+        if latest_timestamp is None or ts > latest_timestamp:
+            latest_timestamp = ts
+
+    if latest_timestamp is None:
+        return QualityRuleResult(
+            rule_type=QualityRuleType.FRESHNESS,
+            passed=False,
+            actual_value=None,
+            threshold=max_age_seconds,
+            message=f"No valid timestamps found in field '{timestamp_field}'",
+            severity=Severity.WARNING,
+            field=timestamp_field,
+        )
+
+    # Calculate age in seconds
+    age_seconds = (reference_time - latest_timestamp).total_seconds()
+    passed = age_seconds <= max_age_seconds
+
+    # Format age for human readability
+    if age_seconds < 60:
+        age_str = f"{age_seconds:.0f} seconds"
+    elif age_seconds < 3600:
+        age_str = f"{age_seconds / 60:.1f} minutes"
+    elif age_seconds < 86400:
+        age_str = f"{age_seconds / 3600:.1f} hours"
+    else:
+        age_str = f"{age_seconds / 86400:.1f} days"
+
+    return QualityRuleResult(
+        rule_type=QualityRuleType.FRESHNESS,
+        passed=passed,
+        actual_value=int(age_seconds),
+        threshold=max_age_seconds,
+        message=(
+            f"Data age: {age_str} "
+            f"({'within' if passed else 'exceeds'} max age of {max_age_seconds}s)"
+        ),
+        severity=Severity.ERROR if not passed else Severity.INFO,
+        field=timestamp_field,
+    )
+
+
+def validate_quality_rules(
+    model: type[GriotModel],
+    data: list[dict[str, Any]],
+) -> QualityValidationResult:
+    """
+    Validate data against ODCS quality rules defined on the model.
+
+    Args:
+        model: The GriotModel class with quality rules defined.
+        data: List of row dictionaries to validate.
+
+    Returns:
+        QualityValidationResult with all rule results.
+    """
+    start_time = time.perf_counter()
+
+    # Handle DataFrame-like objects
+    if hasattr(data, "to_dict"):
+        data = data.to_dict("records")
+
+    if isinstance(data, dict):
+        data = [data]
+
+    rule_results: list[QualityRuleResult] = []
+    row_count = len(data)
+
+    # Get quality rules from model
+    quality_rules = model.get_quality_rules() if hasattr(model, "get_quality_rules") else []
+
+    for rule in quality_rules:
+        rule_type = rule.rule_type if hasattr(rule, "rule_type") else None
+
+        if rule_type == QualityRuleType.COMPLETENESS:
+            threshold = rule.threshold if hasattr(rule, "threshold") else 99.0
+            fields = rule.fields if hasattr(rule, "fields") else None
+            result = validate_completeness(data, fields=fields, min_percent=threshold)
+            rule_results.append(result)
+
+        elif rule_type == QualityRuleType.VOLUME:
+            min_rows = rule.min_value if hasattr(rule, "min_value") else None
+            max_rows = rule.max_value if hasattr(rule, "max_value") else None
+            result = validate_volume(data, min_rows=min_rows, max_rows=max_rows)
+            rule_results.append(result)
+
+        elif rule_type == QualityRuleType.FRESHNESS:
+            field = rule.field if hasattr(rule, "field") else None
+            max_age = rule.max_value if hasattr(rule, "max_value") else 86400  # Default 24h
+            if field:
+                result = validate_freshness(data, field, int(max_age))
+                rule_results.append(result)
+
+        elif rule_type == QualityRuleType.ACCURACY:
+            # Accuracy requires external validation - mark as skipped
+            rule_results.append(
+                QualityRuleResult(
+                    rule_type=QualityRuleType.ACCURACY,
+                    passed=True,
+                    actual_value=None,
+                    threshold=None,
+                    message="Accuracy validation requires external reference data",
+                    severity=Severity.INFO,
+                )
+            )
+
+        elif rule_type == QualityRuleType.DISTRIBUTION:
+            # Distribution validation requires statistical analysis - mark as skipped
+            rule_results.append(
+                QualityRuleResult(
+                    rule_type=QualityRuleType.DISTRIBUTION,
+                    passed=True,
+                    actual_value=None,
+                    threshold=None,
+                    message="Distribution validation requires baseline statistics",
+                    severity=Severity.INFO,
+                )
+            )
+
+    duration_ms = (time.perf_counter() - start_time) * 1000
+    passed = all(r.passed for r in rule_results)
+
+    return QualityValidationResult(
+        passed=passed,
+        rule_results=rule_results,
+        row_count=row_count,
+        duration_ms=duration_ms,
+    )

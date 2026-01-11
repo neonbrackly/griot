@@ -2,6 +2,7 @@
 
 from abc import ABC, abstractmethod
 from datetime import datetime
+from typing import Any
 
 from griot_registry.schemas import (
     Contract,
@@ -105,12 +106,16 @@ class StorageBackend(ABC):
         self,
         contract_id: str,
         update: ContractUpdate,
+        is_breaking: bool = False,
+        breaking_changes: list[dict[str, Any]] | None = None,
     ) -> Contract:
-        """Update a contract, creating a new version.
+        """Update a contract, creating a new version (T-373 enhanced).
 
         Args:
             contract_id: The contract identifier.
             update: The update data.
+            is_breaking: Whether this update contains breaking changes.
+            breaking_changes: List of breaking change details for history tracking.
 
         Returns:
             The updated contract with new version.
