@@ -5,7 +5,8 @@
       "Bash(curl:*)",
       "Bash(taskkill:*)",
       "mcp__playwright__browser_install",
-      "Bash(npx playwright install:*)"
+      "Bash(npx playwright install:*)",
+      "Bash(NODE_OPTIONS=\"--max-old-space-size=4096\" npm run build:*)"
     ]
   }
 }

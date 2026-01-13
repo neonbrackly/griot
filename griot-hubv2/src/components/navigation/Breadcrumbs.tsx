@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { ChevronRight, Home } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-interface BreadcrumbItem {
+export interface BreadcrumbItem {
   label: string
   href?: string
   icon?: React.ComponentType<{ className?: string }>

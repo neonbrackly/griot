@@ -10,6 +10,7 @@ export {
 } from './Tabs'
 
 export { Breadcrumbs, BackLink } from './Breadcrumbs'
+export type { BreadcrumbItem } from './Breadcrumbs'
 
 export {
   Pagination,

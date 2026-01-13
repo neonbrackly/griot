@@ -205,3 +205,43 @@ export function StatusBadge({ status, label, size, className }: GenericStatusBad
     </span>
   )
 }
+
+// Asset Status Types (for Data Assets)
+export type AssetStatus = 'active' | 'draft' | 'deprecated'
+
+interface AssetStatusBadgeProps extends StatusBadgeProps {
+  status: AssetStatus
+}
+
+const assetStatusConfig: Record<
+  AssetStatus,
+  { label: string; icon: React.ComponentType<{ className?: string }>; className: string }
+> = {
+  active: {
+    label: 'Active',
+    icon: CheckCircle2,
+    className: 'bg-success-bg text-success-text',
+  },
+  draft: {
+    label: 'Draft',
+    icon: FileEdit,
+    className: 'bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300',
+  },
+  deprecated: {
+    label: 'Deprecated',
+    icon: Archive,
+    className: 'bg-neutral-100 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400',
+  },
+}
+
+export function AssetStatusBadge({ status, size, className }: AssetStatusBadgeProps) {
+  const config = assetStatusConfig[status]
+  const Icon = config.icon
+
+  return (
+    <span className={cn(statusBadgeVariants({ size }), config.className, className)}>
+      <Icon className="h-3.5 w-3.5" />
+      {config.label}
+    </span>
+  )
+}
