@@ -95,6 +95,60 @@ export interface AssetSLA {
   availabilityPercent: number
 }
 
+// Asset Form Data (for wizard)
+export interface AssetFormData {
+  connectionId?: string
+  connection?: Connection
+  selectedTables?: SelectedTable[]
+  name?: string
+  description?: string
+  domain?: string
+  ownerTeamId?: string
+  tags?: string[]
+  sla?: AssetSLA
+}
+
+export interface SelectedTable {
+  id: string
+  schema: string
+  name: string
+  columns: TableColumn[]
+  rowCount?: number
+}
+
+export interface TableColumn {
+  name: string
+  type: string
+  nullable: boolean
+  primaryKey?: boolean
+}
+
+// Database Browse types (for connection browsing)
+export interface DatabaseStructure {
+  schemas: DatabaseSchema[]
+}
+
+export interface DatabaseSchema {
+  name: string
+  tables: DatabaseTable[]
+}
+
+export interface DatabaseTable {
+  name: string
+  columns: TableColumn[]
+  rowCount?: number
+  sizeBytes?: number
+  lastUpdated?: string
+}
+
+export interface TablePreview {
+  columns: TableColumn[]
+  sampleData: Record<string, unknown>[]
+  rowCount: number
+  sizeBytes?: number
+  lastUpdated?: string
+}
+
 // Contract types
 export type ContractStatus = 'draft' | 'proposed' | 'pending_review' | 'active' | 'deprecated'
 
@@ -231,6 +285,82 @@ export interface TimelineDay {
   runsCount: number
   passedCount: number
   failedCount: number
+}
+
+// Task types
+export interface PendingAuthorization {
+  id: string
+  contractId: string
+  contractName: string
+  requestedBy: string
+  requestedByEmail: string
+  requestedAt: string
+  domain: string
+  priority: 'high' | 'medium' | 'low'
+  description?: string
+}
+
+export interface CommentToReview {
+  id: string
+  contractId: string
+  contractName: string
+  commentBy: string
+  commentByAvatar?: string
+  commentAt: string
+  comment: string
+  type: 'feedback' | 'question' | 'approval'
+}
+
+export interface Draft {
+  id: string
+  type: 'contract' | 'asset'
+  name?: string
+  updatedAt: string
+  completionPercent?: number
+  domain?: string
+}
+
+export interface MyTasks {
+  authorizations: PendingAuthorization[]
+  comments: CommentToReview[]
+  drafts: Draft[]
+}
+
+// Notification types
+export type NotificationType =
+  | 'contract_approved'
+  | 'contract_rejected'
+  | 'issue_detected'
+  | 'sla_breach'
+  | 'schema_drift'
+  | 'comment_added'
+  | 'task_assigned'
+
+export interface Notification {
+  id: string
+  type: NotificationType
+  title: string
+  description: string
+  href?: string
+  read: boolean
+  createdAt: string
+}
+
+// Search result types
+export interface SearchResult {
+  id: string
+  name: string
+  type: 'contract' | 'asset' | 'issue' | 'team'
+  href: string
+  description?: string
+  domain?: string
+}
+
+export interface GlobalSearchResults {
+  contracts: SearchResult[]
+  assets: SearchResult[]
+  issues: SearchResult[]
+  teams: SearchResult[]
 }
 
 // API Response types

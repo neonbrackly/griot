@@ -2,113 +2,164 @@
 
 import { PageShell, PageContainer, PageHeader } from '@/components/layout'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/layout'
-import { Button } from '@/components/ui'
-import { Badge } from '@/components/ui'
+import {
+  Button,
+  Badge,
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from '@/components/ui'
+import { TimelineChart } from '@/components/dashboard/TimelineChart'
+import { HealthScoreCard } from '@/components/dashboard/HealthScoreCard'
+import { Skeleton } from '@/components/feedback'
 import {
   Shield,
   DollarSign,
   BarChart3,
   AlertTriangle,
   Lightbulb,
-  ChevronRight,
-  ArrowUp,
-  ArrowDown,
+  ChevronDown,
+  FileText,
+  Brain,
 } from 'lucide-react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { useQuery } from '@tanstack/react-query'
+import { api, queryKeys } from '@/lib/api/client'
+import type { DashboardMetrics, Issue, TimelineDay } from '@/types'
 
-// Placeholder data - will be replaced with real API calls by Agent 3
-const mockMetrics = {
-  compliance: { score: 87, trend: 3, detail: '142/163 pass' },
-  cost: { score: 78, trend: -12, detail: '$42K/mo' },
-  analytics: { score: 91, trend: 2, detail: '4.2% nulls' },
+interface Recommendation {
+  id: string
+  type: 'action' | 'warning' | 'info'
+  priority: 'high' | 'medium' | 'low'
+  title: string
+  description: string
+  actionLabel: string
+  actionHref: string
 }
 
-const mockIssues = [
-  { id: '1', title: 'PII Exposure Risk', severity: 'critical', contract: 'CONTRACT-045' },
-  { id: '2', title: 'Schema Drift Detected', severity: 'warning', contract: 'CONTRACT-023' },
-]
-
-const mockRecommendations = [
-  { id: '1', text: '3 contracts pending > 7 days' },
-  { id: '2', text: 'customer_events: 32% nulls' },
-  { id: '3', text: '2 twin assets detected' },
-]
-
 export default function DashboardPage() {
+  const router = useRouter()
+
+  // Fetch dashboard metrics
+  const {
+    data: metrics,
+    isLoading: metricsLoading,
+    error: metricsError,
+  } = useQuery<DashboardMetrics>({
+    queryKey: queryKeys.dashboard.metrics,
+    queryFn: () => api.get('/dashboard/metrics'),
+  })
+
+  // Fetch timeline data
+  const {
+    data: timeline,
+    isLoading: timelineLoading,
+    error: timelineError,
+  } = useQuery<TimelineDay[]>({
+    queryKey: queryKeys.dashboard.timeline({ days: 30 }),
+    queryFn: () => api.get('/dashboard/timeline?days=30'),
+  })
+
+  // Fetch recommendations
+  const {
+    data: recommendations,
+    isLoading: recommendationsLoading,
+  } = useQuery<Recommendation[]>({
+    queryKey: queryKeys.dashboard.recommendations,
+    queryFn: () => api.get('/dashboard/recommendations'),
+  })
+
+  // Fetch active issues
+  const {
+    data: issuesData,
+    isLoading: issuesLoading,
+  } = useQuery<{ data: Issue[] }>({
+    queryKey: queryKeys.issues.list({ status: 'open', limit: 5 }),
+    queryFn: () => api.get<{ data: Issue[] }>('/issues?status=open&limit=5'),
+  })
+
+  const issues = issuesData?.data || []
+
+  // Get user name from query or default
+  const userName = 'Jane'
+  const greeting = `Good morning, ${userName}`
+
   return (
     <PageShell>
       <PageContainer>
         <PageHeader
-          title="Good morning, Jane"
+          title={greeting}
           actions={
-            <Button variant="secondary">
-              Generate Report
-              <ChevronRight className="w-4 h-4 ml-1" />
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="secondary">
+                  Generate Report
+                  <ChevronDown className="w-4 h-4 ml-2" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuItem onClick={() => router.push('/reports/audit')}>
+                  <Shield className="w-4 h-4 mr-2" />
+                  Audit Readiness
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => router.push('/reports/cost')}>
+                  <DollarSign className="w-4 h-4 mr-2" />
+                  Cost Readiness
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => router.push('/reports/analytics')}>
+                  <BarChart3 className="w-4 h-4 mr-2" />
+                  Analytics Readiness
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => router.push('/reports/ai')}>
+                  <Brain className="w-4 h-4 mr-2" />
+                  AI Readiness
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => router.push('/reports')}>
+                  <FileText className="w-4 h-4 mr-2" />
+                  View All Reports
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           }
         />
 
         {/* Health Score Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <HealthCard
+          <HealthScoreCard
             title="Compliance Health"
             icon={Shield}
-            score={mockMetrics.compliance.score}
-            trend={mockMetrics.compliance.trend}
-            detail={mockMetrics.compliance.detail}
+            score={metrics?.complianceHealth.score || 0}
+            trend={metrics?.complianceHealth.trend || 0}
+            details={metrics?.complianceHealth.details || ''}
             color="green"
+            isLoading={metricsLoading}
           />
-          <HealthCard
+          <HealthScoreCard
             title="Cost Health"
             icon={DollarSign}
-            score={mockMetrics.cost.score}
-            trend={mockMetrics.cost.trend}
-            detail={mockMetrics.cost.detail}
+            score={metrics?.costHealth.score || 0}
+            trend={metrics?.costHealth.trend || 0}
+            details={metrics?.costHealth.details || ''}
             color="blue"
+            isLoading={metricsLoading}
           />
-          <HealthCard
+          <HealthScoreCard
             title="Analytics Health"
             icon={BarChart3}
-            score={mockMetrics.analytics.score}
-            trend={mockMetrics.analytics.trend}
-            detail={mockMetrics.analytics.detail}
+            score={metrics?.analyticsHealth.score || 0}
+            trend={metrics?.analyticsHealth.trend || 0}
+            details={metrics?.analyticsHealth.details || ''}
             color="purple"
+            isLoading={metricsLoading}
           />
         </div>
 
-        {/* Timeline Placeholder */}
-        <Card className="mb-6">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle>Contract Runs</CardTitle>
-              <Badge variant="secondary">Past 30 days</Badge>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="h-24 flex items-end gap-1">
-              {/* Placeholder timeline bars - Agent 3 will implement real chart */}
-              {Array.from({ length: 30 }).map((_, i) => {
-                const height = Math.random() * 80 + 20
-                const status = Math.random() > 0.9 ? 'error' : Math.random() > 0.8 ? 'warning' : 'success'
-                return (
-                  <div
-                    key={i}
-                    className={`flex-1 rounded-t transition-all hover:opacity-80 cursor-pointer ${
-                      status === 'success' ? 'bg-success-500' :
-                      status === 'warning' ? 'bg-warning-500' :
-                      'bg-error-500'
-                    }`}
-                    style={{ height: `${height}%` }}
-                  />
-                )
-              })}
-            </div>
-            <div className="flex justify-between text-xs text-text-tertiary mt-2">
-              <span>Dec 14</span>
-              <span>Jan 13</span>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Timeline Chart */}
+        <div className="mb-6">
+          <TimelineChart data={timeline || []} isLoading={timelineLoading} period="Past 30 days" />
+        </div>
 
         {/* Issues and Recommendations */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -120,30 +171,45 @@ export default function DashboardPage() {
                   <AlertTriangle className="w-5 h-5 text-error-500" />
                   Active Issues
                 </CardTitle>
-                <Badge variant="error">{mockIssues.length}</Badge>
+                <Badge variant="error">{metrics?.activeIssues || 0}</Badge>
               </div>
             </CardHeader>
             <CardContent className="space-y-3">
-              {mockIssues.map((issue) => (
-                <Link
-                  key={issue.id}
-                  href={`/studio/issues/${issue.id}`}
-                  className="block p-3 rounded-lg border border-border-default hover:bg-bg-hover transition-colors"
-                >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="font-medium text-text-primary">{issue.title}</div>
-                      <div className="text-sm text-text-secondary">{issue.contract}</div>
-                    </div>
-                    <Badge variant={issue.severity === 'critical' ? 'error' : 'warning'}>
-                      {issue.severity}
-                    </Badge>
-                  </div>
-                </Link>
-              ))}
-              <Button variant="ghost" className="w-full" asChild>
-                <Link href="/studio/issues">View All Issues</Link>
-              </Button>
+              {issuesLoading ? (
+                <>
+                  <Skeleton className="h-16 w-full" />
+                  <Skeleton className="h-16 w-full" />
+                  <Skeleton className="h-16 w-full" />
+                </>
+              ) : issues.length > 0 ? (
+                <>
+                  {issues.map((issue) => (
+                    <Link
+                      key={issue.id}
+                      href={`/studio/issues/${issue.id}`}
+                      className="block p-3 rounded-lg border border-border-default hover:bg-bg-hover transition-colors"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="font-medium text-text-primary">{issue.title}</div>
+                          <div className="text-sm text-text-secondary">{issue.contractId}</div>
+                        </div>
+                        <Badge variant={issue.severity === 'critical' ? 'error' : 'warning'}>
+                          {issue.severity}
+                        </Badge>
+                      </div>
+                    </Link>
+                  ))}
+                  <Button variant="ghost" className="w-full" asChild>
+                    <Link href="/studio/issues">View All Issues</Link>
+                  </Button>
+                </>
+              ) : (
+                <div className="text-center py-8 text-text-tertiary">
+                  <AlertTriangle className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                  <p className="text-sm">No active issues</p>
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -156,70 +222,50 @@ export default function DashboardPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              {mockRecommendations.map((rec) => (
-                <div
-                  key={rec.id}
-                  className="flex items-center gap-3 p-3 rounded-lg bg-bg-tertiary"
-                >
-                  <div className="w-2 h-2 rounded-full bg-primary-500" />
-                  <span className="text-sm text-text-primary">{rec.text}</span>
+              {recommendationsLoading ? (
+                <>
+                  <Skeleton className="h-16 w-full" />
+                  <Skeleton className="h-16 w-full" />
+                  <Skeleton className="h-16 w-full" />
+                </>
+              ) : recommendations && recommendations.length > 0 ? (
+                <>
+                  {recommendations.map((rec) => (
+                    <div
+                      key={rec.id}
+                      className="p-3 rounded-lg border border-border-default hover:bg-bg-hover transition-colors"
+                    >
+                      <div className="flex items-start gap-3">
+                        <div
+                          className={`w-2 h-2 rounded-full mt-1.5 ${
+                            rec.priority === 'high'
+                              ? 'bg-error-500'
+                              : rec.priority === 'medium'
+                              ? 'bg-warning-500'
+                              : 'bg-primary-500'
+                          }`}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium text-text-primary">{rec.title}</div>
+                          <div className="text-xs text-text-secondary mt-0.5">{rec.description}</div>
+                          <Button variant="ghost" size="sm" className="mt-2 h-auto py-1 px-2" asChild>
+                            <Link href={rec.actionHref}>{rec.actionLabel} →</Link>
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </>
+              ) : (
+                <div className="text-center py-8 text-text-tertiary">
+                  <Lightbulb className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                  <p className="text-sm">No recommendations at this time</p>
                 </div>
-              ))}
-              <Button variant="ghost" className="w-full">
-                View All Recommendations
-              </Button>
+              )}
             </CardContent>
           </Card>
         </div>
       </PageContainer>
     </PageShell>
-  )
-}
-
-// Health Card Component
-function HealthCard({
-  title,
-  icon: Icon,
-  score,
-  trend,
-  detail,
-  color,
-}: {
-  title: string
-  icon: React.ComponentType<{ className?: string }>
-  score: number
-  trend: number
-  detail: string
-  color: 'green' | 'blue' | 'purple'
-}) {
-  const colorClasses = {
-    green: 'bg-success-bg text-success-text',
-    blue: 'bg-info-bg text-info-text',
-    purple: 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400',
-  }
-
-  return (
-    <Card padding="lg">
-      <div className="flex items-start justify-between">
-        <div className={`p-2 rounded-lg ${colorClasses[color]}`}>
-          <Icon className="w-5 h-5" />
-        </div>
-        <div className="flex items-center gap-1 text-sm">
-          {trend > 0 ? (
-            <ArrowUp className="w-4 h-4 text-success-text" />
-          ) : (
-            <ArrowDown className="w-4 h-4 text-error-text" />
-          )}
-          <span className={trend > 0 ? 'text-success-text' : 'text-error-text'}>
-            {Math.abs(trend)}%
-          </span>
-        </div>
-      </div>
-      <div className="mt-4">
-        <div className="text-3xl font-bold text-text-primary">{score}%</div>
-        <div className="text-sm text-text-secondary mt-1">{title}</div>
-        <div className="text-xs text-text-tertiary mt-0.5">{detail}</div>
-      </div>
-    </Card>
   )
 }

@@ -171,9 +171,18 @@ export const queryKeys = {
   // Dashboard
   dashboard: {
     all: ['dashboard'] as const,
-    metrics: () => [...queryKeys.dashboard.all, 'metrics'] as const,
-    timeline: (days: number) =>
-      [...queryKeys.dashboard.all, 'timeline', days] as const,
+    metrics: ['dashboard', 'metrics'] as const,
+    timeline: (filters: Record<string, unknown>) =>
+      ['dashboard', 'timeline', filters] as const,
+    recommendations: ['dashboard', 'recommendations'] as const,
+  },
+
+  // Runs
+  runs: {
+    all: ['runs'] as const,
+    byDate: (date: string) => [...queryKeys.runs.all, 'by-date', date] as const,
+    detail: (date: string, runId: string) =>
+      [...queryKeys.runs.all, 'detail', date, runId] as const,
   },
 
   // Tasks

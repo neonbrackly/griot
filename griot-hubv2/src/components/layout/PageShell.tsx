@@ -18,20 +18,6 @@ export function PageShell({
   showTopNav = true,
 }: PageShellProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = React.useState(false)
-  const [searchOpen, setSearchOpen] = React.useState(false)
-
-  // Handle keyboard shortcut for search
-  React.useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-        e.preventDefault()
-        setSearchOpen(true)
-      }
-    }
-
-    document.addEventListener('keydown', handleKeyDown)
-    return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [])
 
   return (
     <TooltipProvider>
@@ -49,8 +35,6 @@ export function PageShell({
           {/* Top Navigation */}
           {showTopNav && (
             <TopNav
-              onSearchClick={() => setSearchOpen(true)}
-              notificationCount={3}
               user={{
                 name: 'Jane Doe',
                 email: 'jane@example.com',
@@ -63,9 +47,6 @@ export function PageShell({
             <div className="h-full">{children}</div>
           </main>
         </div>
-
-        {/* Global Search Modal - Will be implemented by Agent 4 */}
-        {/* {searchOpen && <GlobalSearch onClose={() => setSearchOpen(false)} />} */}
       </div>
     </TooltipProvider>
   )
