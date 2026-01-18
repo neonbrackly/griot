@@ -6,10 +6,8 @@ All exceptions inherit from GriotError base class.
 """
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import  Any
 
-if TYPE_CHECKING:
-    from griot_core.validation import FieldValidationError
 
 __all__ = [
     "GriotError",
@@ -19,6 +17,8 @@ __all__ = [
     "BreakingChangeError",
     "ConstraintError",
 ]
+
+from griot_core.types import FieldValidationError
 
 
 class GriotError(Exception):

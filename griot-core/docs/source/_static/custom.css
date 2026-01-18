@@ -1,0 +1,105 @@
+/* Custom CSS for Griot Core Documentation */
+
+/* Code block styling */
+.highlight pre {
+    border-radius: 6px;
+    padding: 12px;
+}
+
+/* Inline code styling */
+code.literal {
+    background-color: var(--color-code-background);
+    padding: 2px 5px;
+    border-radius: 3px;
+    font-size: 0.9em;
+}
+
+/* Table styling */
+table.docutils {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+table.docutils th {
+    background-color: var(--color-table-header-background);
+    font-weight: 600;
+}
+
+table.docutils td,
+table.docutils th {
+    padding: 8px 12px;
+    border: 1px solid var(--color-table-border);
+}
+
+/* Admonition styling */
+.admonition {
+    border-radius: 6px;
+    margin: 1em 0;
+}
+
+.admonition-title {
+    font-weight: 600;
+}
+
+/* API reference styling */
+dl.py.class > dt,
+dl.py.function > dt,
+dl.py.method > dt,
+dl.py.attribute > dt {
+    background-color: var(--color-api-background);
+    padding: 8px 12px;
+    border-radius: 4px;
+    margin-bottom: 8px;
+}
+
+/* Sidebar navigation */
+.sidebar-tree .reference {
+    font-size: 0.95em;
+}
+
+/* Quality rule examples - better visibility */
+.highlight-python .highlight {
+    background: var(--color-code-background) !important;
+}
+
+/* Better list styling in tables */
+table.docutils ul {
+    margin: 0;
+    padding-left: 20px;
+}
+
+/* Response styling for method signatures */
+.sig-paren {
+    font-weight: normal;
+}
+
+.sig-param {
+    font-style: italic;
+}
+
+/* Toctree styling */
+.toctree-wrapper > ul > li {
+    margin-bottom: 8px;
+}
+
+/* Version badge styling */
+.version-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    background-color: #28a745;
+    color: white;
+    border-radius: 4px;
+    font-size: 0.85em;
+    margin-left: 8px;
+}
+
+/* Deprecated badge */
+.deprecated-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    background-color: #dc3545;
+    color: white;
+    border-radius: 4px;
+    font-size: 0.85em;
+    margin-left: 8px;
+}

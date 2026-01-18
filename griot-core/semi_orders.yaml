@@ -1,0 +1,163 @@
+# griot data contract
+apiVersion: v1.0.0
+kind: DataContract
+id: HD03-SBUWO-3GYSU-MZ8G
+version: 1.0.0
+status: draft
+
+schema:
+  - id: IR90-SHGY-Q12W-L3NZ
+    name: Managers
+    logicalType: object
+    physicalType: table
+    physicalName: employees_tbl
+    description: Contains Employee records for the griot data technologies
+    businessName: Employees
+    authoritativeDefinitions:
+      - url: https://data-griot.com/employees
+        description: Authoritative definition for the employees entity
+
+    properties:
+      - id: field_001
+        name: id
+        logicalType: string
+        physicalType: VARCHAR(36)
+        description: Primary identifier
+        primary_key: true
+        partitioned: true
+        partitionKeyPosition: 1
+        required: true
+        unique: true
+        nullable: false
+        criticalDataElement: false
+        relationships:
+          - to: schema/departments_tbl/properties/dept_manager_id
+            type: foreignKey
+            customProperties:
+                - property: cardinality
+                  value: "one-to-many"
+                - property: label
+                  value: "manages"
+          - to: schema/employees_tbl/properties/emp_id
+            type: foreignKey
+            customProperties:
+                - property: cardinality
+                  value: "many-to-one"
+                - property: label
+                  value: "belongs_to"
+        tags: []
+        customProperties:
+          constraints:
+            - name:
+              logicalType: string
+              pattern: "^[a-zA-Z0-9-]+$"
+              max_length: 36
+
+          semantic:
+            logicalType: string
+            description: Unique identifier for each record
+            businessName: identifier
+          privacy:
+            - name: is_pii
+              logicalType: boolean
+              value: false
+            - name: sensitivity
+              logicalType: enum
+              level: internal
+        authoritativeDefinitions:
+          - url: https://data-dictionary.example.com/orders#id
+            type: businessDefinition
+            description: Authoritative definition for the Order ID field
+        quality:
+          - id: id_no_nulls_simplified
+            metric: nullValues
+            mustBe: 0
+            description: "There must be no null values in the column."
+
+    quality:
+      - id: orders_unique_tenant_order
+        description: The combination of tenant_id and order_id must be unique
+        metric: duplicateValues
+        mustBe: 0
+        arguments:
+          properties: # Properties refer to the property in the schema.
+            - tenant_id
+            - order_id
+
+      - id : distribution_shift_checker
+        type: custom
+        engine: griot
+        description: Monitor distribution shifts for order_amount
+        metric: distributionShift
+        arguments:
+          threshold: 0.1
+    tags: []
+
+customProperties:
+    legal:
+      jurisdiction:
+        - Kenya
+      basis: legitimate_interest
+      regulations:
+        - name: GDPR
+          authoritativeDefinitions:
+            - url: https://gdpr.com
+              description:  more details about GDPR compliance
+        - name: CCPA
+          authoritativeDefinitions:
+            - url: https://ccpa.com
+              description: more details about CCPA compliance
+        - name: DPA 2019
+          authoritativeDefinitions:
+            - url: https://dpa.com
+              description: more details about DPA 2019 compliance
+
+      cross_border:
+        restrictions:
+            - name: no_cross_border_transfer
+              type: boolean
+              value: true
+        transfer_mechanisms:
+            - name: standard_contractual_clauses
+              type: boolean
+              value: true
+            - name: binding_corporate_rules
+              type: boolean
+              value: false
+            - name: privacy_shield
+              type: boolean
+              value: false
+    compliance:
+      data_classification: internal
+      audit_requirements:
+        - name: logging
+          required: true
+          log_retention: P365D
+      export_restrictions:
+        - name : allow_download
+          type: boolean
+          value: false
+        - name: allow_external_transfer
+          type: boolean
+          value : false
+    governance:
+      producers:
+        team: Data Team
+        contact: team@example.com
+        responsibilities:
+          - Maintain data quality
+          - Provide timely updates
+          - Address consumer questions
+      consumers:
+        - team: Analytics Team
+          contact: analytics@griot.com
+      review:
+        cadence: quarterly
+      change_management:
+        breaking_change_notice: P30D
+        deprecation_notice: P90D
+        migration_support: true
+      authoritativeDefinitions:
+        - url: https://data-griot.com/employees
+          description: Authoritative definition for the employees entity
+

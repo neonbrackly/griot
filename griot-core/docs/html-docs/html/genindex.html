@@ -1,0 +1,3023 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="./">
+  <head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="#"><link rel="search" title="Search" href="search.html">
+
+    <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 --><title>Index - Griot Core Documentation</title>
+<link rel="stylesheet" type="text/css" href="_static/pygments.css?v=5349f25f" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?v=8dab3a3b" />
+    <link rel="stylesheet" type="text/css" href="_static/custom.css?v=b2b642f0" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #272822;
+  --color-code-foreground: #f8f8f2;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #272822;
+  --color-code-foreground: #f8f8f2;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #272822;
+  --color-code-foreground: #f8f8f2;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
+    <title>Auto light/dark, in light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path style="opacity: 50%" d="M 5.411 14.504 C 5.471 14.504 5.532 14.504 5.591 14.504 C 3.639 16.319 4.383 19.569 6.931 20.352 C 7.693 20.586 8.512 20.551 9.25 20.252 C 8.023 23.207 4.056 23.725 2.11 21.184 C 0.166 18.642 1.702 14.949 4.874 14.536 C 5.051 14.512 5.231 14.5 5.411 14.5 L 5.411 14.504 Z"/>
+      <line x1="14.5" y1="3.25" x2="14.5" y2="1.25"/>
+      <line x1="14.5" y1="15.85" x2="14.5" y2="17.85"/>
+      <line x1="10.044" y1="5.094" x2="8.63" y2="3.68"/>
+      <line x1="19" y1="14.05" x2="20.414" y2="15.464"/>
+      <line x1="8.2" y1="9.55" x2="6.2" y2="9.55"/>
+      <line x1="20.8" y1="9.55" x2="22.8" y2="9.55"/>
+      <line x1="10.044" y1="14.006" x2="8.63" y2="15.42"/>
+      <line x1="19" y1="5.05" x2="20.414" y2="3.636"/>
+      <circle cx="14.5" cy="9.55" r="3.6"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon-with-sun" viewBox="0 0 24 24">
+    <title>Auto light/dark, in dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path d="M 8.282 7.007 C 8.385 7.007 8.494 7.007 8.595 7.007 C 5.18 10.184 6.481 15.869 10.942 17.24 C 12.275 17.648 13.706 17.589 15 17.066 C 12.851 22.236 5.91 23.143 2.505 18.696 C -0.897 14.249 1.791 7.786 7.342 7.063 C 7.652 7.021 7.965 7 8.282 7 L 8.282 7.007 Z"/>
+      <line style="opacity: 50%" x1="18" y1="3.705" x2="18" y2="2.5"/>
+      <line style="opacity: 50%" x1="18" y1="11.295" x2="18" y2="12.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="4.816" x2="14.464" y2="3.964"/>
+      <line style="opacity: 50%" x1="20.711" y1="10.212" x2="21.563" y2="11.063"/>
+      <line style="opacity: 50%" x1="14.205" y1="7.5" x2="13.001" y2="7.5"/>
+      <line style="opacity: 50%" x1="21.795" y1="7.5" x2="23" y2="7.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="10.184" x2="14.464" y2="11.036"/>
+      <line style="opacity: 50%" x1="20.711" y1="4.789" x2="21.563" y2="3.937"/>
+      <circle style="opacity: 50%" cx="18" cy="7.5" r="2.169"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-pencil" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-pencil-code">
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+  <symbol id="svg-eye" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-eye-code">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path
+        d="M11.11 17.958c-3.209 -.307 -5.91 -2.293 -8.11 -5.958c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6c-.21 .352 -.427 .688 -.647 1.008" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle site navigation sidebar">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc" aria-label="Toggle table of contents sidebar">
+<label class="overlay sidebar-overlay" for="__navigation"></label>
+<label class="overlay toc-overlay" for="__toc"></label>
+
+<a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <span class="icon"><svg><use href="#svg-menu"></use></svg></span>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="index.html"><div class="brand">Griot Core Documentation</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+          <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+          <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
+        <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="index.html">
+  
+  <span class="sidebar-brand-text">Griot Core Documentation</span>
+  
+</a><form class="sidebar-search-container" method="get" action="search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="guides/quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guides/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guides/concepts.html">Core Concepts</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="guides/schema_definition.html">Schema Definition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guides/quality_rules.html">Quality Rules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guides/contracts.html">Contracts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guides/validation.html">Data Validation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guides/mock_data.html">Mock Data Generation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="api/index.html">API Reference</a><input aria-label="Toggle navigation of API Reference" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="api/schema.html">Schema API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/contract.html">Contract API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/types.html">Types API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/validation.html">Validation API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/reports.html">Reports API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/exceptions.html">Exceptions API</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Additional Resources</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing</a></li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+              <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+              <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
+            <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+          </label>
+        </div>
+        <article role="main" id="furo-main-content">
+          
+<section class="genindex-section">
+  <h1 id="index">Index</h1>
+  <div class="genindex-jumpbox"><a href="#_"><strong>_</strong></a> | <a href="#A"><strong>A</strong></a> | <a href="#B"><strong>B</strong></a> | <a href="#C"><strong>C</strong></a> | <a href="#D"><strong>D</strong></a> | <a href="#E"><strong>E</strong></a> | <a href="#F"><strong>F</strong></a> | <a href="#G"><strong>G</strong></a> | <a href="#H"><strong>H</strong></a> | <a href="#I"><strong>I</strong></a> | <a href="#K"><strong>K</strong></a> | <a href="#L"><strong>L</strong></a> | <a href="#M"><strong>M</strong></a> | <a href="#N"><strong>N</strong></a> | <a href="#O"><strong>O</strong></a> | <a href="#P"><strong>P</strong></a> | <a href="#Q"><strong>Q</strong></a> | <a href="#R"><strong>R</strong></a> | <a href="#S"><strong>S</strong></a> | <a href="#T"><strong>T</strong></a> | <a href="#U"><strong>U</strong></a> | <a href="#V"><strong>V</strong></a> | <a href="#W"><strong>W</strong></a></div>
+</section>
+<section id="_" class="genindex-section">
+  <h2>_</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.ConstraintError.__init__">__init__() (griot_core.ConstraintError method)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.Contract.__init__">(griot_core.Contract method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.Contract.__init__">(griot_core.contract.Contract method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.ContractDescription.__init__">(griot_core.contract.ContractDescription method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.ContractRole.__init__">(griot_core.contract.ContractRole method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.ContractStructureIssue.__init__">(griot_core.contract.ContractStructureIssue method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.ContractStructureResult.__init__">(griot_core.contract.ContractStructureResult method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.ContractSupport.__init__">(griot_core.contract.ContractSupport method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.ContractTeam.__init__">(griot_core.contract.ContractTeam method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.LintIssue.__init__">(griot_core.contract.LintIssue method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.Server.__init__">(griot_core.contract.Server method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.SLAProperty.__init__">(griot_core.contract.SLAProperty method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.TeamMember.__init__">(griot_core.contract.TeamMember method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.ContractDescription.__init__">(griot_core.ContractDescription method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.ContractNotFoundError.__init__">(griot_core.ContractNotFoundError method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.ContractParseError.__init__">(griot_core.ContractParseError method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.ContractReport.__init__">(griot_core.ContractReport method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.ContractRole.__init__">(griot_core.ContractRole method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.ContractStructureIssue.__init__">(griot_core.ContractStructureIssue method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.ContractStructureResult.__init__">(griot_core.ContractStructureResult method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.ContractSupport.__init__">(griot_core.ContractSupport method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.ContractTeam.__init__">(griot_core.ContractTeam method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.dataframe_validation.html#griot_core.dataframe_validation.DaskValidator.__init__">(griot_core.dataframe_validation.DaskValidator method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.dataframe_validation.html#griot_core.dataframe_validation.DataFrameValidationResult.__init__">(griot_core.dataframe_validation.DataFrameValidationResult method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.dataframe_validation.html#griot_core.dataframe_validation.DataFrameValidatorRegistry.__init__">(griot_core.dataframe_validation.DataFrameValidatorRegistry method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.dataframe_validation.html#griot_core.dataframe_validation.FieldValidationResult.__init__">(griot_core.dataframe_validation.FieldValidationResult method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.dataframe_validation.html#griot_core.dataframe_validation.MultiSchemaValidationResult.__init__">(griot_core.dataframe_validation.MultiSchemaValidationResult method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.dataframe_validation.html#griot_core.dataframe_validation.PandasValidator.__init__">(griot_core.dataframe_validation.PandasValidator method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.dataframe_validation.html#griot_core.dataframe_validation.PanderaNotInstalledError.__init__">(griot_core.dataframe_validation.PanderaNotInstalledError method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.dataframe_validation.html#griot_core.dataframe_validation.PolarsValidator.__init__">(griot_core.dataframe_validation.PolarsValidator method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.dataframe_validation.html#griot_core.dataframe_validation.PySparkValidator.__init__">(griot_core.dataframe_validation.PySparkValidator method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.dataframe_validation.html#griot_core.dataframe_validation.ValidatorNotFoundError.__init__">(griot_core.dataframe_validation.ValidatorNotFoundError method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.DataFrameValidationResult.__init__">(griot_core.DataFrameValidationResult method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.DataFrameValidatorRegistry.__init__">(griot_core.DataFrameValidatorRegistry method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.exceptions.html#griot_core.exceptions.BreakingChangeError.__init__">(griot_core.exceptions.BreakingChangeError method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.exceptions.html#griot_core.exceptions.ConstraintError.__init__">(griot_core.exceptions.ConstraintError method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.exceptions.html#griot_core.exceptions.ContractNotFoundError.__init__">(griot_core.exceptions.ContractNotFoundError method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.exceptions.html#griot_core.exceptions.ContractParseError.__init__">(griot_core.exceptions.ContractParseError method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.exceptions.html#griot_core.exceptions.GriotError.__init__">(griot_core.exceptions.GriotError method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.exceptions.html#griot_core.exceptions.ValidationError.__init__">(griot_core.exceptions.ValidationError method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.Field.__init__">(griot_core.Field method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.FieldInfo.__init__">(griot_core.FieldInfo method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.FieldValidationResult.__init__">(griot_core.FieldValidationResult method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.GriotError.__init__">(griot_core.GriotError method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.LintIssue.__init__">(griot_core.LintIssue method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.MultiSchemaValidationResult.__init__">(griot_core.MultiSchemaValidationResult method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.PanderaNotInstalledError.__init__">(griot_core.PanderaNotInstalledError method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.QualityRule.__init__">(griot_core.QualityRule method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.reports.html#griot_core.reports.ContractReport.__init__">(griot_core.reports.ContractReport method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.Schema.__init__">(griot_core.Schema method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.schema.html#griot_core.schema.Field.__init__">(griot_core.schema.Field method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.schema.html#griot_core.schema.FieldInfo.__init__">(griot_core.schema.FieldInfo method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.schema.html#griot_core.schema.Schema.__init__">(griot_core.schema.Schema method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.Server.__init__">(griot_core.Server method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.SLAProperty.__init__">(griot_core.SLAProperty method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.TeamMember.__init__">(griot_core.TeamMember method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.types.html#griot_core.types.FieldValidationError.__init__">(griot_core.types.FieldValidationError method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.types.html#griot_core.types.QualityRule.__init__">(griot_core.types.QualityRule method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.ValidationError.__init__">(griot_core.ValidationError method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.ValidatorNotFoundError.__init__">(griot_core.ValidatorNotFoundError method)</a>
+</li>
+        </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.Contract.__iter__">__iter__() (griot_core.Contract method)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.Contract.__iter__">(griot_core.contract.Contract method)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.Contract.__len__">__len__() (griot_core.Contract method)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.Contract.__len__">(griot_core.contract.Contract method)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.ContractStatus.__new__">__new__() (griot_core.ContractStatus method)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.dataframe_validation.html#griot_core.dataframe_validation.DataFrameType.__new__">(griot_core.dataframe_validation.DataFrameType method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.dataframe_validation.html#griot_core.dataframe_validation.ValidationMode.__new__">(griot_core.dataframe_validation.ValidationMode method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.DataFrameType.__new__">(griot_core.DataFrameType method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.DataType.__new__">(griot_core.DataType method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.QualityCheckType.__new__">(griot_core.QualityCheckType method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.QualityMetric.__new__">(griot_core.QualityMetric method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.QualityOperator.__new__">(griot_core.QualityOperator method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.QualityUnit.__new__">(griot_core.QualityUnit method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.Severity.__new__">(griot_core.Severity method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.types.html#griot_core.types.ContractStatus.__new__">(griot_core.types.ContractStatus method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.types.html#griot_core.types.DataFrameType.__new__">(griot_core.types.DataFrameType method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.types.html#griot_core.types.DataType.__new__">(griot_core.types.DataType method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.types.html#griot_core.types.QualityCheckType.__new__">(griot_core.types.QualityCheckType method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.types.html#griot_core.types.QualityMetric.__new__">(griot_core.types.QualityMetric method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.types.html#griot_core.types.QualityOperator.__new__">(griot_core.types.QualityOperator method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.types.html#griot_core.types.QualityUnit.__new__">(griot_core.types.QualityUnit method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.types.html#griot_core.types.Severity.__new__">(griot_core.types.Severity method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.ValidationMode.__new__">(griot_core.ValidationMode method)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.Field.__repr__">__repr__() (griot_core.Field method)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.Schema.__repr__">(griot_core.Schema method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.schema.html#griot_core.schema.Field.__repr__">(griot_core.schema.Field method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.schema.html#griot_core.schema.Schema.__repr__">(griot_core.schema.Schema method)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.Field.__set_name__">__set_name__() (griot_core.Field method)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.schema.html#griot_core.schema.Field.__set_name__">(griot_core.schema.Field method)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.Schema.__str__">__str__() (griot_core.Schema method)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.schema.html#griot_core.schema.Schema.__str__">(griot_core.schema.Schema method)</a>
+</li>
+        </ul></li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="A" class="genindex-section">
+  <h2>A</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.ContractRole.access">access (griot_core.contract.ContractRole attribute)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.ContractRole.access">(griot_core.ContractRole attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.ContractStatus.ACTIVE">ACTIVE (griot_core.ContractStatus attribute)</a>, <a href="api/types.html#griot_core.ContractStatus.ACTIVE">[1]</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.types.html#griot_core.types.ContractStatus.ACTIVE">(griot_core.types.ContractStatus attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.Contract.add_schema">add_schema() (griot_core.Contract method)</a>, <a href="api/contract.html#griot_core.Contract.add_schema">[1]</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.Contract.add_schema">(griot_core.contract.Contract method)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.DataType.ANY">ANY (griot_core.DataType attribute)</a>, <a href="api/types.html#griot_core.DataType.ANY">[1]</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.types.html#griot_core.types.DataType.ANY">(griot_core.types.DataType attribute)</a>
+</li>
+        </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.Contract.api_version">api_version (griot_core.Contract attribute)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.Contract.api_version">(griot_core.contract.Contract attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.DataType.ARRAY">ARRAY (griot_core.DataType attribute)</a>, <a href="api/types.html#griot_core.DataType.ARRAY">[1]</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.types.html#griot_core.types.DataType.ARRAY">(griot_core.types.DataType attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.Field.authoritative_definitions">authoritative_definitions (griot_core.Field attribute)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.FieldInfo.authoritative_definitions">(griot_core.FieldInfo attribute)</a>, <a href="api/_autosummary/griot_core.html#id17">[1]</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.schema.html#griot_core.schema.Field.authoritative_definitions">(griot_core.schema.Field attribute)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.schema.html#griot_core.schema.FieldInfo.authoritative_definitions">(griot_core.schema.FieldInfo attribute)</a>, <a href="api/_autosummary/griot_core.schema.html#id16">[1]</a>
+</li>
+        </ul></li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="B" class="genindex-section">
+  <h2>B</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.DataType.BOOLEAN">BOOLEAN (griot_core.DataType attribute)</a>, <a href="api/types.html#griot_core.DataType.BOOLEAN">[1]</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.types.html#griot_core.types.DataType.BOOLEAN">(griot_core.types.DataType attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.exceptions.html#griot_core.exceptions.BreakingChangeError">BreakingChangeError</a>
+</li>
+        <li>
+    built-in function
+
+        <ul>
+          <li><a href="api/validation.html#griot_core.check_backend">griot_core.check_backend()</a>
+</li>
+          <li><a href="api/contract.html#griot_core.contract_to_dict">griot_core.contract_to_dict()</a>
+</li>
+          <li><a href="api/contract.html#griot_core.contract_to_yaml">griot_core.contract_to_yaml()</a>
+</li>
+          <li><a href="api/reports.html#griot_core.export_manifest">griot_core.export_manifest()</a>
+</li>
+          <li><a href="api/schema.html#griot_core.Field">griot_core.Field()</a>
+</li>
+          <li><a href="api/reports.html#griot_core.generate_contract_report">griot_core.generate_contract_report()</a>
+</li>
+          <li><a href="api/validation.html#griot_core.get_available_backends">griot_core.get_available_backends()</a>
+</li>
+          <li><a href="api/validation.html#griot_core.get_validator">griot_core.get_validator()</a>
+</li>
+          <li><a href="api/contract.html#griot_core.lint_contract">griot_core.lint_contract()</a>
+</li>
+          <li><a href="api/contract.html#griot_core.load_contract">griot_core.load_contract()</a>
+</li>
+          <li><a href="api/contract.html#griot_core.load_contract_from_dict">griot_core.load_contract_from_dict()</a>
+</li>
+          <li><a href="api/contract.html#griot_core.load_contract_from_string">griot_core.load_contract_from_string()</a>
+</li>
+          <li><a href="api/contract.html#griot_core.normalize_keys">griot_core.normalize_keys()</a>
+</li>
+          <li><a href="api/validation.html#griot_core.register_validator">griot_core.register_validator()</a>
+</li>
+          <li><a href="api/contract.html#griot_core.to_camel_case">griot_core.to_camel_case()</a>
+</li>
+          <li><a href="api/contract.html#griot_core.to_snake_case">griot_core.to_snake_case()</a>
+</li>
+          <li><a href="api/contract.html#griot_core.validate_contract_structure">griot_core.validate_contract_structure()</a>
+</li>
+          <li><a href="api/validation.html#griot_core.validate_data_batch">griot_core.validate_data_batch()</a>
+</li>
+          <li><a href="api/validation.html#griot_core.validate_data_mapping">griot_core.validate_data_mapping()</a>
+</li>
+          <li><a href="api/validation.html#griot_core.validate_dataframe">griot_core.validate_dataframe()</a>
+</li>
+          <li><a href="api/validation.html#griot_core.validate_list_of_dicts">griot_core.validate_list_of_dicts()</a>
+</li>
+          <li><a href="api/validation.html#griot_core.validate_schema_data">griot_core.validate_schema_data()</a>
+</li>
+        </ul></li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="C" class="genindex-section">
+  <h2>C</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.QualityUnit.calculate_metric">calculate_metric() (griot_core.QualityUnit method)</a>, <a href="api/types.html#griot_core.QualityUnit.calculate_metric">[1]</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.types.html#griot_core.types.QualityUnit.calculate_metric">(griot_core.types.QualityUnit method)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.ContractSupport.channel">channel (griot_core.contract.ContractSupport attribute)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.ContractSupport.channel">(griot_core.ContractSupport attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.check_backend">check_backend() (in module griot_core)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.dataframe_validation.html#griot_core.dataframe_validation.check_backend">(in module griot_core.dataframe_validation)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.ContractStructureIssue.code">code (griot_core.contract.ContractStructureIssue attribute)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.LintIssue.code">(griot_core.contract.LintIssue attribute)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.ContractStructureIssue.code">(griot_core.ContractStructureIssue attribute)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.LintIssue.code">(griot_core.LintIssue attribute)</a>, <a href="api/contract.html#griot_core.LintIssue.code">[1]</a>
+</li>
+        </ul></li>
+        <li><a href="api/validation.html#griot_core.ValidationMode.COERCE">COERCE (griot_core.ValidationMode attribute)</a>
+</li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.QualityOperator.compare">compare() (griot_core.QualityOperator method)</a>, <a href="api/types.html#griot_core.QualityOperator.compare">[1]</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.types.html#griot_core.types.QualityOperator.compare">(griot_core.types.QualityOperator method)</a>
+</li>
+        </ul></li>
+        <li><a href="api/types.html#griot_core.QualityOperator.comparison_type">comparison_type (griot_core.QualityOperator attribute)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.QualityOperator.comparison_type">(griot_core.QualityOperator property)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.types.html#griot_core.types.QualityOperator.comparison_type">(griot_core.types.QualityOperator property)</a>
+</li>
+        </ul></li>
+        <li><a href="api/types.html#griot_core.FieldValidationError.constraint">constraint (griot_core.FieldValidationError attribute)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.types.html#griot_core.types.FieldValidationError.constraint">(griot_core.types.FieldValidationError attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.exceptions.html#griot_core.exceptions.ConstraintError">ConstraintError</a>, <a href="api/_autosummary/griot_core.html#griot_core.ConstraintError">[1]</a>
+</li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.Contract">Contract (class in griot_core)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.Contract">(class in griot_core.contract)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.ContractStructureResult.contract_id">contract_id (griot_core.contract.ContractStructureResult attribute)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.ContractReport.contract_id">(griot_core.ContractReport attribute)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.ContractStructureResult.contract_id">(griot_core.ContractStructureResult attribute)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.dataframe_validation.html#griot_core.dataframe_validation.MultiSchemaValidationResult.contract_id">(griot_core.dataframe_validation.MultiSchemaValidationResult attribute)</a>, <a href="api/_autosummary/griot_core.dataframe_validation.html#id9">[1]</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.MultiSchemaValidationResult.contract_id">(griot_core.MultiSchemaValidationResult attribute)</a>, <a href="api/_autosummary/griot_core.html#id31">[1]</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.reports.html#griot_core.reports.ContractReport.contract_id">(griot_core.reports.ContractReport attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.ContractReport.contract_name">contract_name (griot_core.ContractReport attribute)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.reports.html#griot_core.reports.ContractReport.contract_name">(griot_core.reports.ContractReport attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.ContractReport.contract_status">contract_status (griot_core.ContractReport attribute)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.reports.html#griot_core.reports.ContractReport.contract_status">(griot_core.reports.ContractReport attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.contract_to_dict">contract_to_dict() (in module griot_core)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.contract_to_dict">(in module griot_core.contract)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.contract_to_yaml">contract_to_yaml() (in module griot_core)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.contract_to_yaml">(in module griot_core.contract)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.ContractReport.contract_version">contract_version (griot_core.ContractReport attribute)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.reports.html#griot_core.reports.ContractReport.contract_version">(griot_core.reports.ContractReport attribute)</a>
+</li>
+        </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.ContractDescription">ContractDescription (class in griot_core)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.ContractDescription">(class in griot_core.contract)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.exceptions.html#griot_core.exceptions.ContractNotFoundError">ContractNotFoundError</a>, <a href="api/_autosummary/griot_core.html#griot_core.ContractNotFoundError">[1]</a>
+</li>
+        <li><a href="api/_autosummary/griot_core.exceptions.html#griot_core.exceptions.ContractParseError">ContractParseError</a>, <a href="api/_autosummary/griot_core.html#griot_core.ContractParseError">[1]</a>
+</li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.ContractReport">ContractReport (class in griot_core)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.reports.html#griot_core.reports.ContractReport">(class in griot_core.reports)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.ContractRole">ContractRole (class in griot_core)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.ContractRole">(class in griot_core.contract)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.ContractStatus">ContractStatus (class in griot_core)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.types.html#griot_core.types.ContractStatus">(class in griot_core.types)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.ContractStructureIssue">ContractStructureIssue (class in griot_core)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.ContractStructureIssue">(class in griot_core.contract)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.ContractStructureResult">ContractStructureResult (class in griot_core)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.ContractStructureResult">(class in griot_core.contract)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.ContractSupport">ContractSupport (class in griot_core)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.ContractSupport">(class in griot_core.contract)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.ContractTeam">ContractTeam (class in griot_core)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.ContractTeam">(class in griot_core.contract)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.Field.critical_data_element">critical_data_element (griot_core.Field attribute)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.FieldInfo.critical_data_element">(griot_core.FieldInfo attribute)</a>, <a href="api/_autosummary/griot_core.html#id13">[1]</a>, <a href="api/schema.html#griot_core.FieldInfo.critical_data_element">[2]</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.schema.html#griot_core.schema.Field.critical_data_element">(griot_core.schema.Field attribute)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.schema.html#griot_core.schema.FieldInfo.critical_data_element">(griot_core.schema.FieldInfo attribute)</a>, <a href="api/_autosummary/griot_core.schema.html#id12">[1]</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.ContractReport.critical_data_elements">critical_data_elements (griot_core.ContractReport attribute)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.reports.html#griot_core.reports.ContractReport.critical_data_elements">(griot_core.reports.ContractReport attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.QualityCheckType.CUSTOM">CUSTOM (griot_core.QualityCheckType attribute)</a>, <a href="api/types.html#griot_core.QualityCheckType.CUSTOM">[1]</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.types.html#griot_core.types.QualityCheckType.CUSTOM">(griot_core.types.QualityCheckType attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.ContractSupport.custom_properties">custom_properties (griot_core.contract.ContractSupport attribute)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.Server.custom_properties">(griot_core.contract.Server attribute)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.TeamMember.custom_properties">(griot_core.contract.TeamMember attribute)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.ContractSupport.custom_properties">(griot_core.ContractSupport attribute)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.Field.custom_properties">(griot_core.Field attribute)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.FieldInfo.custom_properties">(griot_core.FieldInfo attribute)</a>, <a href="api/_autosummary/griot_core.html#id16">[1]</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.schema.html#griot_core.schema.Field.custom_properties">(griot_core.schema.Field attribute)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.schema.html#griot_core.schema.FieldInfo.custom_properties">(griot_core.schema.FieldInfo attribute)</a>, <a href="api/_autosummary/griot_core.schema.html#id15">[1]</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.Server.custom_properties">(griot_core.Server attribute)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.TeamMember.custom_properties">(griot_core.TeamMember attribute)</a>
+</li>
+        </ul></li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="D" class="genindex-section">
+  <h2>D</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/_autosummary/griot_core.dataframe_validation.html#griot_core.dataframe_validation.DataFrameType.DASK">DASK (griot_core.dataframe_validation.DataFrameType attribute)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.DataFrameType.DASK">(griot_core.DataFrameType attribute)</a>, <a href="api/types.html#griot_core.DataFrameType.DASK">[1]</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.types.html#griot_core.types.DataFrameType.DASK">(griot_core.types.DataFrameType attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.dataframe_validation.html#griot_core.dataframe_validation.DaskValidator">DaskValidator (class in griot_core.dataframe_validation)</a>
+</li>
+        <li><a href="api/_autosummary/griot_core.dataframe_validation.html#griot_core.dataframe_validation.DaskValidator.dataframe_type">dataframe_type (griot_core.dataframe_validation.DaskValidator attribute)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.dataframe_validation.html#griot_core.dataframe_validation.DataFrameValidationResult.dataframe_type">(griot_core.dataframe_validation.DataFrameValidationResult attribute)</a>, <a href="api/_autosummary/griot_core.dataframe_validation.html#id7">[1]</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.dataframe_validation.html#griot_core.dataframe_validation.DataFrameValidator.dataframe_type">(griot_core.dataframe_validation.DataFrameValidator attribute)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.dataframe_validation.html#griot_core.dataframe_validation.PandasValidator.dataframe_type">(griot_core.dataframe_validation.PandasValidator attribute)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.dataframe_validation.html#griot_core.dataframe_validation.PolarsValidator.dataframe_type">(griot_core.dataframe_validation.PolarsValidator attribute)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.dataframe_validation.html#griot_core.dataframe_validation.PySparkValidator.dataframe_type">(griot_core.dataframe_validation.PySparkValidator attribute)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.DataFrameValidationResult.dataframe_type">(griot_core.DataFrameValidationResult attribute)</a>, <a href="api/_autosummary/griot_core.html#id29">[1]</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.DataFrameValidator.dataframe_type">(griot_core.DataFrameValidator attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.DataFrameType">DataFrameType (class in griot_core)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.dataframe_validation.html#griot_core.dataframe_validation.DataFrameType">(class in griot_core.dataframe_validation)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.types.html#griot_core.types.DataFrameType">(class in griot_core.types)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.DataFrameValidationResult">DataFrameValidationResult (class in griot_core)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.dataframe_validation.html#griot_core.dataframe_validation.DataFrameValidationResult">(class in griot_core.dataframe_validation)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.DataFrameValidator">DataFrameValidator (class in griot_core)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.dataframe_validation.html#griot_core.dataframe_validation.DataFrameValidator">(class in griot_core.dataframe_validation)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.DataFrameValidatorRegistry">DataFrameValidatorRegistry (class in griot_core)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.dataframe_validation.html#griot_core.dataframe_validation.DataFrameValidatorRegistry">(class in griot_core.dataframe_validation)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.Server.dataset">dataset (griot_core.contract.Server attribute)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.Server.dataset">(griot_core.Server attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.DataType">DataType (class in griot_core)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.types.html#griot_core.types.DataType">(class in griot_core.types)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.DataType.DATE">DATE (griot_core.DataType attribute)</a>, <a href="api/types.html#griot_core.DataType.DATE">[1]</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.types.html#griot_core.types.DataType.DATE">(griot_core.types.DataType attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.DataType.DATETIME">DATETIME (griot_core.DataType attribute)</a>, <a href="api/types.html#griot_core.DataType.DATETIME">[1]</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.types.html#griot_core.types.DataType.DATETIME">(griot_core.types.DataType attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.Field.default">default (griot_core.Field attribute)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.FieldInfo.default">(griot_core.FieldInfo attribute)</a>, <a href="api/_autosummary/griot_core.html#id19">[1]</a>, <a href="api/schema.html#griot_core.FieldInfo.default">[2]</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.schema.html#griot_core.schema.Field.default">(griot_core.schema.Field attribute)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.schema.html#griot_core.schema.FieldInfo.default">(griot_core.schema.FieldInfo attribute)</a>, <a href="api/_autosummary/griot_core.schema.html#id18">[1]</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.Field.default_factory">default_factory (griot_core.Field attribute)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.FieldInfo.default_factory">(griot_core.FieldInfo attribute)</a>, <a href="api/_autosummary/griot_core.html#id21">[1]</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.schema.html#griot_core.schema.Field.default_factory">(griot_core.schema.Field attribute)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.schema.html#griot_core.schema.FieldInfo.default_factory">(griot_core.schema.FieldInfo attribute)</a>, <a href="api/_autosummary/griot_core.schema.html#id20">[1]</a>
+</li>
+        </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.ContractStatus.DEPRECATED">DEPRECATED (griot_core.ContractStatus attribute)</a>, <a href="api/types.html#griot_core.ContractStatus.DEPRECATED">[1]</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.types.html#griot_core.types.ContractStatus.DEPRECATED">(griot_core.types.ContractStatus attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/reports.html#FieldReport.description">description (FieldReport attribute)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.ContractSupport.description">(griot_core.contract.ContractSupport attribute)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.ContractTeam.description">(griot_core.contract.ContractTeam attribute)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.Server.description">(griot_core.contract.Server attribute)</a>
+</li>
+          <li><a href="api/reports.html#griot_core.ContractReport.description">(griot_core.ContractReport attribute)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.ContractSupport.description">(griot_core.ContractSupport attribute)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.ContractTeam.description">(griot_core.ContractTeam attribute)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.Field.description">(griot_core.Field attribute)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.FieldInfo.description">(griot_core.FieldInfo attribute)</a>, <a href="api/_autosummary/griot_core.html#id6">[1]</a>, <a href="api/schema.html#griot_core.FieldInfo.description">[2]</a>
+</li>
+          <li><a href="api/schema.html#griot_core.Schema.description">(griot_core.Schema attribute)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.schema.html#griot_core.schema.Field.description">(griot_core.schema.Field attribute)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.schema.html#griot_core.schema.FieldInfo.description">(griot_core.schema.FieldInfo attribute)</a>, <a href="api/_autosummary/griot_core.schema.html#id5">[1]</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.Server.description">(griot_core.Server attribute)</a>
+</li>
+          <li><a href="api/reports.html#SchemaReport.description">(SchemaReport attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/validation.html#griot_core.FieldValidationResult.details">details (griot_core.FieldValidationResult attribute)</a>
+</li>
+        <li><a href="api/validation.html#griot_core.DataFrameValidatorRegistry.detect_type">detect_type() (griot_core.DataFrameValidatorRegistry method)</a>
+</li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.ContractReport.documented_fields">documented_fields (griot_core.ContractReport attribute)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.reports.html#griot_core.reports.ContractReport.documented_fields">(griot_core.reports.ContractReport attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.ContractStatus.DRAFT">DRAFT (griot_core.ContractStatus attribute)</a>, <a href="api/types.html#griot_core.ContractStatus.DRAFT">[1]</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.types.html#griot_core.types.ContractStatus.DRAFT">(griot_core.types.ContractStatus attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.SLAProperty.driver">driver (griot_core.contract.SLAProperty attribute)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.SLAProperty.driver">(griot_core.SLAProperty attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.QualityMetric.DUPLICATE_ROWS">DUPLICATE_ROWS (griot_core.QualityMetric attribute)</a>, <a href="api/types.html#griot_core.QualityMetric.DUPLICATE_ROWS">[1]</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.types.html#griot_core.types.QualityMetric.DUPLICATE_ROWS">(griot_core.types.QualityMetric attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.QualityRule.duplicate_rows">duplicate_rows() (griot_core.QualityRule class method)</a>, <a href="api/types.html#griot_core.QualityRule.duplicate_rows">[1]</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.types.html#griot_core.types.QualityRule.duplicate_rows">(griot_core.types.QualityRule class method)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.QualityMetric.DUPLICATE_VALUES">DUPLICATE_VALUES (griot_core.QualityMetric attribute)</a>, <a href="api/types.html#griot_core.QualityMetric.DUPLICATE_VALUES">[1]</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.types.html#griot_core.types.QualityMetric.DUPLICATE_VALUES">(griot_core.types.QualityMetric attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.QualityRule.duplicate_values">duplicate_values() (griot_core.QualityRule class method)</a>, <a href="api/types.html#griot_core.QualityRule.duplicate_values">[1]</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.types.html#griot_core.types.QualityRule.duplicate_values">(griot_core.types.QualityRule class method)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.dataframe_validation.html#griot_core.dataframe_validation.DataFrameValidationResult.duration_ms">duration_ms (griot_core.dataframe_validation.DataFrameValidationResult attribute)</a>, <a href="api/_autosummary/griot_core.dataframe_validation.html#id6">[1]</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.dataframe_validation.html#griot_core.dataframe_validation.MultiSchemaValidationResult.duration_ms">(griot_core.dataframe_validation.MultiSchemaValidationResult attribute)</a>, <a href="api/_autosummary/griot_core.dataframe_validation.html#id13">[1]</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.DataFrameValidationResult.duration_ms">(griot_core.DataFrameValidationResult attribute)</a>, <a href="api/_autosummary/griot_core.html#id28">[1]</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.MultiSchemaValidationResult.duration_ms">(griot_core.MultiSchemaValidationResult attribute)</a>, <a href="api/_autosummary/griot_core.html#id35">[1]</a>
+</li>
+        </ul></li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="E" class="genindex-section">
+  <h2>E</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/_autosummary/griot_core.dataframe_validation.html#griot_core.dataframe_validation.ValidationMode.EAGER">EAGER (griot_core.dataframe_validation.ValidationMode attribute)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.ValidationMode.EAGER">(griot_core.ValidationMode attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.SLAProperty.element">element (griot_core.contract.SLAProperty attribute)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.SLAProperty.element">(griot_core.SLAProperty attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.Server.environment">environment (griot_core.contract.Server attribute)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.Server.environment">(griot_core.Server attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.Severity.ERROR">ERROR (griot_core.Severity attribute)</a>, <a href="api/types.html#griot_core.Severity.ERROR">[1]</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.types.html#griot_core.types.Severity.ERROR">(griot_core.types.Severity attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.ContractStructureResult.error_count">error_count (griot_core.contract.ContractStructureResult attribute)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.ContractStructureResult.error_count">(griot_core.ContractStructureResult attribute)</a>, <a href="api/contract.html#griot_core.ContractStructureResult.error_count">[1]</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.dataframe_validation.html#griot_core.dataframe_validation.DataFrameValidationResult.error_count">(griot_core.dataframe_validation.DataFrameValidationResult attribute)</a>, <a href="api/_autosummary/griot_core.dataframe_validation.html#id3">[1]</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.dataframe_validation.html#griot_core.dataframe_validation.FieldValidationResult.error_count">(griot_core.dataframe_validation.FieldValidationResult attribute)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.DataFrameValidationResult.error_count">(griot_core.DataFrameValidationResult attribute)</a>, <a href="api/_autosummary/griot_core.html#id25">[1]</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.exceptions.html#griot_core.exceptions.ValidationError.error_count">(griot_core.exceptions.ValidationError property)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.FieldValidationResult.error_count">(griot_core.FieldValidationResult attribute)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.ValidationError.error_count">(griot_core.ValidationError property)</a>
+</li>
+        </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/validation.html#griot_core.FieldValidationResult.error_type">error_type (griot_core.FieldValidationResult attribute)</a>
+</li>
+        <li><a href="api/_autosummary/griot_core.dataframe_validation.html#griot_core.dataframe_validation.DataFrameValidationResult.errors">errors (griot_core.dataframe_validation.DataFrameValidationResult attribute)</a>, <a href="api/_autosummary/griot_core.dataframe_validation.html#id5">[1]</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.dataframe_validation.html#griot_core.dataframe_validation.FieldValidationResult.errors">(griot_core.dataframe_validation.FieldValidationResult attribute)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.DataFrameValidationResult.errors">(griot_core.DataFrameValidationResult attribute)</a>, <a href="api/_autosummary/griot_core.html#id27">[1]</a>, <a href="api/validation.html#griot_core.DataFrameValidationResult.errors">[2]</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.FieldValidationResult.errors">(griot_core.FieldValidationResult attribute)</a>
+</li>
+          <li><a href="api/exceptions.html#griot_core.ValidationError.errors">(griot_core.ValidationError attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.export_manifest">export_manifest() (in module griot_core)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.manifest.html#griot_core.manifest.export_manifest">(in module griot_core.manifest)</a>
+</li>
+        </ul></li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="F" class="genindex-section">
+  <h2>F</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.Field">Field (class in griot_core)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.schema.html#griot_core.schema.Field">(class in griot_core.schema)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.LintIssue.field">field (griot_core.contract.LintIssue attribute)</a>
+
+        <ul>
+          <li><a href="api/types.html#griot_core.FieldValidationError.field">(griot_core.FieldValidationError attribute)</a>
+</li>
+          <li><a href="api/validation.html#griot_core.FieldValidationResult.field">(griot_core.FieldValidationResult attribute)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.LintIssue.field">(griot_core.LintIssue attribute)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.types.html#griot_core.types.FieldValidationError.field">(griot_core.types.FieldValidationError attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.dataframe_validation.html#griot_core.dataframe_validation.FieldValidationResult.field_name">field_name (griot_core.dataframe_validation.FieldValidationResult attribute)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.FieldValidationResult.field_name">(griot_core.FieldValidationResult attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.Schema.field_names">field_names() (griot_core.Schema class method)</a>, <a href="api/schema.html#griot_core.Schema.field_names">[1]</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.schema.html#griot_core.schema.Schema.field_names">(griot_core.schema.Schema class method)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.dataframe_validation.html#griot_core.dataframe_validation.DataFrameValidationResult.field_results">field_results (griot_core.dataframe_validation.DataFrameValidationResult attribute)</a>, <a href="api/_autosummary/griot_core.dataframe_validation.html#id4">[1]</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.DataFrameValidationResult.field_results">(griot_core.DataFrameValidationResult attribute)</a>, <a href="api/_autosummary/griot_core.html#id26">[1]</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.ContractReport.field_types">field_types (griot_core.ContractReport attribute)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.reports.html#griot_core.reports.ContractReport.field_types">(griot_core.reports.ContractReport attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.FieldInfo">FieldInfo (class in griot_core)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.schema.html#griot_core.schema.FieldInfo">(class in griot_core.schema)</a>
+</li>
+        </ul></li>
+        <li><a href="api/reports.html#FieldReport">FieldReport (built-in class)</a>
+</li>
+        <li><a href="api/schema.html#griot_core.Schema.fields">fields (griot_core.Schema attribute)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.Schema.fields">(griot_core.Schema property)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.schema.html#griot_core.schema.Schema.fields">(griot_core.schema.Schema property)</a>
+</li>
+          <li><a href="api/reports.html#SchemaReport.fields">(SchemaReport attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.ContractReport.fields_with_quality_rules">fields_with_quality_rules (griot_core.ContractReport attribute)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.reports.html#griot_core.reports.ContractReport.fields_with_quality_rules">(griot_core.reports.ContractReport attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.types.html#griot_core.types.FieldValidationError">FieldValidationError (class in griot_core.types)</a>
+</li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.FieldValidationResult">FieldValidationResult (class in griot_core)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.dataframe_validation.html#griot_core.dataframe_validation.FieldValidationResult">(class in griot_core.dataframe_validation)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.ContractRole.first_level_approvers">first_level_approvers (griot_core.contract.ContractRole attribute)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.ContractRole.first_level_approvers">(griot_core.ContractRole attribute)</a>
+</li>
+        </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.DataType.FLOAT">FLOAT (griot_core.DataType attribute)</a>, <a href="api/types.html#griot_core.DataType.FLOAT">[1]</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.types.html#griot_core.types.DataType.FLOAT">(griot_core.types.DataType attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.Contract.from_dict">from_dict() (griot_core.Contract class method)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.Contract.from_dict">(griot_core.contract.Contract class method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.ContractDescription.from_dict">(griot_core.contract.ContractDescription class method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.ContractRole.from_dict">(griot_core.contract.ContractRole class method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.ContractSupport.from_dict">(griot_core.contract.ContractSupport class method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.ContractTeam.from_dict">(griot_core.contract.ContractTeam class method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.Server.from_dict">(griot_core.contract.Server class method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.SLAProperty.from_dict">(griot_core.contract.SLAProperty class method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.TeamMember.from_dict">(griot_core.contract.TeamMember class method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.ContractDescription.from_dict">(griot_core.ContractDescription class method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.ContractRole.from_dict">(griot_core.ContractRole class method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.ContractSupport.from_dict">(griot_core.ContractSupport class method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.ContractTeam.from_dict">(griot_core.ContractTeam class method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.FieldInfo.from_dict">(griot_core.FieldInfo class method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.Schema.from_dict">(griot_core.Schema class method)</a>, <a href="api/schema.html#griot_core.Schema.from_dict">[1]</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.schema.html#griot_core.schema.FieldInfo.from_dict">(griot_core.schema.FieldInfo class method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.schema.html#griot_core.schema.Schema.from_dict">(griot_core.schema.Schema class method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.Server.from_dict">(griot_core.Server class method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.SLAProperty.from_dict">(griot_core.SLAProperty class method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.TeamMember.from_dict">(griot_core.TeamMember class method)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.DataType.from_python_type">from_python_type() (griot_core.DataType class method)</a>, <a href="api/types.html#griot_core.DataType.from_python_type">[1]</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.types.html#griot_core.types.DataType.from_python_type">(griot_core.types.DataType class method)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.Contract.from_yaml">from_yaml() (griot_core.Contract class method)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.Contract.from_yaml">(griot_core.contract.Contract class method)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.Contract.from_yaml_string">from_yaml_string() (griot_core.Contract class method)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.Contract.from_yaml_string">(griot_core.contract.Contract class method)</a>
+</li>
+        </ul></li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="G" class="genindex-section">
+  <h2>G</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/_autosummary/griot_core.dataframe_validation.html#griot_core.dataframe_validation.PanderaSchemaGenerator.generate">generate() (griot_core.dataframe_validation.PanderaSchemaGenerator method)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.PanderaSchemaGenerator.generate">(griot_core.PanderaSchemaGenerator method)</a>, <a href="api/validation.html#griot_core.PanderaSchemaGenerator.generate">[1]</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.generate_contract_report">generate_contract_report() (in module griot_core)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.reports.html#griot_core.reports.generate_contract_report">(in module griot_core.reports)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.generate_mock_data">generate_mock_data() (in module griot_core)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.mock.html#griot_core.mock.generate_mock_data">(in module griot_core.mock)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.ContractReport.generated_at">generated_at (griot_core.ContractReport attribute)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.reports.html#griot_core.reports.ContractReport.generated_at">(griot_core.reports.ContractReport attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/validation.html#griot_core.DataFrameValidatorRegistry.get">get() (griot_core.DataFrameValidatorRegistry method)</a>
+</li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.get_available_backends">get_available_backends() (in module griot_core)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.dataframe_validation.html#griot_core.dataframe_validation.get_available_backends">(in module griot_core.dataframe_validation)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.constraints.html#griot_core.constraints.get_constraint_validator">get_constraint_validator() (in module griot_core.constraints)</a>
+</li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.Field.get_default">get_default() (griot_core.Field method)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.schema.html#griot_core.schema.Field.get_default">(griot_core.schema.Field method)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.FieldInfo.get_dq_checks">get_dq_checks() (griot_core.FieldInfo method)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.schema.html#griot_core.schema.FieldInfo.get_dq_checks">(griot_core.schema.FieldInfo method)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.dataframe_validation.html#griot_core.dataframe_validation.MultiSchemaValidationResult.get_failed_schemas">get_failed_schemas() (griot_core.dataframe_validation.MultiSchemaValidationResult method)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.MultiSchemaValidationResult.get_failed_schemas">(griot_core.MultiSchemaValidationResult method)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.Schema.get_field">get_field() (griot_core.Schema class method)</a>, <a href="api/schema.html#griot_core.Schema.get_field">[1]</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.schema.html#griot_core.schema.Schema.get_field">(griot_core.schema.Schema class method)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.Schema.get_instance_field">get_instance_field() (griot_core.Schema method)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.schema.html#griot_core.schema.Schema.get_instance_field">(griot_core.schema.Schema method)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.Schema.get_primary_key">get_primary_key() (griot_core.Schema class method)</a>, <a href="api/schema.html#griot_core.Schema.get_primary_key">[1]</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.schema.html#griot_core.schema.Schema.get_primary_key">(griot_core.schema.Schema class method)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.Contract.get_schema">get_schema() (griot_core.Contract method)</a>, <a href="api/contract.html#griot_core.Contract.get_schema">[1]</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.Contract.get_schema">(griot_core.contract.Contract method)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.Contract.get_schema_by_id">get_schema_by_id() (griot_core.Contract method)</a>, <a href="api/contract.html#griot_core.Contract.get_schema_by_id">[1]</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.Contract.get_schema_by_id">(griot_core.contract.Contract method)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.Contract.get_schema_by_name">get_schema_by_name() (griot_core.Contract method)</a>, <a href="api/contract.html#griot_core.Contract.get_schema_by_name">[1]</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.Contract.get_schema_by_name">(griot_core.contract.Contract method)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.dataframe_validation.html#griot_core.dataframe_validation.MultiSchemaValidationResult.get_schema_result">get_schema_result() (griot_core.dataframe_validation.MultiSchemaValidationResult method)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.MultiSchemaValidationResult.get_schema_result">(griot_core.MultiSchemaValidationResult method)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.dataframe_validation.html#griot_core.dataframe_validation.DataFrameValidator.get_type_name">get_type_name() (griot_core.dataframe_validation.DataFrameValidator class method)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.DataFrameValidator.get_type_name">(griot_core.DataFrameValidator class method)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.dataframe_validation.html#griot_core.dataframe_validation.DataFrameValidatorRegistry.get_validator">get_validator() (griot_core.dataframe_validation.DataFrameValidatorRegistry method)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.DataFrameValidatorRegistry.get_validator">(griot_core.DataFrameValidatorRegistry method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.get_validator">(in module griot_core)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.dataframe_validation.html#griot_core.dataframe_validation.get_validator">(in module griot_core.dataframe_validation)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.dataframe_validation.html#griot_core.dataframe_validation.DataFrameValidatorRegistry.get_validator_by_type">get_validator_by_type() (griot_core.dataframe_validation.DataFrameValidatorRegistry method)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.DataFrameValidatorRegistry.get_validator_by_type">(griot_core.DataFrameValidatorRegistry method)</a>
+</li>
+        </ul></li>
+        <li>
+    griot_core
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.html#module-griot_core">module</a>
+</li>
+        </ul></li>
+        <li>
+    griot_core.check_backend()
+
+        <ul>
+          <li><a href="api/validation.html#griot_core.check_backend">built-in function</a>
+</li>
+        </ul></li>
+        <li><a href="api/exceptions.html#griot_core.ConstraintError">griot_core.ConstraintError</a>
+</li>
+        <li>
+    griot_core.constraints
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.constraints.html#module-griot_core.constraints">module</a>
+</li>
+        </ul></li>
+        <li>
+    griot_core.contract
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.contract.html#module-griot_core.contract">module</a>
+</li>
+        </ul></li>
+        <li><a href="api/contract.html#griot_core.Contract">griot_core.Contract (built-in class)</a>
+</li>
+        <li><a href="api/contract.html#griot_core.CONTRACT_FIELD_TYPES">griot_core.CONTRACT_FIELD_TYPES (built-in variable)</a>
+</li>
+        <li>
+    griot_core.contract_to_dict()
+
+        <ul>
+          <li><a href="api/contract.html#griot_core.contract_to_dict">built-in function</a>
+</li>
+        </ul></li>
+        <li>
+    griot_core.contract_to_yaml()
+
+        <ul>
+          <li><a href="api/contract.html#griot_core.contract_to_yaml">built-in function</a>
+</li>
+        </ul></li>
+        <li><a href="api/contract.html#griot_core.ContractDescription">griot_core.ContractDescription (built-in class)</a>
+</li>
+        <li><a href="api/exceptions.html#griot_core.ContractNotFoundError">griot_core.ContractNotFoundError</a>
+</li>
+        <li><a href="api/exceptions.html#griot_core.ContractParseError">griot_core.ContractParseError</a>
+</li>
+        <li><a href="api/reports.html#griot_core.ContractReport">griot_core.ContractReport (built-in class)</a>
+</li>
+        <li><a href="api/contract.html#griot_core.ContractRole">griot_core.ContractRole (built-in class)</a>
+</li>
+        <li><a href="api/types.html#griot_core.ContractStatus">griot_core.ContractStatus (built-in class)</a>
+</li>
+        <li><a href="api/contract.html#griot_core.ContractStructureResult">griot_core.ContractStructureResult (built-in class)</a>
+</li>
+        <li><a href="api/contract.html#griot_core.ContractSupport">griot_core.ContractSupport (built-in class)</a>
+</li>
+        <li><a href="api/contract.html#griot_core.ContractTeam">griot_core.ContractTeam (built-in class)</a>
+</li>
+        <li>
+    griot_core.dataframe_validation
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.dataframe_validation.html#module-griot_core.dataframe_validation">module</a>
+</li>
+        </ul></li>
+        <li><a href="api/types.html#griot_core.DataFrameType">griot_core.DataFrameType (built-in class)</a>
+</li>
+        <li><a href="api/validation.html#griot_core.DataFrameValidationResult">griot_core.DataFrameValidationResult (built-in class)</a>
+</li>
+        <li><a href="api/validation.html#griot_core.DataFrameValidator">griot_core.DataFrameValidator (built-in class)</a>
+</li>
+        <li><a href="api/validation.html#griot_core.DataFrameValidatorRegistry">griot_core.DataFrameValidatorRegistry (built-in class)</a>
+</li>
+        <li><a href="api/types.html#griot_core.DataType">griot_core.DataType (built-in class)</a>
+</li>
+        <li>
+    griot_core.exceptions
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.exceptions.html#module-griot_core.exceptions">module</a>
+</li>
+        </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li>
+    griot_core.export_manifest()
+
+        <ul>
+          <li><a href="api/reports.html#griot_core.export_manifest">built-in function</a>
+</li>
+        </ul></li>
+        <li>
+    griot_core.Field()
+
+        <ul>
+          <li><a href="api/schema.html#griot_core.Field">built-in function</a>
+</li>
+        </ul></li>
+        <li><a href="api/schema.html#griot_core.FieldInfo">griot_core.FieldInfo (built-in class)</a>
+</li>
+        <li><a href="api/types.html#griot_core.FieldValidationError">griot_core.FieldValidationError (built-in class)</a>
+</li>
+        <li><a href="api/validation.html#griot_core.FieldValidationResult">griot_core.FieldValidationResult (built-in class)</a>
+</li>
+        <li>
+    griot_core.generate_contract_report()
+
+        <ul>
+          <li><a href="api/reports.html#griot_core.generate_contract_report">built-in function</a>
+</li>
+        </ul></li>
+        <li>
+    griot_core.get_available_backends()
+
+        <ul>
+          <li><a href="api/validation.html#griot_core.get_available_backends">built-in function</a>
+</li>
+        </ul></li>
+        <li>
+    griot_core.get_validator()
+
+        <ul>
+          <li><a href="api/validation.html#griot_core.get_validator">built-in function</a>
+</li>
+        </ul></li>
+        <li><a href="api/exceptions.html#griot_core.GriotError">griot_core.GriotError</a>
+</li>
+        <li>
+    griot_core.lint_contract()
+
+        <ul>
+          <li><a href="api/contract.html#griot_core.lint_contract">built-in function</a>
+</li>
+        </ul></li>
+        <li><a href="api/contract.html#griot_core.LintIssue">griot_core.LintIssue (built-in class)</a>
+</li>
+        <li>
+    griot_core.load_contract()
+
+        <ul>
+          <li><a href="api/contract.html#griot_core.load_contract">built-in function</a>
+</li>
+        </ul></li>
+        <li>
+    griot_core.load_contract_from_dict()
+
+        <ul>
+          <li><a href="api/contract.html#griot_core.load_contract_from_dict">built-in function</a>
+</li>
+        </ul></li>
+        <li>
+    griot_core.load_contract_from_string()
+
+        <ul>
+          <li><a href="api/contract.html#griot_core.load_contract_from_string">built-in function</a>
+</li>
+        </ul></li>
+        <li>
+    griot_core.manifest
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.manifest.html#module-griot_core.manifest">module</a>
+</li>
+        </ul></li>
+        <li>
+    griot_core.mock
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.mock.html#module-griot_core.mock">module</a>
+</li>
+        </ul></li>
+        <li><a href="api/validation.html#griot_core.MultiSchemaValidationResult">griot_core.MultiSchemaValidationResult (built-in class)</a>
+</li>
+        <li>
+    griot_core.normalize_keys()
+
+        <ul>
+          <li><a href="api/contract.html#griot_core.normalize_keys">built-in function</a>
+</li>
+        </ul></li>
+        <li><a href="api/contract.html#griot_core.ODCS_MANDATORY_FIELDS">griot_core.ODCS_MANDATORY_FIELDS (built-in variable)</a>
+</li>
+        <li><a href="api/exceptions.html#griot_core.PanderaNotInstalledError">griot_core.PanderaNotInstalledError</a>, <a href="api/validation.html#griot_core.PanderaNotInstalledError">[1]</a>
+</li>
+        <li><a href="api/validation.html#griot_core.PanderaSchemaGenerator">griot_core.PanderaSchemaGenerator (built-in class)</a>
+</li>
+        <li><a href="api/types.html#griot_core.QualityCheckType">griot_core.QualityCheckType (built-in class)</a>
+</li>
+        <li><a href="api/types.html#griot_core.QualityMetric">griot_core.QualityMetric (built-in class)</a>
+</li>
+        <li><a href="api/types.html#griot_core.QualityOperator">griot_core.QualityOperator (built-in class)</a>
+</li>
+        <li><a href="api/types.html#griot_core.QualityRule">griot_core.QualityRule (built-in class)</a>
+</li>
+        <li><a href="api/types.html#griot_core.QualityUnit">griot_core.QualityUnit (built-in class)</a>
+</li>
+        <li>
+    griot_core.register_validator()
+
+        <ul>
+          <li><a href="api/validation.html#griot_core.register_validator">built-in function</a>
+</li>
+        </ul></li>
+        <li>
+    griot_core.reports
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.reports.html#module-griot_core.reports">module</a>
+</li>
+        </ul></li>
+        <li>
+    griot_core.schema
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.schema.html#module-griot_core.schema">module</a>
+</li>
+        </ul></li>
+        <li><a href="api/schema.html#griot_core.Schema">griot_core.Schema (built-in class)</a>
+</li>
+        <li><a href="api/contract.html#griot_core.Server">griot_core.Server (built-in class)</a>
+</li>
+        <li><a href="api/types.html#griot_core.Severity">griot_core.Severity (built-in class)</a>
+</li>
+        <li><a href="api/contract.html#griot_core.SLAProperty">griot_core.SLAProperty (built-in class)</a>
+</li>
+        <li><a href="api/contract.html#griot_core.TeamMember">griot_core.TeamMember (built-in class)</a>
+</li>
+        <li>
+    griot_core.to_camel_case()
+
+        <ul>
+          <li><a href="api/contract.html#griot_core.to_camel_case">built-in function</a>
+</li>
+        </ul></li>
+        <li>
+    griot_core.to_snake_case()
+
+        <ul>
+          <li><a href="api/contract.html#griot_core.to_snake_case">built-in function</a>
+</li>
+        </ul></li>
+        <li>
+    griot_core.types
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.types.html#module-griot_core.types">module</a>
+</li>
+        </ul></li>
+        <li>
+    griot_core.validate_contract_structure()
+
+        <ul>
+          <li><a href="api/contract.html#griot_core.validate_contract_structure">built-in function</a>
+</li>
+        </ul></li>
+        <li>
+    griot_core.validate_data_batch()
+
+        <ul>
+          <li><a href="api/validation.html#griot_core.validate_data_batch">built-in function</a>
+</li>
+        </ul></li>
+        <li>
+    griot_core.validate_data_mapping()
+
+        <ul>
+          <li><a href="api/validation.html#griot_core.validate_data_mapping">built-in function</a>
+</li>
+        </ul></li>
+        <li>
+    griot_core.validate_dataframe()
+
+        <ul>
+          <li><a href="api/validation.html#griot_core.validate_dataframe">built-in function</a>
+</li>
+        </ul></li>
+        <li>
+    griot_core.validate_list_of_dicts()
+
+        <ul>
+          <li><a href="api/validation.html#griot_core.validate_list_of_dicts">built-in function</a>
+</li>
+        </ul></li>
+        <li>
+    griot_core.validate_schema_data()
+
+        <ul>
+          <li><a href="api/validation.html#griot_core.validate_schema_data">built-in function</a>
+</li>
+        </ul></li>
+        <li><a href="api/exceptions.html#griot_core.ValidationError">griot_core.ValidationError</a>
+</li>
+        <li><a href="api/validation.html#griot_core.ValidationMode">griot_core.ValidationMode (built-in class)</a>
+</li>
+        <li><a href="api/exceptions.html#griot_core.ValidatorNotFoundError">griot_core.ValidatorNotFoundError</a>, <a href="api/validation.html#griot_core.ValidatorNotFoundError">[1]</a>
+</li>
+        <li><a href="api/_autosummary/griot_core.exceptions.html#griot_core.exceptions.GriotError">GriotError</a>, <a href="api/_autosummary/griot_core.html#griot_core.GriotError">[1]</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="H" class="genindex-section">
+  <h2>H</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.FieldInfo.has_default">has_default (griot_core.FieldInfo attribute)</a>, <a href="api/_autosummary/griot_core.html#id20">[1]</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.schema.html#griot_core.schema.FieldInfo.has_default">(griot_core.schema.FieldInfo attribute)</a>, <a href="api/_autosummary/griot_core.schema.html#id19">[1]</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.Field.has_default">has_default() (griot_core.Field method)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.schema.html#griot_core.schema.Field.has_default">(griot_core.schema.Field method)</a>
+</li>
+        </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/_autosummary/griot_core.dataframe_validation.html#griot_core.dataframe_validation.DataFrameValidatorRegistry.has_validator">has_validator() (griot_core.dataframe_validation.DataFrameValidatorRegistry method)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.DataFrameValidatorRegistry.has_validator">(griot_core.DataFrameValidatorRegistry method)</a>
+</li>
+        </ul></li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="I" class="genindex-section">
+  <h2>I</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.Contract.id">id (griot_core.Contract attribute)</a>, <a href="api/contract.html#griot_core.Contract.id">[1]</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.Contract.id">(griot_core.contract.Contract attribute)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.ContractSupport.id">(griot_core.contract.ContractSupport attribute)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.ContractTeam.id">(griot_core.contract.ContractTeam attribute)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.SLAProperty.id">(griot_core.contract.SLAProperty attribute)</a>
+</li>
+          <li><a href="api/reports.html#griot_core.ContractReport.id">(griot_core.ContractReport attribute)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.ContractSupport.id">(griot_core.ContractSupport attribute)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.ContractTeam.id">(griot_core.ContractTeam attribute)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.FieldInfo.id">(griot_core.FieldInfo attribute)</a>, <a href="api/_autosummary/griot_core.html#id4">[1]</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.schema.html#griot_core.schema.FieldInfo.id">(griot_core.schema.FieldInfo attribute)</a>, <a href="api/_autosummary/griot_core.schema.html#id3">[1]</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.SLAProperty.id">(griot_core.SLAProperty attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.Severity.INFO">INFO (griot_core.Severity attribute)</a>, <a href="api/types.html#griot_core.Severity.INFO">[1]</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.types.html#griot_core.types.Severity.INFO">(griot_core.types.Severity attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.DataType.INTEGER">INTEGER (griot_core.DataType attribute)</a>, <a href="api/types.html#griot_core.DataType.INTEGER">[1]</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.types.html#griot_core.types.DataType.INTEGER">(griot_core.types.DataType attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.QualityMetric.INVALID_VALUES">INVALID_VALUES (griot_core.QualityMetric attribute)</a>, <a href="api/types.html#griot_core.QualityMetric.INVALID_VALUES">[1]</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.types.html#griot_core.types.QualityMetric.INVALID_VALUES">(griot_core.types.QualityMetric attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.QualityRule.invalid_values">invalid_values() (griot_core.QualityRule class method)</a>, <a href="api/types.html#griot_core.QualityRule.invalid_values">[1]</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.types.html#griot_core.types.QualityRule.invalid_values">(griot_core.types.QualityRule class method)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.dataframe_validation.html#griot_core.dataframe_validation.DaskValidator.is_dataframe_type">is_dataframe_type() (griot_core.dataframe_validation.DaskValidator method)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.dataframe_validation.html#griot_core.dataframe_validation.DataFrameValidator.is_dataframe_type">(griot_core.dataframe_validation.DataFrameValidator method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.dataframe_validation.html#griot_core.dataframe_validation.PandasValidator.is_dataframe_type">(griot_core.dataframe_validation.PandasValidator method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.dataframe_validation.html#griot_core.dataframe_validation.PolarsValidator.is_dataframe_type">(griot_core.dataframe_validation.PolarsValidator method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.dataframe_validation.html#griot_core.dataframe_validation.PySparkValidator.is_dataframe_type">(griot_core.dataframe_validation.PySparkValidator method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.DataFrameValidator.is_dataframe_type">(griot_core.DataFrameValidator method)</a>
+</li>
+        </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/types.html#griot_core.QualityMetric.is_property_level">is_property_level (griot_core.QualityMetric attribute)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.QualityMetric.is_property_level">(griot_core.QualityMetric property)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.types.html#griot_core.types.QualityMetric.is_property_level">(griot_core.types.QualityMetric property)</a>
+</li>
+        </ul></li>
+        <li><a href="api/types.html#griot_core.QualityMetric.is_schema_level">is_schema_level (griot_core.QualityMetric attribute)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.QualityMetric.is_schema_level">(griot_core.QualityMetric property)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.types.html#griot_core.types.QualityMetric.is_schema_level">(griot_core.types.QualityMetric property)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.ContractStructureResult.is_valid">is_valid (griot_core.contract.ContractStructureResult attribute)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.ContractStructureResult.is_valid">(griot_core.ContractStructureResult attribute)</a>, <a href="api/contract.html#griot_core.ContractStructureResult.is_valid">[1]</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.dataframe_validation.html#griot_core.dataframe_validation.DataFrameValidationResult.is_valid">(griot_core.dataframe_validation.DataFrameValidationResult attribute)</a>, <a href="api/_autosummary/griot_core.dataframe_validation.html#id0">[1]</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.dataframe_validation.html#griot_core.dataframe_validation.FieldValidationResult.is_valid">(griot_core.dataframe_validation.FieldValidationResult attribute)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.dataframe_validation.html#griot_core.dataframe_validation.MultiSchemaValidationResult.is_valid">(griot_core.dataframe_validation.MultiSchemaValidationResult attribute)</a>, <a href="api/_autosummary/griot_core.dataframe_validation.html#id8">[1]</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.DataFrameValidationResult.is_valid">(griot_core.DataFrameValidationResult attribute)</a>, <a href="api/_autosummary/griot_core.html#id22">[1]</a>, <a href="api/validation.html#griot_core.DataFrameValidationResult.is_valid">[2]</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.FieldValidationResult.is_valid">(griot_core.FieldValidationResult attribute)</a>, <a href="api/validation.html#griot_core.FieldValidationResult.is_valid">[1]</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.MultiSchemaValidationResult.is_valid">(griot_core.MultiSchemaValidationResult attribute)</a>, <a href="api/_autosummary/griot_core.html#id30">[1]</a>, <a href="api/validation.html#griot_core.MultiSchemaValidationResult.is_valid">[2]</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.ContractStructureResult.issues">issues (griot_core.contract.ContractStructureResult attribute)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.ContractStructureResult.issues">(griot_core.ContractStructureResult attribute)</a>, <a href="api/contract.html#griot_core.ContractStructureResult.issues">[1]</a>
+</li>
+        </ul></li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="K" class="genindex-section">
+  <h2>K</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.Contract.kind">kind (griot_core.Contract attribute)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.Contract.kind">(griot_core.contract.Contract attribute)</a>
+</li>
+        </ul></li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="L" class="genindex-section">
+  <h2>L</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/_autosummary/griot_core.dataframe_validation.html#griot_core.dataframe_validation.ValidationMode.LAZY">LAZY (griot_core.dataframe_validation.ValidationMode attribute)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.ValidationMode.LAZY">(griot_core.ValidationMode attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/validation.html#griot_core.ValidationMode.LENIENT">LENIENT (griot_core.ValidationMode attribute)</a>
+</li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.QualityCheckType.LIBRARY">LIBRARY (griot_core.QualityCheckType attribute)</a>, <a href="api/types.html#griot_core.QualityCheckType.LIBRARY">[1]</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.types.html#griot_core.types.QualityCheckType.LIBRARY">(griot_core.types.QualityCheckType attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.ContractDescription.limitations">limitations (griot_core.contract.ContractDescription attribute)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.ContractDescription.limitations">(griot_core.ContractDescription attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.lint_contract">lint_contract() (in module griot_core)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.lint_contract">(in module griot_core.contract)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.LintIssue">LintIssue (class in griot_core)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.LintIssue">(class in griot_core.contract)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.Schema.list_fields">list_fields() (griot_core.Schema class method)</a>, <a href="api/schema.html#griot_core.Schema.list_fields">[1]</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.schema.html#griot_core.schema.Schema.list_fields">(griot_core.schema.Schema class method)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.Contract.list_schema_names">list_schema_names() (griot_core.Contract method)</a>, <a href="api/contract.html#griot_core.Contract.list_schema_names">[1]</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.Contract.list_schema_names">(griot_core.contract.Contract method)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.Contract.list_schemas">list_schemas() (griot_core.Contract method)</a>, <a href="api/contract.html#griot_core.Contract.list_schemas">[1]</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.Contract.list_schemas">(griot_core.contract.Contract method)</a>
+</li>
+        </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/_autosummary/griot_core.dataframe_validation.html#griot_core.dataframe_validation.DataFrameValidatorRegistry.list_validators">list_validators() (griot_core.dataframe_validation.DataFrameValidatorRegistry method)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.DataFrameValidatorRegistry.list_validators">(griot_core.DataFrameValidatorRegistry method)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.load_contract">load_contract() (in module griot_core)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.load_contract">(in module griot_core.contract)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.load_contract_from_dict">load_contract_from_dict() (in module griot_core)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.load_contract_from_dict">(in module griot_core.contract)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.load_contract_from_string">load_contract_from_string() (in module griot_core)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.load_contract_from_string">(in module griot_core.contract)</a>
+</li>
+        </ul></li>
+        <li><a href="api/reports.html#FieldReport.logical_type">logical_type (FieldReport attribute)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.ContractDescription.logical_type">(griot_core.contract.ContractDescription attribute)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.ContractDescription.logical_type">(griot_core.ContractDescription attribute)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.Field.logical_type">(griot_core.Field attribute)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.FieldInfo.logical_type">(griot_core.FieldInfo attribute)</a>, <a href="api/_autosummary/griot_core.html#id2">[1]</a>, <a href="api/schema.html#griot_core.FieldInfo.logical_type">[2]</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.schema.html#griot_core.schema.Field.logical_type">(griot_core.schema.Field attribute)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.schema.html#griot_core.schema.FieldInfo.logical_type">(griot_core.schema.FieldInfo attribute)</a>, <a href="api/_autosummary/griot_core.schema.html#id1">[1]</a>
+</li>
+        </ul></li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="M" class="genindex-section">
+  <h2>M</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.ContractTeam.members">members (griot_core.contract.ContractTeam attribute)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.ContractTeam.members">(griot_core.ContractTeam attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.ContractStructureIssue.message">message (griot_core.contract.ContractStructureIssue attribute)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.LintIssue.message">(griot_core.contract.LintIssue attribute)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.ContractStructureIssue.message">(griot_core.ContractStructureIssue attribute)</a>
+</li>
+          <li><a href="api/types.html#griot_core.FieldValidationError.message">(griot_core.FieldValidationError attribute)</a>
+</li>
+          <li><a href="api/validation.html#griot_core.FieldValidationResult.message">(griot_core.FieldValidationResult attribute)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.LintIssue.message">(griot_core.LintIssue attribute)</a>, <a href="api/contract.html#griot_core.LintIssue.message">[1]</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.types.html#griot_core.types.FieldValidationError.message">(griot_core.types.FieldValidationError attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.QualityMetric.MISSING_VALUES">MISSING_VALUES (griot_core.QualityMetric attribute)</a>, <a href="api/types.html#griot_core.QualityMetric.MISSING_VALUES">[1]</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.types.html#griot_core.types.QualityMetric.MISSING_VALUES">(griot_core.types.QualityMetric attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.QualityRule.missing_values">missing_values() (griot_core.QualityRule class method)</a>, <a href="api/types.html#griot_core.QualityRule.missing_values">[1]</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.types.html#griot_core.types.QualityRule.missing_values">(griot_core.types.QualityRule class method)</a>
+</li>
+        </ul></li>
+        <li>
+    module
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.html#module-griot_core">griot_core</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.constraints.html#module-griot_core.constraints">griot_core.constraints</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.contract.html#module-griot_core.contract">griot_core.contract</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.dataframe_validation.html#module-griot_core.dataframe_validation">griot_core.dataframe_validation</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.exceptions.html#module-griot_core.exceptions">griot_core.exceptions</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.manifest.html#module-griot_core.manifest">griot_core.manifest</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.mock.html#module-griot_core.mock">griot_core.mock</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.reports.html#module-griot_core.reports">griot_core.reports</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.schema.html#module-griot_core.schema">griot_core.schema</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.types.html#module-griot_core.types">griot_core.types</a>
+</li>
+        </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.MultiSchemaValidationResult">MultiSchemaValidationResult (class in griot_core)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.dataframe_validation.html#griot_core.dataframe_validation.MultiSchemaValidationResult">(class in griot_core.dataframe_validation)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.QualityOperator.MUST_BE">MUST_BE (griot_core.QualityOperator attribute)</a>, <a href="api/types.html#griot_core.QualityOperator.MUST_BE">[1]</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.types.html#griot_core.types.QualityOperator.MUST_BE">(griot_core.types.QualityOperator attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.QualityOperator.MUST_BE_BETWEEN">MUST_BE_BETWEEN (griot_core.QualityOperator attribute)</a>, <a href="api/types.html#griot_core.QualityOperator.MUST_BE_BETWEEN">[1]</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.types.html#griot_core.types.QualityOperator.MUST_BE_BETWEEN">(griot_core.types.QualityOperator attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.QualityOperator.MUST_BE_GREATER_OR_EQUAL_TO">MUST_BE_GREATER_OR_EQUAL_TO (griot_core.QualityOperator attribute)</a>, <a href="api/types.html#griot_core.QualityOperator.MUST_BE_GREATER_OR_EQUAL_TO">[1]</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.types.html#griot_core.types.QualityOperator.MUST_BE_GREATER_OR_EQUAL_TO">(griot_core.types.QualityOperator attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.QualityOperator.MUST_BE_GREATER_THAN">MUST_BE_GREATER_THAN (griot_core.QualityOperator attribute)</a>, <a href="api/types.html#griot_core.QualityOperator.MUST_BE_GREATER_THAN">[1]</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.types.html#griot_core.types.QualityOperator.MUST_BE_GREATER_THAN">(griot_core.types.QualityOperator attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.QualityOperator.MUST_BE_LESS_OR_EQUAL_TO">MUST_BE_LESS_OR_EQUAL_TO (griot_core.QualityOperator attribute)</a>, <a href="api/types.html#griot_core.QualityOperator.MUST_BE_LESS_OR_EQUAL_TO">[1]</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.types.html#griot_core.types.QualityOperator.MUST_BE_LESS_OR_EQUAL_TO">(griot_core.types.QualityOperator attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.QualityOperator.MUST_BE_LESS_THAN">MUST_BE_LESS_THAN (griot_core.QualityOperator attribute)</a>, <a href="api/types.html#griot_core.QualityOperator.MUST_BE_LESS_THAN">[1]</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.types.html#griot_core.types.QualityOperator.MUST_BE_LESS_THAN">(griot_core.types.QualityOperator attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.QualityOperator.MUST_NOT_BE">MUST_NOT_BE (griot_core.QualityOperator attribute)</a>, <a href="api/types.html#griot_core.QualityOperator.MUST_NOT_BE">[1]</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.types.html#griot_core.types.QualityOperator.MUST_NOT_BE">(griot_core.types.QualityOperator attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.QualityOperator.MUST_NOT_BE_BETWEEN">MUST_NOT_BE_BETWEEN (griot_core.QualityOperator attribute)</a>, <a href="api/types.html#griot_core.QualityOperator.MUST_NOT_BE_BETWEEN">[1]</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.types.html#griot_core.types.QualityOperator.MUST_NOT_BE_BETWEEN">(griot_core.types.QualityOperator attribute)</a>
+</li>
+        </ul></li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="N" class="genindex-section">
+  <h2>N</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/reports.html#FieldReport.name">name (FieldReport attribute)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.Contract.name">(griot_core.Contract attribute)</a>, <a href="api/contract.html#griot_core.Contract.name">[1]</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.Contract.name">(griot_core.contract.Contract attribute)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.ContractTeam.name">(griot_core.contract.ContractTeam attribute)</a>
+</li>
+          <li><a href="api/reports.html#griot_core.ContractReport.name">(griot_core.ContractReport attribute)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.ContractTeam.name">(griot_core.ContractTeam attribute)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.FieldInfo.name">(griot_core.FieldInfo attribute)</a>, <a href="api/_autosummary/griot_core.html#id1">[1]</a>, <a href="api/schema.html#griot_core.FieldInfo.name">[2]</a>
+</li>
+          <li><a href="api/schema.html#griot_core.Schema.name">(griot_core.Schema attribute)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.schema.html#griot_core.schema.FieldInfo.name">(griot_core.schema.FieldInfo attribute)</a>, <a href="api/_autosummary/griot_core.schema.html#id0">[1]</a>
+</li>
+          <li><a href="api/reports.html#SchemaReport.name">(SchemaReport attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.normalize_keys">normalize_keys() (in module griot_core)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.normalize_keys">(in module griot_core.contract)</a>
+</li>
+        </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.QualityMetric.NULL_VALUES">NULL_VALUES (griot_core.QualityMetric attribute)</a>, <a href="api/types.html#griot_core.QualityMetric.NULL_VALUES">[1]</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.types.html#griot_core.types.QualityMetric.NULL_VALUES">(griot_core.types.QualityMetric attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.QualityRule.null_values">null_values() (griot_core.QualityRule class method)</a>, <a href="api/types.html#griot_core.QualityRule.null_values">[1]</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.types.html#griot_core.types.QualityRule.null_values">(griot_core.types.QualityRule class method)</a>
+</li>
+        </ul></li>
+        <li><a href="api/reports.html#FieldReport.nullable">nullable (FieldReport attribute)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.Field.nullable">(griot_core.Field attribute)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.FieldInfo.nullable">(griot_core.FieldInfo attribute)</a>, <a href="api/_autosummary/griot_core.html#id12">[1]</a>, <a href="api/schema.html#griot_core.FieldInfo.nullable">[2]</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.schema.html#griot_core.schema.Field.nullable">(griot_core.schema.Field attribute)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.schema.html#griot_core.schema.FieldInfo.nullable">(griot_core.schema.FieldInfo attribute)</a>, <a href="api/_autosummary/griot_core.schema.html#id11">[1]</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.ContractReport.nullable_fields">nullable_fields (griot_core.ContractReport attribute)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.reports.html#griot_core.reports.ContractReport.nullable_fields">(griot_core.reports.ContractReport attribute)</a>
+</li>
+        </ul></li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="O" class="genindex-section">
+  <h2>O</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.DataType.OBJECT">OBJECT (griot_core.DataType attribute)</a>, <a href="api/types.html#griot_core.DataType.OBJECT">[1]</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.types.html#griot_core.types.DataType.OBJECT">(griot_core.types.DataType attribute)</a>
+</li>
+        </ul></li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="P" class="genindex-section">
+  <h2>P</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/_autosummary/griot_core.dataframe_validation.html#griot_core.dataframe_validation.DataFrameType.PANDAS">PANDAS (griot_core.dataframe_validation.DataFrameType attribute)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.DataFrameType.PANDAS">(griot_core.DataFrameType attribute)</a>, <a href="api/types.html#griot_core.DataFrameType.PANDAS">[1]</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.types.html#griot_core.types.DataFrameType.PANDAS">(griot_core.types.DataFrameType attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.dataframe_validation.html#griot_core.dataframe_validation.PandasValidator">PandasValidator (class in griot_core.dataframe_validation)</a>
+</li>
+        <li><a href="api/_autosummary/griot_core.dataframe_validation.html#griot_core.dataframe_validation.PanderaNotInstalledError">PanderaNotInstalledError</a>, <a href="api/_autosummary/griot_core.html#griot_core.PanderaNotInstalledError">[1]</a>
+</li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.PanderaSchemaGenerator">PanderaSchemaGenerator (class in griot_core)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.dataframe_validation.html#griot_core.dataframe_validation.PanderaSchemaGenerator">(class in griot_core.dataframe_validation)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.Field.partition_key_position">partition_key_position (griot_core.Field attribute)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.FieldInfo.partition_key_position">(griot_core.FieldInfo attribute)</a>, <a href="api/_autosummary/griot_core.html#id9">[1]</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.schema.html#griot_core.schema.Field.partition_key_position">(griot_core.schema.Field attribute)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.schema.html#griot_core.schema.FieldInfo.partition_key_position">(griot_core.schema.FieldInfo attribute)</a>, <a href="api/_autosummary/griot_core.schema.html#id8">[1]</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.Field.partitioned">partitioned (griot_core.Field attribute)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.FieldInfo.partitioned">(griot_core.FieldInfo attribute)</a>, <a href="api/_autosummary/griot_core.html#id8">[1]</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.schema.html#griot_core.schema.Field.partitioned">(griot_core.schema.Field attribute)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.schema.html#griot_core.schema.FieldInfo.partitioned">(griot_core.schema.FieldInfo attribute)</a>, <a href="api/_autosummary/griot_core.schema.html#id7">[1]</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.ContractReport.partitioned_fields">partitioned_fields (griot_core.ContractReport attribute)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.reports.html#griot_core.reports.ContractReport.partitioned_fields">(griot_core.reports.ContractReport attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.ContractStructureIssue.path">path (griot_core.contract.ContractStructureIssue attribute)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.ContractStructureIssue.path">(griot_core.ContractStructureIssue attribute)</a>
+</li>
+          <li><a href="api/contract.html#griot_core.LintIssue.path">(griot_core.LintIssue attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.QualityUnit.PERCENT">PERCENT (griot_core.QualityUnit attribute)</a>, <a href="api/types.html#griot_core.QualityUnit.PERCENT">[1]</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.types.html#griot_core.types.QualityUnit.PERCENT">(griot_core.types.QualityUnit attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/schema.html#griot_core.Schema.physical_name">physical_name (griot_core.Schema attribute)</a>
+
+        <ul>
+          <li><a href="api/reports.html#SchemaReport.physical_name">(SchemaReport attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/reports.html#FieldReport.physical_type">physical_type (FieldReport attribute)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.Field.physical_type">(griot_core.Field attribute)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.FieldInfo.physical_type">(griot_core.FieldInfo attribute)</a>, <a href="api/_autosummary/griot_core.html#id5">[1]</a>, <a href="api/schema.html#griot_core.FieldInfo.physical_type">[2]</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.schema.html#griot_core.schema.Field.physical_type">(griot_core.schema.Field attribute)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.schema.html#griot_core.schema.FieldInfo.physical_type">(griot_core.schema.FieldInfo attribute)</a>, <a href="api/_autosummary/griot_core.schema.html#id4">[1]</a>
+</li>
+        </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/_autosummary/griot_core.dataframe_validation.html#griot_core.dataframe_validation.DataFrameType.POLARS">POLARS (griot_core.dataframe_validation.DataFrameType attribute)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.DataFrameType.POLARS">(griot_core.DataFrameType attribute)</a>, <a href="api/types.html#griot_core.DataFrameType.POLARS">[1]</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.types.html#griot_core.types.DataFrameType.POLARS">(griot_core.types.DataFrameType attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.dataframe_validation.html#griot_core.dataframe_validation.PolarsValidator">PolarsValidator (class in griot_core.dataframe_validation)</a>
+</li>
+        <li><a href="api/reports.html#FieldReport.primary_key">primary_key (FieldReport attribute)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.ContractReport.primary_key">(griot_core.ContractReport attribute)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.Field.primary_key">(griot_core.Field attribute)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.FieldInfo.primary_key">(griot_core.FieldInfo attribute)</a>, <a href="api/_autosummary/griot_core.html#id7">[1]</a>, <a href="api/schema.html#griot_core.FieldInfo.primary_key">[2]</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.reports.html#griot_core.reports.ContractReport.primary_key">(griot_core.reports.ContractReport attribute)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.schema.html#griot_core.schema.Field.primary_key">(griot_core.schema.Field attribute)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.schema.html#griot_core.schema.FieldInfo.primary_key">(griot_core.schema.FieldInfo attribute)</a>, <a href="api/_autosummary/griot_core.schema.html#id6">[1]</a>
+</li>
+          <li><a href="api/reports.html#SchemaReport.primary_key">(SchemaReport attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.Server.project">project (griot_core.contract.Server attribute)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.Server.project">(griot_core.Server attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.SLAProperty.property">property (griot_core.contract.SLAProperty attribute)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.SLAProperty.property">(griot_core.SLAProperty attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.ContractDescription.purpose">purpose (griot_core.contract.ContractDescription attribute)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.ContractDescription.purpose">(griot_core.ContractDescription attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.dataframe_validation.html#griot_core.dataframe_validation.DataFrameType.PYSPARK">PYSPARK (griot_core.dataframe_validation.DataFrameType attribute)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.DataFrameType.PYSPARK">(griot_core.DataFrameType attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.dataframe_validation.html#griot_core.dataframe_validation.PySparkValidator">PySparkValidator (class in griot_core.dataframe_validation)</a>
+</li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.FieldInfo.python_type">python_type (griot_core.FieldInfo attribute)</a>, <a href="api/_autosummary/griot_core.html#id3">[1]</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.schema.html#griot_core.schema.FieldInfo.python_type">(griot_core.schema.FieldInfo attribute)</a>, <a href="api/_autosummary/griot_core.schema.html#id2">[1]</a>
+</li>
+        </ul></li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="Q" class="genindex-section">
+  <h2>Q</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/reports.html#FieldReport.quality">quality (FieldReport attribute)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.Field.quality">(griot_core.Field attribute)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.FieldInfo.quality">(griot_core.FieldInfo attribute)</a>, <a href="api/_autosummary/griot_core.html#id18">[1]</a>, <a href="api/schema.html#griot_core.FieldInfo.quality">[2]</a>
+</li>
+          <li><a href="api/schema.html#griot_core.Schema.quality">(griot_core.Schema attribute)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.schema.html#griot_core.schema.Field.quality">(griot_core.schema.Field attribute)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.schema.html#griot_core.schema.FieldInfo.quality">(griot_core.schema.FieldInfo attribute)</a>, <a href="api/_autosummary/griot_core.schema.html#id17">[1]</a>
+</li>
+          <li><a href="api/reports.html#SchemaReport.quality">(SchemaReport attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.QualityCheckType">QualityCheckType (class in griot_core)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.types.html#griot_core.types.QualityCheckType">(class in griot_core.types)</a>
+</li>
+        </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.QualityMetric">QualityMetric (class in griot_core)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.types.html#griot_core.types.QualityMetric">(class in griot_core.types)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.QualityOperator">QualityOperator (class in griot_core)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.types.html#griot_core.types.QualityOperator">(class in griot_core.types)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.QualityRule">QualityRule (class in griot_core)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.types.html#griot_core.types.QualityRule">(class in griot_core.types)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.QualityUnit">QualityUnit (class in griot_core)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.types.html#griot_core.types.QualityUnit">(class in griot_core.types)</a>
+</li>
+        </ul></li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="R" class="genindex-section">
+  <h2>R</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/_autosummary/griot_core.dataframe_validation.html#griot_core.dataframe_validation.DataFrameValidationResult.raise_on_failure">raise_on_failure() (griot_core.dataframe_validation.DataFrameValidationResult method)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.DataFrameValidationResult.raise_on_failure">(griot_core.DataFrameValidationResult method)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.ContractReport.recommendations">recommendations (griot_core.ContractReport attribute)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.reports.html#griot_core.reports.ContractReport.recommendations">(griot_core.reports.ContractReport attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.dataframe_validation.html#griot_core.dataframe_validation.DataFrameValidatorRegistry.register">register() (griot_core.dataframe_validation.DataFrameValidatorRegistry method)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.DataFrameValidatorRegistry.register">(griot_core.DataFrameValidatorRegistry method)</a>, <a href="api/validation.html#griot_core.DataFrameValidatorRegistry.register">[1]</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.register_validator">register_validator() (in module griot_core)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.dataframe_validation.html#griot_core.dataframe_validation.register_validator">(in module griot_core.dataframe_validation)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.Field.relationships">relationships (griot_core.Field attribute)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.FieldInfo.relationships">(griot_core.FieldInfo attribute)</a>, <a href="api/_autosummary/griot_core.html#id14">[1]</a>, <a href="api/schema.html#griot_core.FieldInfo.relationships">[2]</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.schema.html#griot_core.schema.Field.relationships">(griot_core.schema.Field attribute)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.schema.html#griot_core.schema.FieldInfo.relationships">(griot_core.schema.FieldInfo attribute)</a>, <a href="api/_autosummary/griot_core.schema.html#id13">[1]</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.Contract.remove_schema">remove_schema() (griot_core.Contract method)</a>, <a href="api/contract.html#griot_core.Contract.remove_schema">[1]</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.Contract.remove_schema">(griot_core.contract.Contract method)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.Field.required">required (griot_core.Field attribute)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.FieldInfo.required">(griot_core.FieldInfo attribute)</a>, <a href="api/_autosummary/griot_core.html#id10">[1]</a>, <a href="api/schema.html#griot_core.FieldInfo.required">[2]</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.schema.html#griot_core.schema.Field.required">(griot_core.schema.Field attribute)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.schema.html#griot_core.schema.FieldInfo.required">(griot_core.schema.FieldInfo attribute)</a>, <a href="api/_autosummary/griot_core.schema.html#id9">[1]</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.ContractReport.required_fields">required_fields (griot_core.ContractReport attribute)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.reports.html#griot_core.reports.ContractReport.required_fields">(griot_core.reports.ContractReport attribute)</a>
+</li>
+        </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/validation.html#griot_core.MultiSchemaValidationResult.results">results (griot_core.MultiSchemaValidationResult attribute)</a>
+</li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.ContractStatus.RETIRED">RETIRED (griot_core.ContractStatus attribute)</a>, <a href="api/types.html#griot_core.ContractStatus.RETIRED">[1]</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.types.html#griot_core.types.ContractStatus.RETIRED">(griot_core.types.ContractStatus attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.ContractRole.role">role (griot_core.contract.ContractRole attribute)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.TeamMember.role">(griot_core.contract.TeamMember attribute)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.ContractRole.role">(griot_core.ContractRole attribute)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.TeamMember.role">(griot_core.TeamMember attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.Contract.roles">roles (griot_core.contract.Contract attribute)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.Server.roles">(griot_core.contract.Server attribute)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.Server.roles">(griot_core.Server attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/types.html#griot_core.FieldValidationError.row">row (griot_core.FieldValidationError attribute)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.types.html#griot_core.types.FieldValidationError.row">(griot_core.types.FieldValidationError attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.dataframe_validation.html#griot_core.dataframe_validation.DataFrameValidationResult.row_count">row_count (griot_core.dataframe_validation.DataFrameValidationResult attribute)</a>, <a href="api/_autosummary/griot_core.dataframe_validation.html#id2">[1]</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.DataFrameValidationResult.row_count">(griot_core.DataFrameValidationResult attribute)</a>, <a href="api/_autosummary/griot_core.html#id24">[1]</a>, <a href="api/validation.html#griot_core.DataFrameValidationResult.row_count">[2]</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.QualityMetric.ROW_COUNT">ROW_COUNT (griot_core.QualityMetric attribute)</a>, <a href="api/types.html#griot_core.QualityMetric.ROW_COUNT">[1]</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.types.html#griot_core.types.QualityMetric.ROW_COUNT">(griot_core.types.QualityMetric attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.QualityRule.row_count">row_count() (griot_core.QualityRule class method)</a>, <a href="api/types.html#griot_core.QualityRule.row_count">[1]</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.types.html#griot_core.types.QualityRule.row_count">(griot_core.types.QualityRule class method)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.QualityUnit.ROWS">ROWS (griot_core.QualityUnit attribute)</a>, <a href="api/types.html#griot_core.QualityUnit.ROWS">[1]</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.types.html#griot_core.types.QualityUnit.ROWS">(griot_core.types.QualityUnit attribute)</a>
+</li>
+        </ul></li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="S" class="genindex-section">
+  <h2>S</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.Schema">Schema (class in griot_core)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.schema.html#griot_core.schema.Schema">(class in griot_core.schema)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.dataframe_validation.html#griot_core.dataframe_validation.DataFrameValidationResult.schema_name">schema_name (griot_core.dataframe_validation.DataFrameValidationResult attribute)</a>, <a href="api/_autosummary/griot_core.dataframe_validation.html#id1">[1]</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.DataFrameValidationResult.schema_name">(griot_core.DataFrameValidationResult attribute)</a>, <a href="api/_autosummary/griot_core.html#id23">[1]</a>, <a href="api/validation.html#griot_core.DataFrameValidationResult.schema_name">[2]</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.dataframe_validation.html#griot_core.dataframe_validation.MultiSchemaValidationResult.schema_results">schema_results (griot_core.dataframe_validation.MultiSchemaValidationResult attribute)</a>, <a href="api/_autosummary/griot_core.dataframe_validation.html#id10">[1]</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.MultiSchemaValidationResult.schema_results">(griot_core.MultiSchemaValidationResult attribute)</a>, <a href="api/_autosummary/griot_core.html#id32">[1]</a>
+</li>
+        </ul></li>
+        <li><a href="api/reports.html#SchemaReport">SchemaReport (built-in class)</a>
+</li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.Contract.schemas">schemas (griot_core.Contract attribute)</a>, <a href="api/contract.html#griot_core.Contract.schemas">[1]</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.html#id0">(griot_core.Contract property)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.Contract.schemas">(griot_core.contract.Contract attribute)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.contract.html#id0">(griot_core.contract.Contract property)</a>
+</li>
+          <li><a href="api/reports.html#griot_core.ContractReport.schemas">(griot_core.ContractReport attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.ContractSupport.scope">scope (griot_core.contract.ContractSupport attribute)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.ContractSupport.scope">(griot_core.ContractSupport attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.ContractRole.second_level_approvers">second_level_approvers (griot_core.contract.ContractRole attribute)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.ContractRole.second_level_approvers">(griot_core.ContractRole attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.Server">Server (class in griot_core)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.Server">(class in griot_core.contract)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.Server.server">server (griot_core.contract.Server attribute)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.Server.server">(griot_core.Server attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.Contract.servers">servers (griot_core.contract.Contract attribute)</a>
+
+        <ul>
+          <li><a href="api/reports.html#griot_core.ContractReport.servers">(griot_core.ContractReport attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.Severity">Severity (class in griot_core)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.types.html#griot_core.types.Severity">(class in griot_core.types)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.ContractStructureIssue.severity">severity (griot_core.contract.ContractStructureIssue attribute)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.LintIssue.severity">(griot_core.contract.LintIssue attribute)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.ContractStructureIssue.severity">(griot_core.ContractStructureIssue attribute)</a>
+</li>
+          <li><a href="api/types.html#griot_core.FieldValidationError.severity">(griot_core.FieldValidationError attribute)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.LintIssue.severity">(griot_core.LintIssue attribute)</a>, <a href="api/contract.html#griot_core.LintIssue.severity">[1]</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.types.html#griot_core.types.FieldValidationError.severity">(griot_core.types.FieldValidationError attribute)</a>
+</li>
+        </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.Contract.sla_properties">sla_properties (griot_core.contract.Contract attribute)</a>
+
+        <ul>
+          <li><a href="api/reports.html#griot_core.ContractReport.sla_properties">(griot_core.ContractReport attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.SLAProperty">SLAProperty (class in griot_core)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.SLAProperty">(class in griot_core.contract)</a>
+</li>
+        </ul></li>
+        <li><a href="api/types.html#griot_core.DataFrameType.SPARK">SPARK (griot_core.DataFrameType attribute)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.types.html#griot_core.types.DataFrameType.SPARK">(griot_core.types.DataFrameType attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.QualityCheckType.SQL">SQL (griot_core.QualityCheckType attribute)</a>, <a href="api/types.html#griot_core.QualityCheckType.SQL">[1]</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.types.html#griot_core.types.QualityCheckType.SQL">(griot_core.types.QualityCheckType attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.Contract.status">status (griot_core.Contract attribute)</a>, <a href="api/contract.html#griot_core.Contract.status">[1]</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.Contract.status">(griot_core.contract.Contract attribute)</a>
+</li>
+          <li><a href="api/reports.html#griot_core.ContractReport.status">(griot_core.ContractReport attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/validation.html#griot_core.ValidationMode.STRICT">STRICT (griot_core.ValidationMode attribute)</a>
+</li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.DataType.STRING">STRING (griot_core.DataType attribute)</a>, <a href="api/types.html#griot_core.DataType.STRING">[1]</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.types.html#griot_core.types.DataType.STRING">(griot_core.types.DataType attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.ContractStructureIssue.suggestion">suggestion (griot_core.contract.ContractStructureIssue attribute)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.LintIssue.suggestion">(griot_core.contract.LintIssue attribute)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.ContractStructureIssue.suggestion">(griot_core.ContractStructureIssue attribute)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.LintIssue.suggestion">(griot_core.LintIssue attribute)</a>, <a href="api/contract.html#griot_core.LintIssue.suggestion">[1]</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.ContractStructureResult.summary">summary() (griot_core.contract.ContractStructureResult method)</a>
+
+        <ul>
+          <li><a href="api/reports.html#griot_core.ContractReport.summary">(griot_core.ContractReport method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.ContractStructureResult.summary">(griot_core.ContractStructureResult method)</a>, <a href="api/contract.html#griot_core.ContractStructureResult.summary">[1]</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.dataframe_validation.html#griot_core.dataframe_validation.DataFrameValidationResult.summary">(griot_core.dataframe_validation.DataFrameValidationResult method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.dataframe_validation.html#griot_core.dataframe_validation.MultiSchemaValidationResult.summary">(griot_core.dataframe_validation.MultiSchemaValidationResult method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.DataFrameValidationResult.summary">(griot_core.DataFrameValidationResult method)</a>, <a href="api/validation.html#griot_core.DataFrameValidationResult.summary">[1]</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.MultiSchemaValidationResult.summary">(griot_core.MultiSchemaValidationResult method)</a>, <a href="api/validation.html#griot_core.MultiSchemaValidationResult.summary">[1]</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.Contract.support">support (griot_core.contract.Contract attribute)</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="T" class="genindex-section">
+  <h2>T</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/reports.html#FieldReport.tags">tags (FieldReport attribute)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.Field.tags">(griot_core.Field attribute)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.FieldInfo.tags">(griot_core.FieldInfo attribute)</a>, <a href="api/_autosummary/griot_core.html#id15">[1]</a>, <a href="api/schema.html#griot_core.FieldInfo.tags">[2]</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.schema.html#griot_core.schema.Field.tags">(griot_core.schema.Field attribute)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.schema.html#griot_core.schema.FieldInfo.tags">(griot_core.schema.FieldInfo attribute)</a>, <a href="api/_autosummary/griot_core.schema.html#id14">[1]</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.Contract.team">team (griot_core.contract.Contract attribute)</a>
+
+        <ul>
+          <li><a href="api/reports.html#griot_core.ContractReport.team">(griot_core.ContractReport attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.TeamMember">TeamMember (class in griot_core)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.TeamMember">(class in griot_core.contract)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.QualityCheckType.TEXT">TEXT (griot_core.QualityCheckType attribute)</a>, <a href="api/types.html#griot_core.QualityCheckType.TEXT">[1]</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.types.html#griot_core.types.QualityCheckType.TEXT">(griot_core.types.QualityCheckType attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.to_camel_case">to_camel_case() (in module griot_core)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.to_camel_case">(in module griot_core.contract)</a>
+</li>
+        </ul></li>
+        <li><a href="api/reports.html#FieldReport.to_dict">to_dict() (FieldReport method)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.Contract.to_dict">(griot_core.Contract method)</a>, <a href="api/contract.html#griot_core.Contract.to_dict">[1]</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.Contract.to_dict">(griot_core.contract.Contract method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.ContractDescription.to_dict">(griot_core.contract.ContractDescription method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.ContractRole.to_dict">(griot_core.contract.ContractRole method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.ContractStructureResult.to_dict">(griot_core.contract.ContractStructureResult method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.ContractSupport.to_dict">(griot_core.contract.ContractSupport method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.ContractTeam.to_dict">(griot_core.contract.ContractTeam method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.Server.to_dict">(griot_core.contract.Server method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.SLAProperty.to_dict">(griot_core.contract.SLAProperty method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.TeamMember.to_dict">(griot_core.contract.TeamMember method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.ContractDescription.to_dict">(griot_core.ContractDescription method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.ContractReport.to_dict">(griot_core.ContractReport method)</a>, <a href="api/reports.html#griot_core.ContractReport.to_dict">[1]</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.ContractRole.to_dict">(griot_core.ContractRole method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.ContractStructureResult.to_dict">(griot_core.ContractStructureResult method)</a>, <a href="api/contract.html#griot_core.ContractStructureResult.to_dict">[1]</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.ContractSupport.to_dict">(griot_core.ContractSupport method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.ContractTeam.to_dict">(griot_core.ContractTeam method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.dataframe_validation.html#griot_core.dataframe_validation.DataFrameValidationResult.to_dict">(griot_core.dataframe_validation.DataFrameValidationResult method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.dataframe_validation.html#griot_core.dataframe_validation.FieldValidationResult.to_dict">(griot_core.dataframe_validation.FieldValidationResult method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.dataframe_validation.html#griot_core.dataframe_validation.MultiSchemaValidationResult.to_dict">(griot_core.dataframe_validation.MultiSchemaValidationResult method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.DataFrameValidationResult.to_dict">(griot_core.DataFrameValidationResult method)</a>, <a href="api/validation.html#griot_core.DataFrameValidationResult.to_dict">[1]</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.FieldInfo.to_dict">(griot_core.FieldInfo method)</a>, <a href="api/schema.html#griot_core.FieldInfo.to_dict">[1]</a>
+</li>
+          <li><a href="api/types.html#griot_core.FieldValidationError.to_dict">(griot_core.FieldValidationError method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.FieldValidationResult.to_dict">(griot_core.FieldValidationResult method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.MultiSchemaValidationResult.to_dict">(griot_core.MultiSchemaValidationResult method)</a>, <a href="api/validation.html#griot_core.MultiSchemaValidationResult.to_dict">[1]</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.reports.html#griot_core.reports.ContractReport.to_dict">(griot_core.reports.ContractReport method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.Schema.to_dict">(griot_core.Schema method)</a>, <a href="api/schema.html#griot_core.Schema.to_dict">[1]</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.schema.html#griot_core.schema.FieldInfo.to_dict">(griot_core.schema.FieldInfo method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.schema.html#griot_core.schema.Schema.to_dict">(griot_core.schema.Schema method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.Server.to_dict">(griot_core.Server method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.SLAProperty.to_dict">(griot_core.SLAProperty method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.TeamMember.to_dict">(griot_core.TeamMember method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.types.html#griot_core.types.FieldValidationError.to_dict">(griot_core.types.FieldValidationError method)</a>
+</li>
+          <li><a href="api/reports.html#SchemaReport.to_dict">(SchemaReport method)</a>
+</li>
+        </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.Field.to_field_info">to_field_info() (griot_core.Field method)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.schema.html#griot_core.schema.Field.to_field_info">(griot_core.schema.Field method)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.ContractReport.to_json">to_json() (griot_core.ContractReport method)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.reports.html#griot_core.reports.ContractReport.to_json">(griot_core.reports.ContractReport method)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.ContractReport.to_markdown">to_markdown() (griot_core.ContractReport method)</a>, <a href="api/reports.html#griot_core.ContractReport.to_markdown">[1]</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.reports.html#griot_core.reports.ContractReport.to_markdown">(griot_core.reports.ContractReport method)</a>
+</li>
+          <li><a href="api/reports.html#SchemaReport.to_markdown">(SchemaReport method)</a>
+</li>
+        </ul></li>
+        <li><a href="api/reports.html#FieldReport.to_markdown_row">to_markdown_row() (FieldReport method)</a>
+</li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.DataType.to_python_type">to_python_type() (griot_core.DataType method)</a>, <a href="api/types.html#griot_core.DataType.to_python_type">[1]</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.types.html#griot_core.types.DataType.to_python_type">(griot_core.types.DataType method)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.to_snake_case">to_snake_case() (in module griot_core)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.to_snake_case">(in module griot_core.contract)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.Contract.to_yaml">to_yaml() (griot_core.Contract method)</a>, <a href="api/contract.html#griot_core.Contract.to_yaml">[1]</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.Contract.to_yaml">(griot_core.contract.Contract method)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.ContractSupport.tool">tool (griot_core.contract.ContractSupport attribute)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.ContractSupport.tool">(griot_core.ContractSupport attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.dataframe_validation.html#griot_core.dataframe_validation.MultiSchemaValidationResult.total_error_count">total_error_count (griot_core.dataframe_validation.MultiSchemaValidationResult attribute)</a>, <a href="api/_autosummary/griot_core.dataframe_validation.html#id11">[1]</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.MultiSchemaValidationResult.total_error_count">(griot_core.MultiSchemaValidationResult attribute)</a>, <a href="api/_autosummary/griot_core.html#id33">[1]</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.ContractReport.total_fields">total_fields (griot_core.ContractReport attribute)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.reports.html#griot_core.reports.ContractReport.total_fields">(griot_core.reports.ContractReport attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.dataframe_validation.html#griot_core.dataframe_validation.MultiSchemaValidationResult.total_row_count">total_row_count (griot_core.dataframe_validation.MultiSchemaValidationResult attribute)</a>, <a href="api/_autosummary/griot_core.dataframe_validation.html#id12">[1]</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.MultiSchemaValidationResult.total_row_count">(griot_core.MultiSchemaValidationResult attribute)</a>, <a href="api/_autosummary/griot_core.html#id34">[1]</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.Server.type">type (griot_core.contract.Server attribute)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.FieldInfo.type">(griot_core.FieldInfo property)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.schema.html#griot_core.schema.FieldInfo.type">(griot_core.schema.FieldInfo property)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.Server.type">(griot_core.Server attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.dataframe_validation.html#griot_core.dataframe_validation.PanderaSchemaGenerator.TYPE_MAP">TYPE_MAP (griot_core.dataframe_validation.PanderaSchemaGenerator attribute)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.PanderaSchemaGenerator.TYPE_MAP">(griot_core.PanderaSchemaGenerator attribute)</a>
+</li>
+        </ul></li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="U" class="genindex-section">
+  <h2>U</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/reports.html#FieldReport.unique">unique (FieldReport attribute)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.Field.unique">(griot_core.Field attribute)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.FieldInfo.unique">(griot_core.FieldInfo attribute)</a>, <a href="api/_autosummary/griot_core.html#id11">[1]</a>, <a href="api/schema.html#griot_core.FieldInfo.unique">[2]</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.schema.html#griot_core.schema.Field.unique">(griot_core.schema.Field attribute)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.schema.html#griot_core.schema.FieldInfo.unique">(griot_core.schema.FieldInfo attribute)</a>, <a href="api/_autosummary/griot_core.schema.html#id10">[1]</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.ContractReport.unique_fields">unique_fields (griot_core.ContractReport attribute)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.reports.html#griot_core.reports.ContractReport.unique_fields">(griot_core.reports.ContractReport attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.SLAProperty.unit">unit (griot_core.contract.SLAProperty attribute)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.SLAProperty.unit">(griot_core.SLAProperty attribute)</a>
+</li>
+        </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/_autosummary/griot_core.dataframe_validation.html#griot_core.dataframe_validation.DataFrameValidatorRegistry.unregister">unregister() (griot_core.dataframe_validation.DataFrameValidatorRegistry method)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.DataFrameValidatorRegistry.unregister">(griot_core.DataFrameValidatorRegistry method)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.ContractSupport.url">url (griot_core.contract.ContractSupport attribute)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.ContractSupport.url">(griot_core.ContractSupport attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.ContractDescription.usage">usage (griot_core.contract.ContractDescription attribute)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.ContractDescription.usage">(griot_core.ContractDescription attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.TeamMember.username">username (griot_core.contract.TeamMember attribute)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.TeamMember.username">(griot_core.TeamMember attribute)</a>
+</li>
+        </ul></li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="V" class="genindex-section">
+  <h2>V</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/_autosummary/griot_core.dataframe_validation.html#griot_core.dataframe_validation.DaskValidator.validate">validate() (griot_core.dataframe_validation.DaskValidator method)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.dataframe_validation.html#griot_core.dataframe_validation.DataFrameValidator.validate">(griot_core.dataframe_validation.DataFrameValidator method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.dataframe_validation.html#griot_core.dataframe_validation.DataFrameValidatorRegistry.validate">(griot_core.dataframe_validation.DataFrameValidatorRegistry method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.dataframe_validation.html#griot_core.dataframe_validation.PandasValidator.validate">(griot_core.dataframe_validation.PandasValidator method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.dataframe_validation.html#griot_core.dataframe_validation.PolarsValidator.validate">(griot_core.dataframe_validation.PolarsValidator method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.dataframe_validation.html#griot_core.dataframe_validation.PySparkValidator.validate">(griot_core.dataframe_validation.PySparkValidator method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.DataFrameValidator.validate">(griot_core.DataFrameValidator method)</a>, <a href="api/validation.html#griot_core.DataFrameValidator.validate">[1]</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.DataFrameValidatorRegistry.validate">(griot_core.DataFrameValidatorRegistry method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.Schema.validate">(griot_core.Schema method)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.schema.html#griot_core.schema.Schema.validate">(griot_core.schema.Schema method)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.constraints.html#griot_core.constraints.validate_constraint">validate_constraint() (in module griot_core.constraints)</a>
+</li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.validate_contract_structure">validate_contract_structure() (in module griot_core)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.validate_contract_structure">(in module griot_core.contract)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.validate_data_batch">validate_data_batch() (in module griot_core)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.dataframe_validation.html#griot_core.dataframe_validation.validate_data_batch">(in module griot_core.dataframe_validation)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.validate_data_mapping">validate_data_mapping() (in module griot_core)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.dataframe_validation.html#griot_core.dataframe_validation.validate_data_mapping">(in module griot_core.dataframe_validation)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.validate_dataframe">validate_dataframe() (in module griot_core)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.dataframe_validation.html#griot_core.dataframe_validation.validate_dataframe">(in module griot_core.dataframe_validation)</a>
+</li>
+        </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.validate_list_of_dicts">validate_list_of_dicts() (in module griot_core)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.dataframe_validation.html#griot_core.dataframe_validation.validate_list_of_dicts">(in module griot_core.dataframe_validation)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.validate_schema_data">validate_schema_data() (in module griot_core)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.dataframe_validation.html#griot_core.dataframe_validation.validate_schema_data">(in module griot_core.dataframe_validation)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.exceptions.html#griot_core.exceptions.ValidationError">ValidationError</a>, <a href="api/_autosummary/griot_core.html#griot_core.ValidationError">[1]</a>
+</li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.ValidationMode">ValidationMode (class in griot_core)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.dataframe_validation.html#griot_core.dataframe_validation.ValidationMode">(class in griot_core.dataframe_validation)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.dataframe_validation.html#griot_core.dataframe_validation.ValidatorNotFoundError">ValidatorNotFoundError</a>, <a href="api/_autosummary/griot_core.html#griot_core.ValidatorNotFoundError">[1]</a>
+</li>
+        <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.SLAProperty.value">value (griot_core.contract.SLAProperty attribute)</a>
+
+        <ul>
+          <li><a href="api/types.html#griot_core.FieldValidationError.value">(griot_core.FieldValidationError attribute)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.SLAProperty.value">(griot_core.SLAProperty attribute)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.types.html#griot_core.types.FieldValidationError.value">(griot_core.types.FieldValidationError attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.SLAProperty.value_ext">value_ext (griot_core.contract.SLAProperty attribute)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.SLAProperty.value_ext">(griot_core.SLAProperty attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.Contract.version">version (griot_core.Contract attribute)</a>, <a href="api/contract.html#griot_core.Contract.version">[1]</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.Contract.version">(griot_core.contract.Contract attribute)</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.ContractReport.version">(griot_core.ContractReport attribute)</a>, <a href="api/reports.html#griot_core.ContractReport.version">[1]</a>
+</li>
+          <li><a href="api/_autosummary/griot_core.reports.html#griot_core.reports.ContractReport.version">(griot_core.reports.ContractReport attribute)</a>
+</li>
+        </ul></li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="W" class="genindex-section">
+  <h2>W</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/_autosummary/griot_core.html#griot_core.Severity.WARNING">WARNING (griot_core.Severity attribute)</a>, <a href="api/types.html#griot_core.Severity.WARNING">[1]</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.types.html#griot_core.types.Severity.WARNING">(griot_core.types.Severity attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="api/_autosummary/griot_core.contract.html#griot_core.contract.ContractStructureResult.warning_count">warning_count (griot_core.contract.ContractStructureResult attribute)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.ContractStructureResult.warning_count">(griot_core.ContractStructureResult attribute)</a>, <a href="api/contract.html#griot_core.ContractStructureResult.warning_count">[1]</a>
+</li>
+        </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="api/_autosummary/griot_core.dataframe_validation.html#griot_core.dataframe_validation.FieldValidationResult.warnings">warnings (griot_core.dataframe_validation.FieldValidationResult attribute)</a>
+
+        <ul>
+          <li><a href="api/_autosummary/griot_core.html#griot_core.FieldValidationResult.warnings">(griot_core.FieldValidationResult attribute)</a>
+</li>
+        </ul></li>
+    </ul></td>
+  </tr></table>
+</section>
+
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          
+          
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2024, Griot Team
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer no-toc">
+      
+      
+      
+    </aside>
+  </div>
+</div><script src="_static/documentation_options.js?v=cce5339e"></script>
+    <script src="_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/scripts/furo.js?v=46bd48cc"></script>
+    <script src="_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="_static/copybutton.js?v=f281be69"></script>
+    </body>
+</html>

@@ -1,46 +1,19 @@
 """
 Griot Core Constraints
 
-Constraint definitions and validation logic.
-This module provides reusable constraint validators.
+Constraint validation logic for ODCS contracts.
+Constraints are defined in customProperties.constraints on each field.
 Uses Python stdlib only (no external dependencies).
 """
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass
 from typing import Any, Callable
 
-from griot_core.types import ConstraintType, FieldFormat
-
 __all__ = [
-    "Constraint",
-    "ConstraintValidator",
-    "get_constraint_validator",
     "validate_constraint",
+    "get_constraint_validator",
 ]
-
-
-@dataclass
-class Constraint:
-    """Represents a single constraint on a field."""
-
-    type: ConstraintType
-    value: Any
-    message: str | None = None
-
-    def validate(self, field_value: Any) -> tuple[bool, str]:
-        """
-        Validate a value against this constraint.
-
-        Returns:
-            Tuple of (is_valid, error_message).
-        """
-        validator = get_constraint_validator(self.type)
-        is_valid = validator(field_value, self.value)
-        if is_valid:
-            return True, ""
-        return False, self.message or f"Constraint {self.type.value} failed"
 
 
 # Type alias for constraint validators
@@ -68,21 +41,8 @@ def _validate_pattern(value: Any, constraint_value: str) -> bool:
     return bool(re.match(constraint_value, str(value)))
 
 
-def _validate_format(value: Any, constraint_value: FieldFormat) -> bool:
-    """Validate format constraint."""
-    if value is None:
-        return True
-
-    from griot_core.validation import _FORMAT_VALIDATORS
-
-    validator = _FORMAT_VALIDATORS.get(constraint_value)
-    if validator:
-        return validator(str(value))
-    return True
-
-
-def _validate_ge(value: Any, constraint_value: int | float) -> bool:
-    """Validate greater-than-or-equal constraint."""
+def _validate_min(value: Any, constraint_value: int | float) -> bool:
+    """Validate minimum value constraint."""
     if value is None:
         return True
     try:
@@ -91,42 +51,12 @@ def _validate_ge(value: Any, constraint_value: int | float) -> bool:
         return False
 
 
-def _validate_le(value: Any, constraint_value: int | float) -> bool:
-    """Validate less-than-or-equal constraint."""
+def _validate_max(value: Any, constraint_value: int | float) -> bool:
+    """Validate maximum value constraint."""
     if value is None:
         return True
     try:
         return float(value) <= constraint_value
-    except (TypeError, ValueError):
-        return False
-
-
-def _validate_gt(value: Any, constraint_value: int | float) -> bool:
-    """Validate greater-than constraint."""
-    if value is None:
-        return True
-    try:
-        return float(value) > constraint_value
-    except (TypeError, ValueError):
-        return False
-
-
-def _validate_lt(value: Any, constraint_value: int | float) -> bool:
-    """Validate less-than constraint."""
-    if value is None:
-        return True
-    try:
-        return float(value) < constraint_value
-    except (TypeError, ValueError):
-        return False
-
-
-def _validate_multiple_of(value: Any, constraint_value: int | float) -> bool:
-    """Validate multiple-of constraint."""
-    if value is None:
-        return True
-    try:
-        return float(value) % constraint_value == 0
     except (TypeError, ValueError):
         return False
 
@@ -138,35 +68,23 @@ def _validate_enum(value: Any, constraint_value: list[Any]) -> bool:
     return value in constraint_value
 
 
-def _validate_unique(value: Any, constraint_value: set[Any]) -> bool:
-    """Validate unique constraint (value not in seen set)."""
-    if value is None:
-        return True
-    return value not in constraint_value
-
-
-_VALIDATORS: dict[ConstraintType, ConstraintValidator] = {
-    ConstraintType.MIN_LENGTH: _validate_min_length,
-    ConstraintType.MAX_LENGTH: _validate_max_length,
-    ConstraintType.PATTERN: _validate_pattern,
-    ConstraintType.FORMAT: _validate_format,
-    ConstraintType.GE: _validate_ge,
-    ConstraintType.LE: _validate_le,
-    ConstraintType.GT: _validate_gt,
-    ConstraintType.LT: _validate_lt,
-    ConstraintType.MULTIPLE_OF: _validate_multiple_of,
-    ConstraintType.ENUM: _validate_enum,
-    ConstraintType.UNIQUE: _validate_unique,
+_VALIDATORS: dict[str, ConstraintValidator] = {
+    "min_length": _validate_min_length,
+    "max_length": _validate_max_length,
+    "pattern": _validate_pattern,
+    "min": _validate_min,
+    "max": _validate_max,
+    "enum": _validate_enum,
 }
 
 
-def get_constraint_validator(constraint_type: ConstraintType) -> ConstraintValidator:
-    """Get the validator function for a constraint type."""
-    return _VALIDATORS.get(constraint_type, lambda v, c: True)
+def get_constraint_validator(constraint_name: str) -> ConstraintValidator:
+    """Get the validator function for a constraint name."""
+    return _VALIDATORS.get(constraint_name, lambda v, c: True)
 
 
 def validate_constraint(
-    constraint_type: ConstraintType,
+    constraint_name: str,
     value: Any,
     constraint_value: Any,
 ) -> bool:
@@ -174,12 +92,12 @@ def validate_constraint(
     Validate a value against a specific constraint.
 
     Args:
-        constraint_type: The type of constraint to validate.
+        constraint_name: The name of the constraint (e.g., "min_length", "pattern").
         value: The value to validate.
-        constraint_value: The constraint parameter (e.g., max length, pattern).
+        constraint_value: The constraint parameter (e.g., max length value, pattern string).
 
     Returns:
         True if the constraint is satisfied, False otherwise.
     """
-    validator = get_constraint_validator(constraint_type)
+    validator = get_constraint_validator(constraint_name)
     return validator(value, constraint_value)

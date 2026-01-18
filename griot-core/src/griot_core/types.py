@@ -2,135 +2,57 @@
 Griot Core Type Definitions
 
 Enums and type definitions for the Griot data contract system.
-All types use Python stdlib only (no external dependencies).
+Based on the Open Data Contract Standard (ODCS).
 """
 from __future__ import annotations
 
-from dataclasses import dataclass, field as dataclass_field
-from enum import Enum, auto
-from typing import Any, Callable, TypeVar, Union
+from dataclasses import dataclass
+from enum import Enum
 
 __all__ = [
-    # Phase 1 - Core types
-    "ConstraintType",
-    "Severity",
-    "FieldFormat",
-    "AggregationType",
-    "DataType",
-    # Phase 2 - PII/Privacy types (FR-SDK-008)
-    "PIICategory",
-    "SensitivityLevel",
-    "MaskingStrategy",
-    "LegalBasis",
-    # Phase 2 - Residency types (FR-SDK-011)
-    "ResidencyConfig",
-    "ResidencyRule",
-    "DataRegion",
-    # Phase 2 - Lineage types (FR-SDK-012)
-    "LineageConfig",
-    "Source",
-    "Transformation",
-    "Consumer",
-    # Phase 6 - ODCS types (Open Data Contract Standard)
+    # Core enums
     "ContractStatus",
-    "PhysicalType",
-    "QualityRuleType",
-    "CheckType",
-    "ExtractionMethod",
-    "PartitioningStrategy",
-    "ReviewCadence",
-    "AccessLevel",
-    "DistributionType",
-    "SourceType",
-    # Phase 6 - ODCS dataclasses
-    "CustomProperty",
-    "Description",
-    "SemanticInfo",
-    "PrivacyInfo",
-    "FieldConstraints",
-    "ForeignKey",
-    "SchemaProperty",
+    "DataType",
+    "Severity",
+    "DataFrameType",
+    # Quality rule enums
+    "QualityCheckType",
+    "QualityMetric",
+    "QualityOperator",
+    "QualityUnit",
+    # Quality rule builder
     "QualityRule",
-    "CustomCheck",
-    "Legal",
-    "CrossBorder",
-    "Compliance",
-    "AuditRequirements",
-    "SLA",
-    "AvailabilitySLA",
-    "FreshnessSLA",
-    "CompletenessSLA",
-    "AccuracySLA",
-    "ResponseTimeSLA",
-    "AccessGrant",
-    "AccessApproval",
-    "AccessConfig",
-    "DistributionChannel",
-    "Distribution",
-    "GovernanceProducer",
-    "GovernanceConsumer",
-    "ApprovalRecord",
-    "ReviewConfig",
-    "ChangeManagement",
-    "Governance",
-    "Team",
-    "Steward",
-    "Server",
-    "Role",
-    "Timestamps",
+    # Validation results
+    "FieldValidationError",
 ]
 
-
-class ConstraintType(str, Enum):
-    """Types of field constraints that can be applied to values."""
-
-    MIN_LENGTH = "min_length"
-    MAX_LENGTH = "max_length"
-    PATTERN = "pattern"
-    FORMAT = "format"
-    GE = "ge"  # Greater than or equal
-    LE = "le"  # Less than or equal
-    GT = "gt"  # Greater than
-    LT = "lt"  # Less than
-    MULTIPLE_OF = "multiple_of"
-    ENUM = "enum"
-    UNIQUE = "unique"
+from typing import Any
 
 
-class Severity(str, Enum):
-    """Error/issue severity levels for validation and linting."""
+class ContractStatus(str, Enum):
+    """
+    Contract lifecycle status.
 
-    ERROR = "error"
-    WARNING = "warning"
-    INFO = "info"
+    Based on Open Data Contract Standard.
+    """
 
-
-class FieldFormat(str, Enum):
-    """Built-in field format validators for common patterns."""
-
-    EMAIL = "email"
-    URI = "uri"
-    UUID = "uuid"
-    DATE = "date"
-    DATETIME = "datetime"
-    IPV4 = "ipv4"
-    IPV6 = "ipv6"
-    HOSTNAME = "hostname"
+    DRAFT = "draft"
+    ACTIVE = "active"
+    DEPRECATED = "deprecated"
+    RETIRED = "retired"
 
 
-class AggregationType(str, Enum):
-    """Recommended aggregation methods for numeric fields."""
+class DataFrameType(str, Enum):
+    """Types of data frames in a data processing context."""
 
-    SUM = "sum"
-    AVG = "avg"
-    COUNT = "count"
-    MIN = "min"
-    MAX = "max"
-    NONE = "none"
+    PANDAS = "pandas"
+    DASK = "dask"
+    SPARK = "spark"
+    POLARS = "polars"
 
 
 class DataType(str, Enum):
-    """Supported data types for contract fields."""
+    """Supported logical types for contract fields."""
 
     STRING = "string"
     INTEGER = "integer"
@@ -172,1427 +94,599 @@ class DataType(str, Enum):
             DataType.BOOLEAN: bool,
             DataType.ARRAY: list,
             DataType.OBJECT: dict,
-            DataType.DATE: str,  # dates stored as ISO strings
-            DataType.DATETIME: str,  # datetimes stored as ISO strings
+            DataType.DATE: str,
+            DataType.DATETIME: str,
             DataType.ANY: object,
         }
         return type_mapping[self]
 
 
-# =============================================================================
-# PHASE 2 - PII/Privacy Types (FR-SDK-008)
-# =============================================================================
+class Severity(str, Enum):
+    """Error/issue severity levels for validation and linting."""
+
+    ERROR = "error"
+    WARNING = "warning"
+    INFO = "info"
+
+@dataclass
+class FieldValidationError:
+    """Single field validation error."""
+
+    field: str
+    row: int | None
+    value: Any
+    constraint: str
+    message: str
+    severity: Severity = Severity.ERROR
+
+    def to_dict(self) -> dict[str, Any]:
+        """Convert to dictionary representation."""
+        return {
+            "field": self.field,
+            "row": self.row,
+            "value": _serialize_value(self.value),
+            "constraint": self.constraint,
+            "message": self.message,
+            "severity": self.severity.value,
+        }
+
+    def __str__(self) -> str:
+        loc = f"[row {self.row}]" if self.row is not None else ""
+        return f"{self.field}{loc}: {self.message}"
+
+def _serialize_value(value: Any) -> Any:
+    """Convert a value to a JSON-serializable format."""
+    if value is None:
+        return None
+    if isinstance(value, (str, int, float, bool)):
+        return value
+    if isinstance(value, (list, tuple)):
+        return [_serialize_value(v) for v in value]
+    if isinstance(value, dict):
+        return {k: _serialize_value(v) for k, v in value.items()}
+    return str(value)
 
 
-class PIICategory(str, Enum):
+class QualityCheckType(str, Enum):
     """
-    Categories of Personally Identifiable Information (PII).
+    Types of validation checks based on ODCS specification.
 
-    Based on common privacy regulations (GDPR, CCPA, HIPAA).
-    Used to classify fields containing personal data.
+    - LIBRARY: Executable checks using standard metrics (nullValues, etc.)
+    - TEXT: Human-readable rules for documentation
+    - SQL: SQL-based validation queries
+    - CUSTOM: Vendor-specific custom checks
     """
+    LIBRARY = "library"
+    TEXT = "text"
+    SQL = "sql"
+    CUSTOM = "custom"
 
-    # Direct identifiers
-    NAME = "name"
-    EMAIL = "email"
-    PHONE = "phone"
-    ADDRESS = "address"
-    SSN = "ssn"  # Social Security Number
-    NATIONAL_ID = "national_id"
-    PASSPORT = "passport"
-    DRIVERS_LICENSE = "drivers_license"
-
-    # Financial identifiers
-    CREDIT_CARD = "credit_card"
-    BANK_ACCOUNT = "bank_account"
-    FINANCIAL = "financial"
-
-    # Biometric
-    BIOMETRIC = "biometric"
-    FACIAL = "facial"
-    FINGERPRINT = "fingerprint"
-    VOICE = "voice"
-
-    # Health
-    HEALTH = "health"
-    MEDICAL_RECORD = "medical_record"
-    GENETIC = "genetic"
-
-    # Digital identifiers
-    IP_ADDRESS = "ip_address"
-    DEVICE_ID = "device_id"
-    COOKIE = "cookie"
-    USER_AGENT = "user_agent"
-
-    # Location
-    LOCATION = "location"
-    GPS = "gps"
-    GEOLOCATION = "geolocation"
-
-    # Behavioral
-    BEHAVIORAL = "behavioral"
-    BROWSING_HISTORY = "browsing_history"
-    PURCHASE_HISTORY = "purchase_history"
-
-    # Demographics
-    DATE_OF_BIRTH = "date_of_birth"
-    AGE = "age"
-    GENDER = "gender"
-    ETHNICITY = "ethnicity"
-    RELIGION = "religion"
-    POLITICAL = "political"
-    SEXUAL_ORIENTATION = "sexual_orientation"
-
-    # Employment
-    EMPLOYEE_ID = "employee_id"
-    SALARY = "salary"
-
-    # Other
-    OTHER = "other"
-    NONE = "none"
+    def __str__(self) -> str:
+        return self.value
 
 
-class SensitivityLevel(str, Enum):
+class QualityMetric(str, Enum):
     """
-    Data sensitivity classification levels.
+    ODCS quality metrics for library-type checks.
 
-    Used to determine handling requirements and access controls.
+    Property-level metrics (operate on a single column):
+    - NULL_VALUES: Count of null/None values
+    - MISSING_VALUES: Count of values considered missing (null, empty, N/A, etc.)
+    - INVALID_VALUES: Count of values failing validation rules
+    - DUPLICATE_VALUES: Count of duplicate values in a column
+
+    Schema-level metrics (operate on entire table/dataset):
+    - ROW_COUNT: Total number of rows in the dataset
+    - DUPLICATE_ROWS: Duplicate rows across specified columns (schema-level)
     """
+    # Property-level metrics
+    NULL_VALUES = "nullValues"
+    MISSING_VALUES = "missingValues"
+    INVALID_VALUES = "invalidValues"
+    DUPLICATE_VALUES = "duplicateValues"
 
-    PUBLIC = "public"
-    INTERNAL = "internal"
-    CONFIDENTIAL = "confidential"
-    RESTRICTED = "restricted"
-    TOP_SECRET = "top_secret"
+    # Schema-level metrics
+    ROW_COUNT = "rowCount"
+    DUPLICATE_ROWS = "duplicateRows"
+
+    def __str__(self) -> str:
+        return self.value
 
     @property
-    def numeric_level(self) -> int:
-        """Return numeric sensitivity level for comparison."""
-        levels = {
-            SensitivityLevel.PUBLIC: 0,
-            SensitivityLevel.INTERNAL: 1,
-            SensitivityLevel.CONFIDENTIAL: 2,
-            SensitivityLevel.RESTRICTED: 3,
-            SensitivityLevel.TOP_SECRET: 4,
+    def is_property_level(self) -> bool:
+        """Check if this metric operates at the property/column level."""
+        return self in (
+            QualityMetric.NULL_VALUES,
+            QualityMetric.MISSING_VALUES,
+            QualityMetric.INVALID_VALUES,
+            QualityMetric.DUPLICATE_VALUES,
+        )
+
+    @property
+    def is_schema_level(self) -> bool:
+        """Check if this metric operates at the schema/table level."""
+        return self in (
+            QualityMetric.ROW_COUNT,
+            QualityMetric.DUPLICATE_ROWS,
+        )
+
+
+class QualityOperator(str, Enum):
+    """
+    ODCS comparison operators for quality rule thresholds.
+
+    These operators define how to compare the calculated metric value
+    against the specified threshold.
+    """
+    MUST_BE = "mustBe"
+    MUST_NOT_BE = "mustNotBe"
+    MUST_BE_GREATER_THAN = "mustBeGreaterThan"
+    MUST_BE_GREATER_OR_EQUAL_TO = "mustBeGreaterOrEqualTo"
+    MUST_BE_LESS_THAN = "mustBeLessThan"
+    MUST_BE_LESS_OR_EQUAL_TO = "mustBeLessOrEqualTo"
+    MUST_BE_BETWEEN = "mustBeBetween"
+    MUST_NOT_BE_BETWEEN = "mustNotBeBetween"
+
+    def __str__(self) -> str:
+        return self.value
+
+    @property
+    def comparison_type(self) -> str:
+        """Get the internal comparison type code."""
+        mapping = {
+            QualityOperator.MUST_BE: "eq",
+            QualityOperator.MUST_NOT_BE: "ne",
+            QualityOperator.MUST_BE_GREATER_THAN: "gt",
+            QualityOperator.MUST_BE_GREATER_OR_EQUAL_TO: "ge",
+            QualityOperator.MUST_BE_LESS_THAN: "lt",
+            QualityOperator.MUST_BE_LESS_OR_EQUAL_TO: "le",
+            QualityOperator.MUST_BE_BETWEEN: "between",
+            QualityOperator.MUST_NOT_BE_BETWEEN: "not_between",
         }
-        return levels[self]
+        return mapping[self]
 
-    def __lt__(self, other: SensitivityLevel) -> bool:
-        return self.numeric_level < other.numeric_level
-
-    def __le__(self, other: SensitivityLevel) -> bool:
-        return self.numeric_level <= other.numeric_level
-
-    def __gt__(self, other: SensitivityLevel) -> bool:
-        return self.numeric_level > other.numeric_level
-
-    def __ge__(self, other: SensitivityLevel) -> bool:
-        return self.numeric_level >= other.numeric_level
-
-
-class MaskingStrategy(str, Enum):
-    """
-    Data masking/anonymization strategies.
-
-    Used to protect sensitive data while preserving utility.
-    """
-
-    # Full masking
-    REDACT = "redact"  # Replace with [REDACTED]
-    NULL = "null"  # Replace with null/None
-    CONSTANT = "constant"  # Replace with constant value
-
-    # Partial masking
-    PARTIAL = "partial"  # Show partial (e.g., ****1234)
-    TRUNCATE = "truncate"  # Show first N characters
-    MASK_EMAIL = "mask_email"  # j***@e***.com
-
-    # Transformation
-    HASH = "hash"  # One-way hash (SHA-256)
-    ENCRYPT = "encrypt"  # Reversible encryption
-    TOKENIZE = "tokenize"  # Replace with token
-
-    # Anonymization
-    GENERALIZE = "generalize"  # Reduce precision (age -> age range)
-    NOISE = "noise"  # Add statistical noise
-    SHUFFLE = "shuffle"  # Shuffle values within column
-
-    # Synthetic
-    SYNTHETIC = "synthetic"  # Replace with synthetic data
-
-    # None
-    NONE = "none"  # No masking
-
-
-class LegalBasis(str, Enum):
-    """
-    Legal basis for processing personal data (GDPR Article 6).
-
-    Determines under what legal grounds data can be processed.
-    """
-
-    CONSENT = "consent"  # Subject has given consent
-    CONTRACT = "contract"  # Necessary for contract performance
-    LEGAL_OBLIGATION = "legal_obligation"  # Required by law
-    VITAL_INTEREST = "vital_interest"  # Protect vital interests
-    PUBLIC_TASK = "public_task"  # Public interest or official authority
-    LEGITIMATE_INTEREST = "legitimate_interest"  # Legitimate business interest
-
-    # Extended bases
-    EMPLOYMENT = "employment"  # Employment law context
-    RESEARCH = "research"  # Scientific/historical research
-    ARCHIVING = "archiving"  # Archiving in public interest
-
-    # None/Unknown
-    NONE = "none"
-    UNKNOWN = "unknown"
-
-
-# =============================================================================
-# PHASE 2 - Data Residency Types (FR-SDK-011)
-# =============================================================================
-
-
-class DataRegion(str, Enum):
-    """
-    Geographic regions for data residency requirements.
-
-    Based on common regulatory jurisdictions.
-    """
-
-    # Americas
-    US = "us"
-    US_EAST = "us-east"
-    US_WEST = "us-west"
-    CANADA = "canada"
-    BRAZIL = "brazil"
-    LATAM = "latam"
-
-    # Europe
-    EU = "eu"
-    EU_WEST = "eu-west"
-    EU_CENTRAL = "eu-central"
-    UK = "uk"
-    GERMANY = "germany"
-    FRANCE = "france"
-    SWITZERLAND = "switzerland"
-
-    # Asia Pacific
-    APAC = "apac"
-    JAPAN = "japan"
-    AUSTRALIA = "australia"
-    SINGAPORE = "singapore"
-    INDIA = "india"
-    CHINA = "china"
-    HONG_KONG = "hong_kong"
-    SOUTH_KOREA = "south_korea"
-
-    # Middle East & Africa
-    MEA = "mea"
-    UAE = "uae"
-    SOUTH_AFRICA = "south_africa"
-
-    # Global
-    GLOBAL = "global"
-    ANY = "any"
-
-
-@dataclass
-class ResidencyRule:
-    """
-    A single data residency rule.
-
-    Specifies where data can and cannot be stored/processed.
-    """
-
-    allowed_regions: list[DataRegion] = dataclass_field(default_factory=list)
-    forbidden_regions: list[DataRegion] = dataclass_field(default_factory=list)
-    requires_encryption: bool = False
-    requires_pseudonymization: bool = False
-    max_retention_days: int | None = None
-    notes: str | None = None
-
-    def is_region_allowed(self, region: DataRegion) -> bool:
-        """Check if a region is allowed by this rule."""
-        if region in self.forbidden_regions:
-            return False
-        if self.allowed_regions and region not in self.allowed_regions:
-            # If allowed_regions is specified, region must be in it
-            return False
-        return True
-
-    def to_dict(self) -> dict[str, Any]:
-        """Convert to dictionary representation."""
-        return {
-            "allowed_regions": [r.value for r in self.allowed_regions],
-            "forbidden_regions": [r.value for r in self.forbidden_regions],
-            "requires_encryption": self.requires_encryption,
-            "requires_pseudonymization": self.requires_pseudonymization,
-            "max_retention_days": self.max_retention_days,
-            "notes": self.notes,
-        }
-
-
-@dataclass
-class ResidencyConfig:
-    """
-    Data residency configuration for a contract.
-
-    Defines geographic restrictions and compliance requirements.
-    """
-
-    default_rule: ResidencyRule | None = None
-    field_rules: dict[str, ResidencyRule] = dataclass_field(default_factory=dict)
-    compliance_frameworks: list[str] = dataclass_field(default_factory=list)
-    data_controller: str | None = None
-    data_processor: str | None = None
-    dpo_contact: str | None = None  # Data Protection Officer
-
-    def get_rule_for_field(self, field_name: str) -> ResidencyRule | None:
-        """Get the residency rule for a specific field."""
-        if field_name in self.field_rules:
-            return self.field_rules[field_name]
-        return self.default_rule
-
-    def check_residency(
-        self, field_name: str, region: DataRegion
-    ) -> tuple[bool, str | None]:
+    def compare(self, value: float, threshold: Any) -> bool:
         """
-        Check if storing a field in a region is compliant.
+        Compare a metric value against a threshold.
+
+        Args:
+            value: The calculated metric value
+            threshold: The comparison threshold
 
         Returns:
-            Tuple of (is_compliant, error_message).
+            True if the comparison passes, False otherwise
         """
-        rule = self.get_rule_for_field(field_name)
-        if rule is None:
-            return True, None
-
-        if not rule.is_region_allowed(region):
-            if region in rule.forbidden_regions:
-                return False, f"Field '{field_name}' cannot be stored in {region.value} (forbidden)"
-            return False, f"Field '{field_name}' must be stored in {[r.value for r in rule.allowed_regions]}"
-
-        return True, None
-
-    def to_dict(self) -> dict[str, Any]:
-        """Convert to dictionary representation."""
-        return {
-            "default_rule": self.default_rule.to_dict() if self.default_rule else None,
-            "field_rules": {k: v.to_dict() for k, v in self.field_rules.items()},
-            "compliance_frameworks": self.compliance_frameworks,
-            "data_controller": self.data_controller,
-            "data_processor": self.data_processor,
-            "dpo_contact": self.dpo_contact,
-        }
-
-
-# =============================================================================
-# PHASE 2 - Data Lineage Types (FR-SDK-012)
-# =============================================================================
+        if self == QualityOperator.MUST_BE:
+            return value == threshold
+        elif self == QualityOperator.MUST_NOT_BE:
+            return value != threshold
+        elif self == QualityOperator.MUST_BE_GREATER_THAN:
+            return value > threshold
+        elif self == QualityOperator.MUST_BE_GREATER_OR_EQUAL_TO:
+            return value >= threshold
+        elif self == QualityOperator.MUST_BE_LESS_THAN:
+            return value < threshold
+        elif self == QualityOperator.MUST_BE_LESS_OR_EQUAL_TO:
+            return value <= threshold
+        elif self == QualityOperator.MUST_BE_BETWEEN:
+            if isinstance(threshold, (list, tuple)) and len(threshold) == 2:
+                return threshold[0] < value < threshold[1]
+            return False
+        elif self == QualityOperator.MUST_NOT_BE_BETWEEN:
+            if isinstance(threshold, (list, tuple)) and len(threshold) == 2:
+                return not (threshold[0] < value < threshold[1])
+            return True
+        return True
 
 
-@dataclass
-class Source:
+class QualityUnit(str, Enum):
     """
-    Data source definition for lineage tracking.
+    Units for quality metric values.
 
-    Represents where data originates from.
+    - ROWS: Absolute count of rows
+    - PERCENT: Percentage of total rows
     """
-
-    name: str
-    type: str  # e.g., "database", "api", "file", "stream"
-    system: str | None = None  # e.g., "salesforce", "postgres", "s3"
-    location: str | None = None  # e.g., connection string, path, URL
-    owner: str | None = None
-    refresh_frequency: str | None = None  # e.g., "daily", "hourly", "real-time"
-    sla: str | None = None  # e.g., "99.9%", "4h recovery"
-    metadata: dict[str, Any] = dataclass_field(default_factory=dict)
-
-    def to_dict(self) -> dict[str, Any]:
-        """Convert to dictionary representation."""
-        return {
-            "name": self.name,
-            "type": self.type,
-            "system": self.system,
-            "location": self.location,
-            "owner": self.owner,
-            "refresh_frequency": self.refresh_frequency,
-            "sla": self.sla,
-            "metadata": self.metadata,
-        }
-
-
-@dataclass
-class Transformation:
-    """
-    Data transformation definition for lineage tracking.
-
-    Represents how data is processed between source and destination.
-    """
-
-    name: str
-    type: str  # e.g., "etl", "sql", "python", "dbt"
-    description: str | None = None
-    logic: str | None = None  # e.g., SQL query, transformation code
-    input_fields: list[str] = dataclass_field(default_factory=list)
-    output_fields: list[str] = dataclass_field(default_factory=list)
-    owner: str | None = None
-    schedule: str | None = None  # e.g., cron expression
-    metadata: dict[str, Any] = dataclass_field(default_factory=dict)
-
-    def to_dict(self) -> dict[str, Any]:
-        """Convert to dictionary representation."""
-        return {
-            "name": self.name,
-            "type": self.type,
-            "description": self.description,
-            "logic": self.logic,
-            "input_fields": self.input_fields,
-            "output_fields": self.output_fields,
-            "owner": self.owner,
-            "schedule": self.schedule,
-            "metadata": self.metadata,
-        }
-
-
-@dataclass
-class Consumer:
-    """
-    Data consumer definition for lineage tracking.
-
-    Represents systems/users that consume the data.
-    """
-
-    name: str
-    type: str  # e.g., "dashboard", "report", "api", "ml_model", "application"
-    system: str | None = None
-    owner: str | None = None
-    access_level: str | None = None  # e.g., "read", "write", "admin"
-    purpose: str | None = None  # Why they need the data
-    fields_used: list[str] = dataclass_field(default_factory=list)
-    metadata: dict[str, Any] = dataclass_field(default_factory=dict)
-
-    def to_dict(self) -> dict[str, Any]:
-        """Convert to dictionary representation."""
-        return {
-            "name": self.name,
-            "type": self.type,
-            "system": self.system,
-            "owner": self.owner,
-            "access_level": self.access_level,
-            "purpose": self.purpose,
-            "fields_used": self.fields_used,
-            "metadata": self.metadata,
-        }
-
-
-@dataclass
-class LineageConfig:
-    """
-    Data lineage configuration for a contract.
-
-    Tracks data flow from sources through transformations to consumers.
-    """
-
-    sources: list[Source] = dataclass_field(default_factory=list)
-    transformations: list[Transformation] = dataclass_field(default_factory=list)
-    consumers: list[Consumer] = dataclass_field(default_factory=list)
-
-    # Field-level lineage
-    field_sources: dict[str, str] = dataclass_field(default_factory=dict)  # field -> source
-    field_transformations: dict[str, list[str]] = dataclass_field(
-        default_factory=dict
-    )  # field -> [transformations]
-
-    # Ownership
-    data_owner: str | None = None
-    data_steward: str | None = None
-    technical_owner: str | None = None
-
-    def get_field_lineage(self, field_name: str) -> dict[str, Any]:
-        """Get complete lineage information for a field."""
-        return {
-            "field": field_name,
-            "source": self.field_sources.get(field_name),
-            "transformations": self.field_transformations.get(field_name, []),
-            "consumers": [c.name for c in self.consumers if field_name in c.fields_used],
-        }
-
-    def to_dict(self) -> dict[str, Any]:
-        """Convert to dictionary representation."""
-        return {
-            "sources": [s.to_dict() for s in self.sources],
-            "transformations": [t.to_dict() for t in self.transformations],
-            "consumers": [c.to_dict() for c in self.consumers],
-            "field_sources": self.field_sources,
-            "field_transformations": self.field_transformations,
-            "data_owner": self.data_owner,
-            "data_steward": self.data_steward,
-            "technical_owner": self.technical_owner,
-        }
-
-
-# =============================================================================
-# PHASE 6 - Open Data Contract Standard (ODCS) Types
-# =============================================================================
-
-
-class ContractStatus(str, Enum):
-    """
-    Contract lifecycle status (T-340).
-
-    Indicates the current state of a data contract in its lifecycle.
-    Based on Open Data Contract Standard.
-    """
-
-    DRAFT = "draft"  # Contract is being developed, not yet active
-    ACTIVE = "active"  # Contract is in production use
-    DEPRECATED = "deprecated"  # Contract is being phased out
-    RETIRED = "retired"  # Contract is no longer in use
-
-
-class PhysicalType(str, Enum):
-    """
-    Physical storage type for schema objects (T-341).
-
-    Describes how the data is physically stored or accessed.
-    """
-
-    TABLE = "table"  # Database table
-    VIEW = "view"  # Database view
-    FILE = "file"  # File-based storage (CSV, Parquet, etc.)
-    STREAM = "stream"  # Streaming data (Kafka, Kinesis, etc.)
-
-
-class QualityRuleType(str, Enum):
-    """
-    Types of data quality rules (T-342).
-
-    Standard quality dimensions for data quality checks.
-    """
-
-    COMPLETENESS = "completeness"  # Check for missing values
-    ACCURACY = "accuracy"  # Check for data accuracy
-    FRESHNESS = "freshness"  # Check for data timeliness
-    VOLUME = "volume"  # Check for expected data volume
-    DISTRIBUTION = "distribution"  # Check for value distribution
-
-
-class CheckType(str, Enum):
-    """
-    Types of custom quality checks (T-343).
-
-    Specifies the language/framework for custom quality check definitions.
-    """
-
-    SQL = "sql"  # SQL-based check
-    PYTHON = "python"  # Python-based check
-    GREAT_EXPECTATIONS = "great_expectations"  # Great Expectations framework
-
-
-class ExtractionMethod(str, Enum):
-    """
-    Data extraction methods for lineage (T-344).
-
-    Describes how data is extracted from source systems.
-    """
-
-    FULL = "full"  # Full extraction (complete data refresh)
-    INCREMENTAL = "incremental"  # Incremental extraction (delta only)
-    CDC = "cdc"  # Change Data Capture
-
-
-class PartitioningStrategy(str, Enum):
-    """
-    Data partitioning strategies (T-345).
-
-    Describes how data is partitioned for storage/distribution.
-    """
-
-    DATE = "date"  # Partitioned by date/time
-    HASH = "hash"  # Hash-based partitioning
-    RANGE = "range"  # Range-based partitioning
-
-
-class ReviewCadence(str, Enum):
-    """
-    Contract review frequency (T-346).
-
-    Specifies how often contracts should be reviewed.
-    """
-
-    MONTHLY = "monthly"
-    QUARTERLY = "quarterly"
-    ANNUALLY = "annually"
-
-
-class AccessLevel(str, Enum):
-    """
-    Data access levels (T-347).
-
-    Defines the level of access granted to principals.
-    """
-
-    READ = "read"  # Read-only access
-    WRITE = "write"  # Read and write access
-    ADMIN = "admin"  # Full administrative access
-
-
-class DistributionType(str, Enum):
-    """
-    Data distribution channel types (T-348).
-
-    Describes where and how data is made available.
-    """
-
-    WAREHOUSE = "warehouse"  # Data warehouse (BigQuery, Snowflake, Redshift)
-    LAKE = "lake"  # Data lake (S3, GCS, ADLS)
-    API = "api"  # REST/GraphQL API
-    STREAM = "stream"  # Streaming platform (Kafka, Kinesis)
-    FILE = "file"  # File export
-
-
-class SourceType(str, Enum):
-    """
-    Data source types for lineage (T-349).
-
-    Describes the type of upstream data source.
-    """
-
-    SYSTEM = "system"  # Internal system/database
-    CONTRACT = "contract"  # Another data contract
-    FILE = "file"  # File-based source
-    API = "api"  # External API
-    STREAM = "stream"  # Streaming source
-
-
-# =============================================================================
-# PHASE 6 - ODCS Dataclasses (T-311 through T-326)
-# =============================================================================
-
-
-@dataclass
-class CustomProperty:
-    """
-    Custom property for contract descriptions (T-311).
-
-    Allows arbitrary key-value metadata with descriptions.
-    """
-
-    name: str
-    value: str
-    description: str | None = None
-
-    def to_dict(self) -> dict[str, Any]:
-        """Convert to dictionary representation."""
-        result = {"name": self.name, "value": self.value}
-        if self.description:
-            result["description"] = self.description
-        return result
-
-
-@dataclass
-class Description:
-    """
-    Contract description metadata (T-311).
-
-    Provides context about the contract's purpose, usage, and limitations.
-    """
-
-    purpose: str | None = None
-    usage: str | None = None
-    limitations: str | None = None
-    custom_properties: list[CustomProperty] = dataclass_field(default_factory=list)
-
-    def to_dict(self) -> dict[str, Any]:
-        """Convert to dictionary representation."""
-        result: dict[str, Any] = {}
-        if self.purpose:
-            result["purpose"] = self.purpose
-        if self.usage:
-            result["usage"] = self.usage
-        if self.limitations:
-            result["limitations"] = self.limitations
-        if self.custom_properties:
-            result["customProperties"] = [p.to_dict() for p in self.custom_properties]
-        return result
-
-
-@dataclass
-class SemanticInfo:
-    """
-    Semantic metadata for a field (T-312).
-
-    Provides business context and meaning for a field.
-    """
-
-    description: str | None = None
-    unit: str | None = None
-    precision: int | None = None
-    business_term: str | None = None
-    glossary_uri: str | None = None
-
-    def to_dict(self) -> dict[str, Any]:
-        """Convert to dictionary representation."""
-        result: dict[str, Any] = {}
-        if self.description:
-            result["description"] = self.description
-        if self.unit:
-            result["unit"] = self.unit
-        if self.precision is not None:
-            result["precision"] = self.precision
-        if self.business_term:
-            result["business_term"] = self.business_term
-        if self.glossary_uri:
-            result["glossary_uri"] = self.glossary_uri
-        return result
-
-
-@dataclass
-class PrivacyInfo:
-    """
-    Privacy metadata for a field (T-312).
-
-    Defines PII classification and handling requirements.
-    """
-
-    contains_pii: bool = False
-    pii_category: PIICategory | None = None
-    sensitivity_level: SensitivityLevel | None = None
-    masking: MaskingStrategy | None = None
-    retention_days: int | None = None
-    legal_basis: LegalBasis | None = None
-
-    def to_dict(self) -> dict[str, Any]:
-        """Convert to dictionary representation."""
-        result: dict[str, Any] = {"contains_pii": self.contains_pii}
-        if self.pii_category:
-            result["pii_category"] = self.pii_category.value
-        if self.sensitivity_level:
-            result["sensitivity_level"] = self.sensitivity_level.value
-        if self.masking:
-            result["masking"] = self.masking.value
-        if self.retention_days is not None:
-            result["retention_days"] = self.retention_days
-        if self.legal_basis:
-            result["legal_basis"] = self.legal_basis.value
-        return result
-
-
-@dataclass
-class FieldConstraints:
-    """
-    Field constraints (T-312).
-
-    Validation rules for field values.
-    """
-
-    pattern: str | None = None
-    min_length: int | None = None
-    max_length: int | None = None
-    enum: list[Any] | None = None
-    unique: bool = False
-
-    def to_dict(self) -> dict[str, Any]:
-        """Convert to dictionary representation."""
-        result: dict[str, Any] = {}
-        if self.pattern:
-            result["pattern"] = self.pattern
-        if self.min_length is not None:
-            result["min_length"] = self.min_length
-        if self.max_length is not None:
-            result["max_length"] = self.max_length
-        if self.enum:
-            result["enum"] = self.enum
-        if self.unique:
-            result["unique"] = self.unique
-        return result
-
-
-@dataclass
-class ForeignKey:
-    """
-    Foreign key reference (T-313).
-
-    References a field in another contract.
-    """
-
-    contract: str  # Referenced contract ID
-    field: str  # Referenced field name
-
-    def to_dict(self) -> dict[str, Any]:
-        """Convert to dictionary representation."""
-        return {"contract": self.contract, "field": self.field}
-
-
-@dataclass
-class SchemaProperty:
-    """
-    Schema property definition (T-312).
-
-    Complete field definition with all ODCS metadata.
-    """
-
-    name: str
-    description: str | None = None
-    logical_type: str | None = None  # string, integer, date, etc.
-    physical_type: str | None = None  # UUID, VARCHAR, etc.
-    nullable: bool = True
-    examples: list[Any] = dataclass_field(default_factory=list)
-    primary_key: bool = False
-    foreign_key: ForeignKey | None = None
-    constraints: FieldConstraints | None = None
-    semantic: SemanticInfo | None = None
-    privacy: PrivacyInfo | None = None
-
-    def to_dict(self) -> dict[str, Any]:
-        """Convert to dictionary representation."""
-        result: dict[str, Any] = {"name": self.name}
-        if self.description:
-            result["description"] = self.description
-        if self.logical_type:
-            result["logicalType"] = self.logical_type
-        if self.physical_type:
-            result["physicalType"] = self.physical_type
-        result["nullable"] = self.nullable
-        if self.examples:
-            result["examples"] = self.examples
-        if self.primary_key:
-            result["primary_key"] = self.primary_key
-        if self.foreign_key:
-            result["foreign_key"] = self.foreign_key.to_dict()
-        if self.constraints:
-            result["constraints"] = self.constraints.to_dict()
-        if self.semantic:
-            result["semantic"] = self.semantic.to_dict()
-        if self.privacy:
-            result["privacy"] = self.privacy.to_dict()
-        return result
+    ROWS = "rows"
+    PERCENT = "percent"
+
+    def __str__(self) -> str:
+        return self.value
+
+    def calculate_metric(self, count: int, total: int) -> float:
+        """
+        Calculate the metric value based on the unit.
+
+        Args:
+            count: The raw count value
+            total: The total number of rows
+
+        Returns:
+            The metric value in the appropriate unit
+        """
+        if self == QualityUnit.PERCENT and total > 0:
+            return (count / total) * 100
+        return float(count)
 
 
 @dataclass
 class QualityRule:
     """
-    Data quality rule (T-314).
+    Builder class for creating ODCS-compliant quality rules.
 
-    Defines a quality check for the data.
+    This class provides a type-safe way to build quality rules using enums
+    instead of raw strings, reducing errors when defining contracts.
+
+    Example - Property-level rules (for field.quality):
+        >>> # No null values allowed
+        >>> QualityRule.null_values(must_be=0)
+        {'metric': 'nullValues', 'mustBe': 0}
+
+        >>> # Less than 5% missing values
+        >>> QualityRule.missing_values(must_be_less_than=5, unit=QualityUnit.PERCENT)
+        {'metric': 'missingValues', 'mustBeLessThan': 5, 'unit': 'percent'}
+
+        >>> # Values must be in valid set
+        >>> QualityRule.invalid_values(must_be=0, valid_values=['active', 'inactive'])
+        {'metric': 'invalidValues', 'mustBe': 0, 'arguments': {'validValues': ['active', 'inactive']}}
+
+    Example - Schema-level rules (for schema.quality):
+        >>> # Row count between 100 and 10000
+        >>> QualityRule.row_count(must_be_between=[100, 10000])
+        {'metric': 'rowCount', 'mustBeBetween': [100, 10000]}
+
+        >>> # No duplicate rows on composite key
+        >>> QualityRule.duplicate_rows(must_be=0, properties=['user_id', 'date'])
+        {'metric': 'duplicateRows', 'mustBe': 0, 'arguments': {'properties': ['user_id', 'date']}}
     """
 
-    rule: QualityRuleType
-    # Completeness
-    min_percent: float | None = None
-    critical_fields: list[str] | None = None
-    # Accuracy
-    max_error_rate: float | None = None
-    validation_method: str | None = None
-    # Freshness
-    max_age: str | None = None  # ISO 8601 duration
-    timestamp_field: str | None = None
-    # Volume
-    min_rows: int | None = None
-    max_rows: int | None = None
-    # Distribution
-    field: str | None = None
-    expected_distribution: dict[str, Any] | None = None
-
-    def to_dict(self) -> dict[str, Any]:
-        """Convert to dictionary representation."""
-        result: dict[str, Any] = {"rule": self.rule.value}
-        if self.min_percent is not None:
-            result["min_percent"] = self.min_percent
-        if self.critical_fields:
-            result["critical_fields"] = self.critical_fields
-        if self.max_error_rate is not None:
-            result["max_error_rate"] = self.max_error_rate
-        if self.validation_method:
-            result["validation_method"] = self.validation_method
-        if self.max_age:
-            result["max_age"] = self.max_age
-        if self.timestamp_field:
-            result["timestamp_field"] = self.timestamp_field
-        if self.min_rows is not None:
-            result["min_rows"] = self.min_rows
-        if self.max_rows is not None:
-            result["max_rows"] = self.max_rows
-        if self.field:
-            result["field"] = self.field
-        if self.expected_distribution:
-            result["expected_distribution"] = self.expected_distribution
-        return result
-
-
-@dataclass
-class CustomCheck:
-    """
-    Custom quality check (T-315).
-
-    User-defined quality check using SQL, Python, or Great Expectations.
-    """
-
-    name: str
-    type: CheckType
-    definition: str
-    severity: Severity | None = None
-
-    def to_dict(self) -> dict[str, Any]:
-        """Convert to dictionary representation."""
-        result: dict[str, Any] = {
-            "name": self.name,
-            "type": self.type.value,
-            "definition": self.definition,
-        }
-        if self.severity:
-            result["severity"] = self.severity.value
-        return result
-
-
-@dataclass
-class CrossBorder:
-    """
-    Cross-border data transfer rules (T-316).
-
-    Defines restrictions and mechanisms for international data transfer.
-    """
-
-    restrictions: list[str] = dataclass_field(default_factory=list)
-    transfer_mechanisms: list[str] = dataclass_field(default_factory=list)
-    data_residency: str | None = None
-
-    def to_dict(self) -> dict[str, Any]:
-        """Convert to dictionary representation."""
-        result: dict[str, Any] = {}
-        if self.restrictions:
-            result["restrictions"] = self.restrictions
-        if self.transfer_mechanisms:
-            result["transfer_mechanisms"] = self.transfer_mechanisms
-        if self.data_residency:
-            result["data_residency"] = self.data_residency
-        return result
-
-
-@dataclass
-class Legal:
-    """
-    Legal metadata (T-316).
-
-    Defines legal basis and jurisdiction for data processing.
-    """
-
-    jurisdiction: list[str] = dataclass_field(default_factory=list)
-    basis: LegalBasis | None = None
-    consent_id: str | None = None
-    regulations: list[str] = dataclass_field(default_factory=list)
-    cross_border: CrossBorder | None = None
-
-    def to_dict(self) -> dict[str, Any]:
-        """Convert to dictionary representation."""
-        result: dict[str, Any] = {}
-        if self.jurisdiction:
-            result["jurisdiction"] = self.jurisdiction
-        if self.basis:
-            result["basis"] = self.basis.value
-        if self.consent_id:
-            result["consent_id"] = self.consent_id
-        if self.regulations:
-            result["regulations"] = self.regulations
-        if self.cross_border:
-            result["cross_border"] = self.cross_border.to_dict()
-        return result
-
-
-@dataclass
-class AuditRequirements:
-    """
-    Audit requirements (T-317).
-
-    Defines audit logging requirements.
-    """
-
-    logging: bool = False
-    log_retention: str | None = None  # ISO 8601 duration
-
-    def to_dict(self) -> dict[str, Any]:
-        """Convert to dictionary representation."""
-        result: dict[str, Any] = {"logging": self.logging}
-        if self.log_retention:
-            result["log_retention"] = self.log_retention
-        return result
-
-
-@dataclass
-class Compliance:
-    """
-    Compliance metadata (T-317).
-
-    Defines regulatory compliance requirements.
-    """
-
-    data_classification: SensitivityLevel | None = None
-    regulatory_scope: list[str] = dataclass_field(default_factory=list)
-    audit_requirements: AuditRequirements | None = None
-    certification_requirements: list[str] = dataclass_field(default_factory=list)
-    export_restrictions: dict[str, Any] | None = None
-
-    def to_dict(self) -> dict[str, Any]:
-        """Convert to dictionary representation."""
-        result: dict[str, Any] = {}
-        if self.data_classification:
-            result["data_classification"] = self.data_classification.value
-        if self.regulatory_scope:
-            result["regulatory_scope"] = self.regulatory_scope
-        if self.audit_requirements:
-            result["audit_requirements"] = self.audit_requirements.to_dict()
-        if self.certification_requirements:
-            result["certification_requirements"] = self.certification_requirements
-        if self.export_restrictions:
-            result["export_restrictions"] = self.export_restrictions
-        return result
-
-
-@dataclass
-class AvailabilitySLA:
-    """Availability SLA (T-318)."""
-
-    target_percent: float
-    measurement_window: str | None = None  # ISO 8601 duration
-
-    def to_dict(self) -> dict[str, Any]:
-        result: dict[str, Any] = {"target_percent": self.target_percent}
-        if self.measurement_window:
-            result["measurement_window"] = self.measurement_window
-        return result
-
-
-@dataclass
-class FreshnessSLA:
-    """Freshness SLA (T-318)."""
-
-    target: str  # ISO 8601 duration
-    measurement_field: str | None = None
-
-    def to_dict(self) -> dict[str, Any]:
-        result: dict[str, Any] = {"target": self.target}
-        if self.measurement_field:
-            result["measurement_field"] = self.measurement_field
-        return result
-
-
-@dataclass
-class CompletenessSLA:
-    """Completeness SLA (T-318)."""
-
-    target_percent: float
-    critical_fields: list[str] = dataclass_field(default_factory=list)
-    critical_target_percent: float | None = None
-
-    def to_dict(self) -> dict[str, Any]:
-        result: dict[str, Any] = {"target_percent": self.target_percent}
-        if self.critical_fields:
-            result["critical_fields"] = self.critical_fields
-        if self.critical_target_percent is not None:
-            result["critical_target_percent"] = self.critical_target_percent
-        return result
-
-
-@dataclass
-class AccuracySLA:
-    """Accuracy SLA (T-318)."""
-
-    error_rate_target: float
-    validation_method: str | None = None
-
-    def to_dict(self) -> dict[str, Any]:
-        result: dict[str, Any] = {"error_rate_target": self.error_rate_target}
-        if self.validation_method:
-            result["validation_method"] = self.validation_method
-        return result
-
-
-@dataclass
-class ResponseTimeSLA:
-    """Response time SLA (T-318)."""
-
-    p50_ms: int | None = None
-    p99_ms: int | None = None
-
-    def to_dict(self) -> dict[str, Any]:
-        result: dict[str, Any] = {}
-        if self.p50_ms is not None:
-            result["p50_ms"] = self.p50_ms
-        if self.p99_ms is not None:
-            result["p99_ms"] = self.p99_ms
-        return result
-
-
-@dataclass
-class SLA:
-    """
-    Service Level Agreement (T-318).
-
-    Defines quality targets for the data.
-    """
-
-    availability: AvailabilitySLA | None = None
-    freshness: FreshnessSLA | None = None
-    completeness: CompletenessSLA | None = None
-    accuracy: AccuracySLA | None = None
-    response_time: ResponseTimeSLA | None = None
-
-    def to_dict(self) -> dict[str, Any]:
-        """Convert to dictionary representation."""
-        result: dict[str, Any] = {}
-        if self.availability:
-            result["availability"] = self.availability.to_dict()
-        if self.freshness:
-            result["freshness"] = self.freshness.to_dict()
-        if self.completeness:
-            result["completeness"] = self.completeness.to_dict()
-        if self.accuracy:
-            result["accuracy"] = self.accuracy.to_dict()
-        if self.response_time:
-            result["response_time"] = self.response_time.to_dict()
-        return result
-
-
-@dataclass
-class AccessGrant:
-    """Access grant (T-319)."""
-
-    principal: str  # team://, role://, user://, service://
-    level: AccessLevel
-    fields: list[str] | None = None
-    expiry: str | None = None  # ISO 8601 date
-    conditions: dict[str, Any] | None = None
-
-    def to_dict(self) -> dict[str, Any]:
-        result: dict[str, Any] = {
-            "principal": self.principal,
-            "level": self.level.value,
-        }
-        if self.fields:
-            result["fields"] = self.fields
-        if self.expiry:
-            result["expiry"] = self.expiry
-        if self.conditions:
-            result["conditions"] = self.conditions
-        return result
-
-
-@dataclass
-class AccessApproval:
-    """Access approval requirements (T-319)."""
-
-    required: bool = False
-    approvers: list[str] = dataclass_field(default_factory=list)
-    workflow: str | None = None
-
-    def to_dict(self) -> dict[str, Any]:
-        result: dict[str, Any] = {"required": self.required}
-        if self.approvers:
-            result["approvers"] = self.approvers
-        if self.workflow:
-            result["workflow"] = self.workflow
-        return result
-
-
-@dataclass
-class AccessConfig:
-    """
-    Access configuration (T-319).
-
-    Defines who can access the data and how.
-    """
-
-    default_level: AccessLevel | None = None
-    grants: list[AccessGrant] = dataclass_field(default_factory=list)
-    approval: AccessApproval | None = None
-    authentication: dict[str, Any] | None = None
-
-    def to_dict(self) -> dict[str, Any]:
-        result: dict[str, Any] = {}
-        if self.default_level:
-            result["default_level"] = self.default_level.value
-        if self.grants:
-            result["grants"] = [g.to_dict() for g in self.grants]
-        if self.approval:
-            result["approval"] = self.approval.to_dict()
-        if self.authentication:
-            result["authentication"] = self.authentication
-        return result
-
-
-@dataclass
-class DistributionChannel:
-    """Distribution channel (T-320)."""
-
-    type: DistributionType
-    identifier: str
-    format: str | None = None
-    partitioning: dict[str, Any] | None = None
-
-    def to_dict(self) -> dict[str, Any]:
-        result: dict[str, Any] = {
-            "type": self.type.value,
-            "identifier": self.identifier,
-        }
-        if self.format:
-            result["format"] = self.format
-        if self.partitioning:
-            result["partitioning"] = self.partitioning
-        return result
-
-
-@dataclass
-class Distribution:
-    """
-    Distribution configuration (T-320).
-
-    Defines where and how data is distributed.
-    """
-
-    channels: list[DistributionChannel] = dataclass_field(default_factory=list)
-
-    def to_dict(self) -> dict[str, Any]:
-        result: dict[str, Any] = {}
-        if self.channels:
-            result["channels"] = [c.to_dict() for c in self.channels]
-        return result
-
-
-@dataclass
-class GovernanceProducer:
-    """Governance producer (T-321)."""
-
-    team: str
-    contact: str | None = None
-    responsibilities: list[str] = dataclass_field(default_factory=list)
-
-    def to_dict(self) -> dict[str, Any]:
-        result: dict[str, Any] = {"team": self.team}
-        if self.contact:
-            result["contact"] = self.contact
-        if self.responsibilities:
-            result["responsibilities"] = self.responsibilities
-        return result
-
-
-@dataclass
-class GovernanceConsumer:
-    """Governance consumer (T-321)."""
-
-    team: str
-    contact: str | None = None
-    use_case: str | None = None
-    approved_date: str | None = None  # ISO 8601 date
-    approved_by: str | None = None
-
-    def to_dict(self) -> dict[str, Any]:
-        result: dict[str, Any] = {"team": self.team}
-        if self.contact:
-            result["contact"] = self.contact
-        if self.use_case:
-            result["use_case"] = self.use_case
-        if self.approved_date:
-            result["approved_date"] = self.approved_date
-        if self.approved_by:
-            result["approved_by"] = self.approved_by
-        return result
-
-
-@dataclass
-class ApprovalRecord:
-    """Approval record (T-321)."""
-
-    role: str
-    approver: str | None = None
-    approved_date: str | None = None  # ISO 8601 datetime
-    comments: str | None = None
-
-    def to_dict(self) -> dict[str, Any]:
-        result: dict[str, Any] = {"role": self.role}
-        if self.approver:
-            result["approver"] = self.approver
-        if self.approved_date:
-            result["approved_date"] = self.approved_date
-        if self.comments:
-            result["comments"] = self.comments
-        return result
-
-
-@dataclass
-class ReviewConfig:
-    """Review configuration (T-321)."""
-
-    cadence: ReviewCadence | None = None
-    last_review: str | None = None  # ISO 8601 date
-    next_review: str | None = None  # ISO 8601 date
-    reviewers: list[str] = dataclass_field(default_factory=list)
-
-    def to_dict(self) -> dict[str, Any]:
-        result: dict[str, Any] = {}
-        if self.cadence:
-            result["cadence"] = self.cadence.value
-        if self.last_review:
-            result["last_review"] = self.last_review
-        if self.next_review:
-            result["next_review"] = self.next_review
-        if self.reviewers:
-            result["reviewers"] = self.reviewers
-        return result
-
-
-@dataclass
-class ChangeManagement:
-    """Change management configuration (T-322)."""
-
-    breaking_change_notice: str | None = None  # ISO 8601 duration
-    deprecation_notice: str | None = None  # ISO 8601 duration
-    communication_channels: list[str] = dataclass_field(default_factory=list)
-    migration_support: bool = False
-
-    def to_dict(self) -> dict[str, Any]:
-        result: dict[str, Any] = {}
-        if self.breaking_change_notice:
-            result["breaking_change_notice"] = self.breaking_change_notice
-        if self.deprecation_notice:
-            result["deprecation_notice"] = self.deprecation_notice
-        if self.communication_channels:
-            result["communication_channels"] = self.communication_channels
-        if self.migration_support:
-            result["migration_support"] = self.migration_support
-        return result
-
-
-@dataclass
-class Governance:
-    """
-    Governance configuration (T-321, T-322).
-
-    Defines ownership, consumers, approvals, and change management.
-    """
-
-    producer: GovernanceProducer | None = None
-    consumers: list[GovernanceConsumer] = dataclass_field(default_factory=list)
-    approval_chain: list[ApprovalRecord] = dataclass_field(default_factory=list)
-    review: ReviewConfig | None = None
-    change_management: ChangeManagement | None = None
-    dispute_resolution: dict[str, Any] | None = None
-    documentation: dict[str, Any] | None = None
-
-    def to_dict(self) -> dict[str, Any]:
-        result: dict[str, Any] = {}
-        if self.producer:
-            result["producer"] = self.producer.to_dict()
-        if self.consumers:
-            result["consumers"] = [c.to_dict() for c in self.consumers]
-        if self.approval_chain:
-            result["approval_chain"] = [a.to_dict() for a in self.approval_chain]
-        if self.review:
-            result["review"] = self.review.to_dict()
-        if self.change_management:
-            result["change_management"] = self.change_management.to_dict()
-        if self.dispute_resolution:
-            result["dispute_resolution"] = self.dispute_resolution
-        if self.documentation:
-            result["documentation"] = self.documentation
-        return result
-
-
-@dataclass
-class Steward:
-    """Data steward (T-323)."""
-
-    name: str
-    email: str | None = None
-
-    def to_dict(self) -> dict[str, Any]:
-        result: dict[str, Any] = {"name": self.name}
-        if self.email:
-            result["email"] = self.email
-        return result
-
-
-@dataclass
-class Team:
-    """
-    Team metadata (T-323).
-
-    Defines the accountable team for the contract.
-    """
-
-    name: str
-    department: str | None = None
-    steward: Steward | None = None
-
-    def to_dict(self) -> dict[str, Any]:
-        result: dict[str, Any] = {"name": self.name}
-        if self.department:
-            result["department"] = self.department
-        if self.steward:
-            result["steward"] = self.steward.to_dict()
-        return result
-
-
-@dataclass
-class Server:
-    """
-    Server configuration (T-324).
-
-    Defines where the data is physically stored.
-    """
-
-    server: str
-    environment: str  # development, staging, production
-    type: str  # bigquery, redshift, snowflake, s3, kafka, etc.
-    project: str
-    dataset: str
-
-    def to_dict(self) -> dict[str, Any]:
-        return {
-            "server": self.server,
-            "environment": self.environment,
-            "type": self.type,
-            "project": self.project,
-            "dataset": self.dataset,
-        }
-
-
-@dataclass
-class Role:
-    """
-    Role definition (T-325).
-
-    Defines access roles for the contract.
-    """
-
-    role: str
-    access: AccessLevel
-
-    def to_dict(self) -> dict[str, Any]:
-        return {"role": self.role, "access": self.access.value}
-
-
-@dataclass
-class Timestamps:
-    """
-    Contract timestamps (T-326).
-
-    Tracks creation, updates, and effective dates.
-    """
-
-    created_at: str | None = None  # ISO 8601 datetime
-    updated_at: str | None = None  # ISO 8601 datetime
-    effective_from: str | None = None  # ISO 8601 date
-    effective_until: str | None = None  # ISO 8601 date
-
-    def to_dict(self) -> dict[str, Any]:
-        result: dict[str, Any] = {}
-        if self.created_at:
-            result["created_at"] = self.created_at
-        if self.updated_at:
-            result["updated_at"] = self.updated_at
-        if self.effective_from:
-            result["effective_from"] = self.effective_from
-        if self.effective_until:
-            result["effective_until"] = self.effective_until
-        return result
+    @staticmethod
+    def _build_rule(
+        metric: QualityMetric,
+        *,
+        must_be: Any = None,
+        must_not_be: Any = None,
+        must_be_greater_than: Any = None,
+        must_be_greater_or_equal_to: Any = None,
+        must_be_less_than: Any = None,
+        must_be_less_or_equal_to: Any = None,
+        must_be_between: list[Any] | tuple[Any, Any] | None = None,
+        must_not_be_between: list[Any] | tuple[Any, Any] | None = None,
+        unit: QualityUnit | None = None,
+        rule_id: str | None = None,
+        name: str | None = None,
+        arguments: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        """Build a quality rule dictionary from typed parameters."""
+        rule: dict[str, Any] = {"metric": metric.value}
+
+        # Add operator
+        if must_be is not None:
+            rule[QualityOperator.MUST_BE.value] = must_be
+        elif must_not_be is not None:
+            rule[QualityOperator.MUST_NOT_BE.value] = must_not_be
+        elif must_be_greater_than is not None:
+            rule[QualityOperator.MUST_BE_GREATER_THAN.value] = must_be_greater_than
+        elif must_be_greater_or_equal_to is not None:
+            rule[QualityOperator.MUST_BE_GREATER_OR_EQUAL_TO.value] = must_be_greater_or_equal_to
+        elif must_be_less_than is not None:
+            rule[QualityOperator.MUST_BE_LESS_THAN.value] = must_be_less_than
+        elif must_be_less_or_equal_to is not None:
+            rule[QualityOperator.MUST_BE_LESS_OR_EQUAL_TO.value] = must_be_less_or_equal_to
+        elif must_be_between is not None:
+            rule[QualityOperator.MUST_BE_BETWEEN.value] = list(must_be_between)
+        elif must_not_be_between is not None:
+            rule[QualityOperator.MUST_NOT_BE_BETWEEN.value] = list(must_not_be_between)
+
+        # Add optional fields
+        if unit is not None:
+            rule["unit"] = unit.value
+        if rule_id is not None:
+            rule["id"] = rule_id
+        if name is not None:
+            rule["name"] = name
+        if arguments is not None:
+            rule["arguments"] = arguments
+
+        return rule
+
+    @classmethod
+    def null_values(
+        cls,
+        *,
+        must_be: int | None = None,
+        must_not_be: int | None = None,
+        must_be_less_than: int | None = None,
+        must_be_less_or_equal_to: int | None = None,
+        must_be_greater_than: int | None = None,
+        must_be_greater_or_equal_to: int | None = None,
+        must_be_between: list[int] | tuple[int, int] | None = None,
+        unit: QualityUnit = QualityUnit.ROWS,
+        rule_id: str | None = None,
+        name: str | None = None,
+    ) -> dict[str, Any]:
+        """
+        Create a null values quality rule.
+
+        Args:
+            must_be: Exact count of null values allowed
+            must_not_be: Count that null values must not equal
+            must_be_less_than: Maximum null values (exclusive)
+            must_be_less_or_equal_to: Maximum null values (inclusive)
+            must_be_greater_than: Minimum null values (exclusive)
+            must_be_greater_or_equal_to: Minimum null values (inclusive)
+            must_be_between: Range [min, max] for null values
+            unit: ROWS for absolute count, PERCENT for percentage
+            rule_id: Unique identifier for the rule
+            name: Human-readable name
+
+        Returns:
+            ODCS-compliant quality rule dictionary
+        """
+        return cls._build_rule(
+            QualityMetric.NULL_VALUES,
+            must_be=must_be,
+            must_not_be=must_not_be,
+            must_be_less_than=must_be_less_than,
+            must_be_less_or_equal_to=must_be_less_or_equal_to,
+            must_be_greater_than=must_be_greater_than,
+            must_be_greater_or_equal_to=must_be_greater_or_equal_to,
+            must_be_between=must_be_between,
+            unit=unit if unit != QualityUnit.ROWS else None,
+            rule_id=rule_id,
+            name=name,
+        )
+
+    @classmethod
+    def missing_values(
+        cls,
+        *,
+        must_be: int | None = None,
+        must_not_be: int | None = None,
+        must_be_less_than: int | None = None,
+        must_be_less_or_equal_to: int | None = None,
+        must_be_greater_than: int | None = None,
+        must_be_greater_or_equal_to: int | None = None,
+        must_be_between: list[int] | tuple[int, int] | None = None,
+        unit: QualityUnit = QualityUnit.ROWS,
+        missing_values_list: list[Any] | None = None,
+        rule_id: str | None = None,
+        name: str | None = None,
+    ) -> dict[str, Any]:
+        """
+        Create a missing values quality rule.
+
+        Missing values include null, empty strings, 'N/A', etc.
+
+        Args:
+            must_be: Exact count of missing values allowed
+            must_not_be: Count that missing values must not equal
+            must_be_less_than: Maximum missing values (exclusive)
+            must_be_less_or_equal_to: Maximum missing values (inclusive)
+            must_be_greater_than: Minimum missing values (exclusive)
+            must_be_greater_or_equal_to: Minimum missing values (inclusive)
+            must_be_between: Range [min, max] for missing values
+            unit: ROWS for absolute count, PERCENT for percentage
+            missing_values_list: Custom list of values considered missing
+            rule_id: Unique identifier for the rule
+            name: Human-readable name
+
+        Returns:
+            ODCS-compliant quality rule dictionary
+        """
+        arguments = None
+        if missing_values_list is not None:
+            arguments = {"missingValues": missing_values_list}
+
+        return cls._build_rule(
+            QualityMetric.MISSING_VALUES,
+            must_be=must_be,
+            must_not_be=must_not_be,
+            must_be_less_than=must_be_less_than,
+            must_be_less_or_equal_to=must_be_less_or_equal_to,
+            must_be_greater_than=must_be_greater_than,
+            must_be_greater_or_equal_to=must_be_greater_or_equal_to,
+            must_be_between=must_be_between,
+            unit=unit if unit != QualityUnit.ROWS else None,
+            rule_id=rule_id,
+            name=name,
+            arguments=arguments,
+        )
+
+    @classmethod
+    def invalid_values(
+        cls,
+        *,
+        must_be: int | None = None,
+        must_not_be: int | None = None,
+        must_be_less_than: int | None = None,
+        must_be_less_or_equal_to: int | None = None,
+        unit: QualityUnit = QualityUnit.ROWS,
+        valid_values: list[Any] | None = None,
+        pattern: str | None = None,
+        min_value: int | float | None = None,
+        max_value: int | float | None = None,
+        min_length: int | None = None,
+        max_length: int | None = None,
+        rule_id: str | None = None,
+        name: str | None = None,
+    ) -> dict[str, Any]:
+        """
+        Create an invalid values quality rule.
+
+        Args:
+            must_be: Exact count of invalid values allowed (typically 0)
+            must_not_be: Count that invalid values must not equal
+            must_be_less_than: Maximum invalid values (exclusive)
+            must_be_less_or_equal_to: Maximum invalid values (inclusive)
+            unit: ROWS for absolute count, PERCENT for percentage
+            valid_values: List of allowed values (enum constraint)
+            pattern: Regex pattern values must match
+            min_value: Minimum numeric value allowed
+            max_value: Maximum numeric value allowed
+            min_length: Minimum string length
+            max_length: Maximum string length
+            rule_id: Unique identifier for the rule
+            name: Human-readable name
+
+        Returns:
+            ODCS-compliant quality rule dictionary
+        """
+        arguments: dict[str, Any] = {}
+        if valid_values is not None:
+            arguments["validValues"] = valid_values
+        if pattern is not None:
+            arguments["pattern"] = pattern
+        if min_value is not None:
+            arguments["minValue"] = min_value
+        if max_value is not None:
+            arguments["maxValue"] = max_value
+        if min_length is not None:
+            arguments["minLength"] = min_length
+        if max_length is not None:
+            arguments["maxLength"] = max_length
+
+        return cls._build_rule(
+            QualityMetric.INVALID_VALUES,
+            must_be=must_be,
+            must_not_be=must_not_be,
+            must_be_less_than=must_be_less_than,
+            must_be_less_or_equal_to=must_be_less_or_equal_to,
+            unit=unit if unit != QualityUnit.ROWS else None,
+            rule_id=rule_id,
+            name=name,
+            arguments=arguments if arguments else None,
+        )
+
+    @classmethod
+    def duplicate_values(
+        cls,
+        *,
+        must_be: int | None = None,
+        must_not_be: int | None = None,
+        must_be_less_than: int | None = None,
+        must_be_less_or_equal_to: int | None = None,
+        unit: QualityUnit = QualityUnit.ROWS,
+        rule_id: str | None = None,
+        name: str | None = None,
+    ) -> dict[str, Any]:
+        """
+        Create a duplicate values quality rule for a single column.
+
+        For property/field-level duplicate checking.
+
+        Args:
+            must_be: Exact count of duplicates allowed (typically 0)
+            must_not_be: Count that duplicates must not equal
+            must_be_less_than: Maximum duplicates (exclusive)
+            must_be_less_or_equal_to: Maximum duplicates (inclusive)
+            unit: ROWS for absolute count, PERCENT for percentage
+            rule_id: Unique identifier for the rule
+            name: Human-readable name
+
+        Returns:
+            ODCS-compliant quality rule dictionary
+        """
+        return cls._build_rule(
+            QualityMetric.DUPLICATE_VALUES,
+            must_be=must_be,
+            must_not_be=must_not_be,
+            must_be_less_than=must_be_less_than,
+            must_be_less_or_equal_to=must_be_less_or_equal_to,
+            unit=unit if unit != QualityUnit.ROWS else None,
+            rule_id=rule_id,
+            name=name,
+        )
+
+    @classmethod
+    def row_count(
+        cls,
+        *,
+        must_be: int | None = None,
+        must_not_be: int | None = None,
+        must_be_greater_than: int | None = None,
+        must_be_greater_or_equal_to: int | None = None,
+        must_be_less_than: int | None = None,
+        must_be_less_or_equal_to: int | None = None,
+        must_be_between: list[int] | tuple[int, int] | None = None,
+        rule_id: str | None = None,
+        name: str | None = None,
+    ) -> dict[str, Any]:
+        """
+        Create a row count quality rule (schema-level).
+
+        Use this in schema.quality to validate total row count.
+
+        Args:
+            must_be: Exact row count required
+            must_not_be: Row count that must not occur
+            must_be_greater_than: Minimum rows (exclusive)
+            must_be_greater_or_equal_to: Minimum rows (inclusive)
+            must_be_less_than: Maximum rows (exclusive)
+            must_be_less_or_equal_to: Maximum rows (inclusive)
+            must_be_between: Range [min, max] for row count
+            rule_id: Unique identifier for the rule
+            name: Human-readable name
+
+        Returns:
+            ODCS-compliant quality rule dictionary
+        """
+        return cls._build_rule(
+            QualityMetric.ROW_COUNT,
+            must_be=must_be,
+            must_not_be=must_not_be,
+            must_be_greater_than=must_be_greater_than,
+            must_be_greater_or_equal_to=must_be_greater_or_equal_to,
+            must_be_less_than=must_be_less_than,
+            must_be_less_or_equal_to=must_be_less_or_equal_to,
+            must_be_between=must_be_between,
+            rule_id=rule_id,
+            name=name,
+        )
+
+    @classmethod
+    def duplicate_rows(
+        cls,
+        *,
+        must_be: int | None = None,
+        must_not_be: int | None = None,
+        must_be_less_than: int | None = None,
+        must_be_less_or_equal_to: int | None = None,
+        unit: QualityUnit = QualityUnit.ROWS,
+        properties: list[str] | None = None,
+        rule_id: str | None = None,
+        name: str | None = None,
+    ) -> dict[str, Any]:
+        """
+        Create a duplicate rows quality rule (schema-level).
+
+        Use this in schema.quality to validate row uniqueness across columns.
+
+        Args:
+            must_be: Exact count of duplicate rows allowed (typically 0)
+            must_not_be: Count that duplicates must not equal
+            must_be_less_than: Maximum duplicate rows (exclusive)
+            must_be_less_or_equal_to: Maximum duplicate rows (inclusive)
+            unit: ROWS for absolute count, PERCENT for percentage
+            properties: List of column names to check for uniqueness.
+                       If None, checks all columns.
+            rule_id: Unique identifier for the rule
+            name: Human-readable name
+
+        Returns:
+            ODCS-compliant quality rule dictionary
+        """
+        arguments = None
+        if properties is not None:
+            arguments = {"properties": properties}
+
+        return cls._build_rule(
+            QualityMetric.DUPLICATE_ROWS,
+            must_be=must_be,
+            must_not_be=must_not_be,
+            must_be_less_than=must_be_less_than,
+            must_be_less_or_equal_to=must_be_less_or_equal_to,
+            unit=unit if unit != QualityUnit.ROWS else None,
+            rule_id=rule_id,
+            name=name,
+            arguments=arguments,
+        )

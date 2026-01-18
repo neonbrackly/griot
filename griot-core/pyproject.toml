@@ -1,6 +1,6 @@
 [project]
 name = "griot-core"
-version = "0.1.0"
+version = "0.8.0"
 description = "Core library for Griot data contracts - schema validation, mock generation, and AI manifests"
 readme = "README.md"
 license = { text = "Apache-2.0" }
@@ -8,7 +8,7 @@ requires-python = ">=3.10"
 authors = [
     { name = "Griot Team" }
 ]
-keywords = ["data-contracts", "validation", "schema", "data-quality"]
+keywords = ["data-contracts", "validation", "schema", "data-quality", "odcs"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
@@ -21,11 +21,56 @@ classifiers = [
     "Typing :: Typed",
 ]
 
+# Core dependencies - minimal, just YAML parsing
 dependencies = ["pyyaml>=6.0"]
 
 [project.optional-dependencies]
-pandas = ["pandas>=1.5.0"]
-all = ["griot-core[pandas]"]
+# =============================================================================
+# DataFrame-specific extras (composable)
+# Install with: pip install griot-core[pandas] or griot-core[pandas,polars]
+# =============================================================================
+
+# Pandas DataFrame support with validation
+pandas = [
+    "pandas>=1.5.0",
+    "pandera[io]>=0.18.0",
+]
+
+# Polars DataFrame support with validation
+polars = [
+    "polars>=0.19.0",
+    "pandera[polars]>=0.18.0",
+]
+
+# PySpark DataFrame support with validation
+spark = [
+    "pyspark>=3.3.0",
+    "pandera[pyspark]>=0.18.0",
+]
+
+# Dask DataFrame support with validation
+dask = [
+    "dask[dataframe]>=2023.1.0",
+    "pandera[dask]>=0.18.0",
+]
+
+# =============================================================================
+# Convenience bundles
+# =============================================================================
+
+# All DataFrame types
+all = [
+    "griot-core[pandas,polars,spark,dask]",
+]
+
+# Development dependencies
+dev = [
+    "griot-core[pandas]",
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "ruff>=0.1.0",
+    "mypy>=1.0.0",
+]
 
 [build-system]
 requires = ["hatchling"]
@@ -38,3 +83,15 @@ packages = ["src/griot_core"]
 include = [
     "/src",
 ]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W"]
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_ignores = true

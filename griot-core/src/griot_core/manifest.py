@@ -13,40 +13,76 @@ from typing import TYPE_CHECKING, Any
 from griot_core.types import DataType
 
 if TYPE_CHECKING:
-    from griot_core.models import GriotModel
+    from griot_core.schema import Schema
 
 __all__ = ["export_manifest"]
 
 
+def _get_schema_fields(schema: Any) -> dict[str, Any]:
+    """Get fields from Schema class or instance."""
+    # Check if it's a class with _schema_fields (class-based schema)
+    if hasattr(schema, "_schema_fields") and schema._schema_fields:
+        return schema._schema_fields
+    # Check if it's an instance with a fields property
+    if hasattr(schema, "fields"):
+        fields_attr = getattr(schema, "fields", None)
+        if isinstance(fields_attr, dict):
+            return fields_attr
+    raise TypeError(f"Expected Schema, got {type(schema).__name__}")
+
+
+def _get_primary_key(schema: Any) -> str | None:
+    """Get primary key from Schema class or instance."""
+    if hasattr(schema, "_schema_primary_key"):
+        return schema._schema_primary_key
+    return None
+
+
 def export_manifest(
-    model: type[GriotModel],
+    schema: type[Schema] | Schema,
     format: str = "json_ld",
 ) -> str:
     """
-    Export contract metadata for AI/LLM consumption.
+    Export schema metadata for AI/LLM consumption.
 
     Args:
-        model: The GriotModel class to export.
+        schema: The Schema class or instance to export.
         format: Output format - 'json_ld', 'markdown', or 'llm_context'.
 
     Returns:
         String representation in the requested format.
     """
     if format == "json_ld":
-        return _export_json_ld(model)
+        return _export_json_ld(schema)
     elif format == "markdown":
-        return _export_markdown(model)
+        return _export_markdown(schema)
     elif format == "llm_context":
-        return _export_llm_context(model)
+        return _export_llm_context(schema)
     else:
         raise ValueError(f"Unknown format: {format}. Use 'json_ld', 'markdown', or 'llm_context'")
 
 
-def _export_json_ld(model: type[GriotModel]) -> str:
+def _get_schema_name(schema: Any) -> str:
+    """Get name from Schema class or instance."""
+    # For class-based schemas, check _name class variable first
+    if hasattr(schema, "_name") and schema._name:
+        return schema._name
+    # For classes, use __name__
+    if isinstance(schema, type):
+        return schema.__name__
+    # For instances, check instance name attribute
+    if hasattr(schema, "name") and isinstance(getattr(schema, "name"), str) and schema.name:
+        return schema.name
+    # Fall back to class name
+    return schema.__class__.__name__ if hasattr(schema, "__class__") else str(schema)
+
+
+def _export_json_ld(schema: type[Schema] | Schema) -> str:
     """Export as JSON-LD (Linked Data format)."""
     properties: dict[str, Any] = {}
+    fields = _get_schema_fields(schema)
 
-    for field_name, field_info in model._griot_fields.items():
+    for field_name, field_info in fields.items():
         prop: dict[str, Any] = {
             "@type": _datatype_to_schema_org(field_info.type),
             "description": field_info.description,
@@ -54,77 +90,71 @@ def _export_json_ld(model: type[GriotModel]) -> str:
 
         if field_info.nullable:
             prop["nullable"] = True
-        if field_info.enum:
-            prop["enum"] = field_info.enum
-        if field_info.unit:
-            prop["unitCode"] = field_info.unit
-        if field_info.format:
-            prop["format"] = field_info.format.value
+        if field_info.physical_type:
+            prop["physicalType"] = field_info.physical_type
 
         properties[field_name] = prop
 
+    name = _get_schema_name(schema)
     json_ld = {
         "@context": {
             "@vocab": "https://schema.org/",
             "griot": "https://griot.dev/schema/",
         },
         "@type": "DataContract",
-        "@id": f"griot:{model.__name__}",
-        "name": model.__name__,
-        "description": model.__doc__ or "",
+        "@id": f"griot:{name}",
+        "name": name,
+        "description": getattr(schema, "__doc__", "") or "",
         "properties": properties,
     }
 
-    if model._griot_primary_key:
-        json_ld["identifier"] = model._griot_primary_key
+    primary_key = _get_primary_key(schema)
+    if primary_key:
+        json_ld["identifier"] = primary_key
 
     return json.dumps(json_ld, indent=2, default=str)
 
 
-def _export_markdown(model: type[GriotModel]) -> str:
+def _export_markdown(schema: type[Schema] | Schema) -> str:
     """Export as Markdown documentation."""
+    name = _get_schema_name(schema)
+    fields = _get_schema_fields(schema)
+
     lines = [
-        f"# {model.__name__}",
+        f"# {name}",
         "",
     ]
 
-    if model.__doc__:
-        lines.append(model.__doc__.strip())
+    doc = getattr(schema, "__doc__", None)
+    if doc:
+        lines.append(doc.strip())
         lines.append("")
 
     lines.append("## Fields")
     lines.append("")
-    lines.append("| Field | Type | Description | Constraints |")
-    lines.append("|-------|------|-------------|-------------|")
+    lines.append("| Field | Type | Description | Properties |")
+    lines.append("|-------|------|-------------|------------|")
 
-    for field_name, field_info in model._griot_fields.items():
-        type_str = field_info.type.value
+    for field_name, field_info in fields.items():
+        type_str = field_info.logical_type
         if field_info.nullable:
             type_str += "?"
 
-        constraints: list[str] = []
+        props: list[str] = []
         if field_info.primary_key:
-            constraints.append("PK")
+            props.append("PK")
         if field_info.unique:
-            constraints.append("unique")
-        if field_info.format:
-            constraints.append(f"format:{field_info.format.value}")
-        if field_info.min_length is not None:
-            constraints.append(f"min_len:{field_info.min_length}")
-        if field_info.max_length is not None:
-            constraints.append(f"max_len:{field_info.max_length}")
-        if field_info.ge is not None:
-            constraints.append(f">={field_info.ge}")
-        if field_info.le is not None:
-            constraints.append(f"<={field_info.le}")
-        if field_info.pattern:
-            constraints.append(f"pattern")
-        if field_info.enum:
-            constraints.append(f"enum({len(field_info.enum)})")
+            props.append("unique")
+        if field_info.required:
+            props.append("required")
+        if field_info.partitioned:
+            props.append("partitioned")
+        if field_info.critical_data_element:
+            props.append("CDE")
 
-        constraint_str = ", ".join(constraints) if constraints else "-"
+        props_str = ", ".join(props) if props else "-"
         lines.append(
-            f"| `{field_name}` | {type_str} | {field_info.description} | {constraint_str} |"
+            f"| `{field_name}` | {type_str} | {field_info.description} | {props_str} |"
         )
 
     lines.append("")
@@ -133,54 +163,55 @@ def _export_markdown(model: type[GriotModel]) -> str:
     lines.append("## Field Details")
     lines.append("")
 
-    for field_name, field_info in model._griot_fields.items():
+    for field_name, field_info in fields.items():
         lines.append(f"### {field_name}")
         lines.append("")
-        lines.append(f"**Type:** `{field_info.type.value}`")
+        lines.append(f"**Logical Type:** `{field_info.logical_type}`")
+        if field_info.physical_type:
+            lines.append(f"**Physical Type:** `{field_info.physical_type}`")
         lines.append("")
         lines.append(f"**Description:** {field_info.description}")
         lines.append("")
 
-        if field_info.enum:
-            lines.append(f"**Allowed values:** {', '.join(str(v) for v in field_info.enum)}")
+        if field_info.tags:
+            lines.append(f"**Tags:** {', '.join(field_info.tags)}")
             lines.append("")
 
-        if field_info.pattern:
-            lines.append(f"**Pattern:** `{field_info.pattern}`")
-            lines.append("")
-
-        if field_info.unit:
-            lines.append(f"**Unit:** {field_info.unit}")
-            lines.append("")
-
-        if field_info.glossary_term:
-            lines.append(f"**Glossary term:** {field_info.glossary_term}")
+        if field_info.relationships:
+            lines.append("**Relationships:**")
+            for rel in field_info.relationships:
+                lines.append(f"- {rel.get('type', 'unknown')}: {rel.get('to', '')}")
             lines.append("")
 
     return "\n".join(lines)
 
 
-def _export_llm_context(model: type[GriotModel]) -> str:
+def _export_llm_context(schema: type[Schema] | Schema) -> str:
     """Export as optimized context for LLM consumption."""
+    name = _get_schema_name(schema)
+    fields = _get_schema_fields(schema)
+    primary_key = _get_primary_key(schema)
+
     lines = [
-        f"DATA CONTRACT: {model.__name__}",
+        f"DATA CONTRACT: {name}",
         "",
     ]
 
-    if model.__doc__:
-        lines.append(f"PURPOSE: {model.__doc__.strip()}")
+    doc = getattr(schema, "__doc__", None)
+    if doc:
+        lines.append(f"PURPOSE: {doc.strip()}")
         lines.append("")
 
-    if model._griot_primary_key:
-        lines.append(f"PRIMARY KEY: {model._griot_primary_key}")
+    if primary_key:
+        lines.append(f"PRIMARY KEY: {primary_key}")
         lines.append("")
 
     lines.append("FIELDS:")
     lines.append("")
 
-    for field_name, field_info in model._griot_fields.items():
+    for field_name, field_info in fields.items():
         # Build a concise field description
-        parts = [f"- {field_name} ({field_info.type.value})"]
+        parts = [f"- {field_name} ({field_info.logical_type})"]
 
         if field_info.nullable:
             parts.append(" [nullable]")
@@ -188,34 +219,27 @@ def _export_llm_context(model: type[GriotModel]) -> str:
             parts.append(" [PK]")
         if field_info.unique:
             parts.append(" [unique]")
+        if field_info.required:
+            parts.append(" [required]")
 
         lines.append("".join(parts))
         lines.append(f"  Description: {field_info.description}")
 
-        # Add constraints
-        constraints: list[str] = []
-        if field_info.format:
-            constraints.append(f"format={field_info.format.value}")
-        if field_info.enum:
-            enum_str = str(field_info.enum[:3])
-            if len(field_info.enum) > 3:
-                enum_str = enum_str[:-1] + ", ...]"
-            constraints.append(f"values={enum_str}")
-        if field_info.min_length is not None:
-            constraints.append(f"min_len={field_info.min_length}")
-        if field_info.max_length is not None:
-            constraints.append(f"max_len={field_info.max_length}")
-        if field_info.ge is not None:
-            constraints.append(f"min={field_info.ge}")
-        if field_info.le is not None:
-            constraints.append(f"max={field_info.le}")
-        if field_info.pattern:
-            constraints.append(f"pattern={field_info.pattern}")
-        if field_info.unit:
-            constraints.append(f"unit={field_info.unit}")
-
-        if constraints:
-            lines.append(f"  Constraints: {', '.join(constraints)}")
+        # Add quality rules from ODCS specification
+        quality_rules = field_info.get_dq_checks()
+        if quality_rules:
+            rule_strs = []
+            for rule in quality_rules:
+                metric = rule.get("metric", "unknown")
+                # Extract operator (mustBe, mustNotBe, etc.)
+                op_str = ""
+                for op_name in ["mustBe", "mustNotBe", "mustBeGreaterThan",
+                                "mustBeLessThan", "mustBeBetween"]:
+                    if op_name in rule:
+                        op_str = f" {op_name}={rule[op_name]}"
+                        break
+                rule_strs.append(f"{metric}{op_str}")
+            lines.append(f"  Quality Rules: {', '.join(rule_strs)}")
 
         lines.append("")
 
@@ -223,8 +247,7 @@ def _export_llm_context(model: type[GriotModel]) -> str:
     lines.append("VALIDATION RULES:")
     lines.append("- All non-nullable fields are required")
     lines.append("- Type constraints must be strictly followed")
-    lines.append("- Enum fields only accept listed values")
-    lines.append("- Pattern fields must match the regex")
+    lines.append("- Check field-level quality rules for additional constraints")
     lines.append("")
 
     return "\n".join(lines)
