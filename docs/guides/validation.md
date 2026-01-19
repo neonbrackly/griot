@@ -87,7 +87,7 @@ for field_name, stats in result.field_stats.items():
 Validate a single row:
 
 ```python
-from griot_core.validation import validate_single_row
+from griot_validate.validation import validate_single_row
 
 row = {"sku": "PROD-001", "price": -10}
 errors = validate_single_row(Product, row)

@@ -36,25 +36,25 @@ Install with your orchestrator of choice:
 
 :::{tab-item} Airflow
 ```bash
-pip install griot-enforce[airflow]
+pip install griot-validate[airflow]
 ```
 :::
 
 :::{tab-item} Dagster
 ```bash
-pip install griot-enforce[dagster]
+pip install griot-validate[dagster]
 ```
 :::
 
 :::{tab-item} Prefect
 ```bash
-pip install griot-enforce[prefect]
+pip install griot-validate[prefect]
 ```
 :::
 
 :::{tab-item} All Orchestrators
 ```bash
-pip install griot-enforce[all]
+pip install griot-validate[all]
 ```
 :::
 

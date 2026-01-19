@@ -557,10 +557,7 @@ class ContractBase(BaseModel):
 
 
 class ContractCreate(ContractBase):
-    """Schema for creating a new contract (ODCS-aware)."""
-
-    # Legacy field list (for backwards compatibility)
-    fields: list[FieldDefinition] | None = None
+    """Schema for creating a new contract using ODCS format."""
 
     # ODCS sections
     description_section: Description | None = Field(default=None, alias="description_odcs")
@@ -580,14 +577,11 @@ class ContractCreate(ContractBase):
 
 
 class ContractUpdate(BaseModel):
-    """Schema for updating a contract (creates new version)."""
+    """Schema for updating a contract (creates new version) using ODCS format."""
 
     # Basic updates
     name: str | None = None
     description: str | None = None
-
-    # Legacy field list (for backwards compatibility)
-    fields: list[FieldDefinition] | None = None
 
     # ODCS section updates
     description_section: Description | None = Field(default=None, alias="description_odcs")
@@ -611,14 +605,11 @@ class ContractUpdate(BaseModel):
 
 
 class Contract(ContractBase):
-    """Full contract response schema with ODCS support."""
+    """Full contract response schema using ODCS format."""
 
     # Version info
     version: str = Field(..., examples=["1.2.0"])
     status: ContractStatusType = "draft"
-
-    # Legacy field list (for backwards compatibility)
-    fields: list[FieldDefinition] = Field(default_factory=list)
 
     # ODCS sections
     description_section: Description | None = Field(default=None, alias="description_odcs")
@@ -788,7 +779,7 @@ class ValidationError(BaseModel):
 
 
 class ValidationReport(BaseModel):
-    """Report of a validation run (from griot-enforce)."""
+    """Report of a validation run (from griot-validate)."""
 
     contract_id: str
     contract_version: str | None = None

@@ -36,7 +36,7 @@ async def report_validation(
 ) -> ValidationRecord:
     """Report a validation result.
 
-    Called by griot-enforce to report runtime validation results.
+    Called by griot-validate to report runtime validation results.
     The validation is recorded in history for auditing and analytics.
     """
     # Verify contract exists

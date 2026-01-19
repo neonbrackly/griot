@@ -49,8 +49,7 @@ class TestValidationError:
 
     def test_validation_error_with_field_errors(self) -> None:
         """Test ValidationError with field-level errors."""
-        from griot_core.validation import FieldValidationError
-        from griot_core.types import Severity
+        from griot_validate.validation import FieldValidationError
 
         field_errors = [
             FieldValidationError(
@@ -75,7 +74,7 @@ class TestValidationError:
 
     def test_validation_error_str_with_count(self) -> None:
         """Test ValidationError string includes error count."""
-        from griot_core.validation import FieldValidationError
+        from griot_validate.validation import FieldValidationError
 
         field_errors = [
             FieldValidationError(

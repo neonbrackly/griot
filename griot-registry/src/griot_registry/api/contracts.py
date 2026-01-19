@@ -20,7 +20,6 @@ from griot_registry.schemas import (
     ContractList,
     ContractUpdate,
     ErrorResponse,
-    FieldDefinition,
     VersionList,
 )
 from griot_registry.storage.base import StorageBackend
@@ -31,55 +30,31 @@ router = APIRouter()
 # =============================================================================
 # Breaking Change Detection Helpers (T-304, T-371)
 # =============================================================================
-def _contract_to_dict(contract: Contract) -> dict[str, Any]:
-    """Convert a registry Contract to a dictionary for griot-core."""
-    return {
-        "id": contract.id,
-        "name": contract.name,
-        "description": contract.description,
-        "version": contract.version,
-        "status": contract.status,
-        "fields": [
-            {
-                "name": f.name,
-                "type": f.type,
-                "description": f.description,
-                "nullable": f.nullable,
-                "primary_key": f.primary_key,
-                "unique": f.unique,
-                "constraints": f.constraints.model_dump(exclude_none=True) if f.constraints else {},
-                "metadata": f.metadata.model_dump(exclude_none=True) if f.metadata else {},
-            }
-            for f in contract.fields
-        ],
-    }
+def _extract_properties_from_schema(schema_list: list | None) -> dict[str, dict[str, Any]]:
+    """Extract all properties from ODCS schema into a flat dictionary."""
+    properties: dict[str, dict[str, Any]] = {}
+    if not schema_list:
+        return properties
 
+    for schema in schema_list:
+        schema_name = schema.name if hasattr(schema, 'name') else schema.get('name', '')
+        schema_props = schema.properties if hasattr(schema, 'properties') else schema.get('properties', [])
 
-def _proposed_update_to_dict(
-    current: Contract,
-    update: ContractUpdate,
-) -> dict[str, Any]:
-    """Create a dictionary representing the proposed contract state after update."""
-    return {
-        "id": current.id,
-        "name": update.name if update.name else current.name,
-        "description": update.description if update.description else current.description,
-        "version": "proposed",  # Temporary version for comparison
-        "status": current.status,
-        "fields": [
-            {
-                "name": f.name,
-                "type": f.type,
-                "description": f.description,
-                "nullable": f.nullable,
-                "primary_key": f.primary_key,
-                "unique": f.unique,
-                "constraints": f.constraints.model_dump(exclude_none=True) if f.constraints else {},
-                "metadata": f.metadata.model_dump(exclude_none=True) if f.metadata else {},
+        if not schema_props:
+            continue
+
+        for prop in schema_props:
+            prop_name = prop.name if hasattr(prop, 'name') else prop.get('name', '')
+            full_name = f"{schema_name}.{prop_name}"
+            properties[full_name] = {
+                "name": prop_name,
+                "schema": schema_name,
+                "logicalType": prop.logicalType if hasattr(prop, 'logicalType') else prop.get('logicalType', 'string'),
+                "nullable": prop.nullable if hasattr(prop, 'nullable') else prop.get('nullable', True),
+                "primary_key": prop.primary_key if hasattr(prop, 'primary_key') else prop.get('primary_key', False),
             }
-            for f in (update.fields if update.fields else current.fields)
-        ],
-    }
+
+    return properties
 
 
 def detect_breaking_changes_for_update(
@@ -89,8 +64,11 @@ def detect_breaking_changes_for_update(
     """
     Detect breaking changes between current contract and proposed update.
 
-    Uses griot-core's detect_breaking_changes() function (T-301) to identify
-    any changes that could break existing data consumers.
+    Uses ODCS schema format to detect breaking changes in:
+    - Removed properties
+    - Type changes
+    - Nullable to required changes
+    - Removed schemas
 
     Args:
         current: The current contract version.
@@ -99,100 +77,79 @@ def detect_breaking_changes_for_update(
     Returns:
         List of BreakingChangeInfo objects describing breaking changes.
     """
-    try:
-        from griot_core.contract import detect_breaking_changes, load_contract_from_dict
-
-        # Convert to griot-core models
-        current_dict = _contract_to_dict(current)
-        proposed_dict = _proposed_update_to_dict(current, update)
-
-        current_model = load_contract_from_dict(current_dict)
-        proposed_model = load_contract_from_dict(proposed_dict)
-
-        # Detect breaking changes using griot-core
-        breaking_changes = detect_breaking_changes(current_model, proposed_model)
-
-        # Convert to API response format
-        return [
-            BreakingChangeInfo(
-                change_type=bc.change_type.value,
-                field=bc.field,
-                description=bc.description,
-                from_value=bc.from_value,
-                to_value=bc.to_value,
-                migration_hint=bc.migration_hint,
-            )
-            for bc in breaking_changes
-        ]
-    except ImportError:
-        # griot-core not available, fall back to basic detection
-        return _fallback_breaking_change_detection(current, update)
-
-
-def _fallback_breaking_change_detection(
-    current: Contract,
-    update: ContractUpdate,
-) -> list[BreakingChangeInfo]:
-    """
-    Fallback breaking change detection when griot-core is not available.
-
-    Performs basic detection of:
-    - Removed fields
-    - Type changes
-    - Nullable to required changes
-    """
-    if not update.fields:
+    # If no schema update, no breaking changes from schema perspective
+    if not update.schema:
         return []
 
     breaking_changes: list[BreakingChangeInfo] = []
-    current_fields = {f.name: f for f in current.fields}
-    new_fields = {f.name: f for f in update.fields}
 
-    # Check for removed fields
-    for name in current_fields:
-        if name not in new_fields:
+    # Extract properties from current and proposed schemas
+    current_props = _extract_properties_from_schema(current.schema)
+    new_props = _extract_properties_from_schema(update.schema)
+
+    # Check for removed properties
+    for prop_name in current_props:
+        if prop_name not in new_props:
             breaking_changes.append(
                 BreakingChangeInfo(
                     change_type="field_removed",
-                    field=name,
-                    description=f"Field '{name}' was removed",
-                    from_value=current_fields[name].type,
+                    field=prop_name,
+                    description=f"Property '{prop_name}' was removed",
+                    from_value=current_props[prop_name].get("logicalType"),
                     to_value=None,
-                    migration_hint="Add the field back or migrate consumers",
+                    migration_hint="Add the property back or migrate consumers",
                 )
             )
 
     # Check for type changes and nullable changes
-    for name in current_fields:
-        if name not in new_fields:
+    for prop_name in current_props:
+        if prop_name not in new_props:
             continue
 
-        old_f = current_fields[name]
-        new_f = new_fields[name]
+        old_p = current_props[prop_name]
+        new_p = new_props[prop_name]
 
-        if old_f.type != new_f.type:
+        # Type change
+        if old_p.get("logicalType") != new_p.get("logicalType"):
             breaking_changes.append(
                 BreakingChangeInfo(
                     change_type="type_changed_incompatible",
-                    field=name,
-                    description=f"Type changed from '{old_f.type}' to '{new_f.type}'",
-                    from_value=old_f.type,
-                    to_value=new_f.type,
-                    migration_hint="Use a compatible type or create a new field",
+                    field=prop_name,
+                    description=f"Type changed from '{old_p.get('logicalType')}' to '{new_p.get('logicalType')}'",
+                    from_value=old_p.get("logicalType"),
+                    to_value=new_p.get("logicalType"),
+                    migration_hint="Use a compatible type or create a new property",
                 )
             )
 
-        if old_f.nullable and not new_f.nullable:
+        # Nullable to required change
+        if old_p.get("nullable") and not new_p.get("nullable"):
             breaking_changes.append(
                 BreakingChangeInfo(
                     change_type="nullable_to_required",
-                    field=name,
-                    description=f"Field '{name}' changed from nullable to required",
+                    field=prop_name,
+                    description=f"Property '{prop_name}' changed from nullable to required",
                     from_value=True,
                     to_value=False,
                     migration_hint="Keep nullable or ensure all data has values",
                 )
             )
+
+    # Check for removed schemas
+    current_schemas = {s.name if hasattr(s, 'name') else s.get('name', '') for s in (current.schema or [])}
+    new_schemas = {s.name if hasattr(s, 'name') else s.get('name', '') for s in (update.schema or [])}
+
+    for schema_name in current_schemas - new_schemas:
+        breaking_changes.append(
+            BreakingChangeInfo(
+                change_type="schema_removed",
+                field=schema_name,
+                description=f"Schema '{schema_name}' was removed",
+                from_value=schema_name,
+                to_value=None,
+                migration_hint="Add the schema back or migrate consumers",
+            )
+        )
 
     return breaking_changes
 
@@ -449,6 +406,76 @@ async def update_contract(
         is_breaking=is_breaking_update,
         breaking_changes=[bc.model_dump() for bc in breaking_changes] if is_breaking_update else None,
     )
+
+
+@router.patch(
+    "/contracts/{contract_id}/status",
+    response_model=Contract,
+    operation_id="updateContractStatus",
+    responses={
+        400: {"model": ErrorResponse, "description": "Invalid status transition"},
+        404: {"model": ErrorResponse},
+    },
+)
+async def update_contract_status(
+    storage: StorageDep,
+    contract_id: str,
+    status_update: dict,
+) -> Contract:
+    """Update the status of a contract.
+
+    This endpoint is used by the approval workflow to transition contract status.
+
+    Valid status transitions:
+    - draft -> active (requires approval)
+    - draft -> deprecated
+    - active -> deprecated
+    - deprecated -> retired
+
+    Args:
+        contract_id: The contract ID
+        status_update: Object containing the new status {"status": "active"}
+
+    Returns:
+        The updated contract with new status
+    """
+    contract = await storage.get_contract(contract_id)
+    if contract is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={"code": "NOT_FOUND", "message": f"Contract '{contract_id}' not found"},
+        )
+
+    new_status = status_update.get("status")
+    if new_status is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={"code": "BAD_REQUEST", "message": "Missing 'status' field"},
+        )
+
+    # Validate status transition
+    valid_transitions = {
+        "draft": ["active", "deprecated"],
+        "active": ["deprecated"],
+        "deprecated": ["retired"],
+        "retired": [],
+    }
+
+    current_status = contract.status
+    allowed = valid_transitions.get(current_status, [])
+
+    if new_status not in allowed:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={
+                "code": "INVALID_STATUS_TRANSITION",
+                "message": f"Cannot transition from '{current_status}' to '{new_status}'",
+                "allowed_transitions": allowed,
+            },
+        )
+
+    # Update the status
+    return await storage.update_contract_status(contract_id, new_status)
 
 
 @router.delete(

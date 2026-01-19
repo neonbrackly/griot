@@ -434,7 +434,7 @@ class Contract:
 
     Attributes:
         api_version: ODCS version (e.g., "v1.0.0")
-        kind: Contract type (e.g., "DataContract")
+        _kind: Contract type (e.g., "DataContract")
         id: Unique contract identifier
         name: Human-readable contract name
         version: Contract version
@@ -459,9 +459,9 @@ class Contract:
     def __init__(
         self,
         *,
-        api_version: str = "v1.0.0",
-        kind: str = "DataContract",
-        id: str | None = None,
+        id: str,
+        schemas: list[Schema],
+        api_version: str = "v3.1.0.",
         name: str = "",
         version: str = "1.0.0",
         status: ContractStatus | str = ContractStatus.DRAFT,
@@ -475,10 +475,9 @@ class Contract:
         support: list[ContractSupport | dict[str, Any]] | None = None,
         authoritative_definitions: list[dict[str, Any]] | None = None,
         custom_properties: dict[str, Any] | None = None,
-        schemas: list[Schema] | None = None,
     ) -> None:
         self.api_version = api_version
-        self.kind = kind
+        self._kind = "DataContract"
         self.id = id
         self.name = name
         self.version = version
@@ -610,7 +609,7 @@ class Contract:
         """Convert to ODCS dictionary format (camelCase keys)."""
         result: dict[str, Any] = {
             "apiVersion": self.api_version,
-            "kind": self.kind,
+            "kind": self._kind,
             "version": self.version,
             "status": self.status.value,
         }
@@ -656,6 +655,9 @@ class Contract:
             allow_unicode=True,
         )
 
+    def preview(self):
+        """Print a brief preview of the contract."""
+        return print(self.to_yaml())
     # -------------------------------------------------------------------------
     # Class Methods for Loading
     # -------------------------------------------------------------------------

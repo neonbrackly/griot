@@ -126,7 +126,9 @@ export default function DashboardPage() {
         />
 
         {/* Health Score Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div className="mb-8">
+          <h2 className="text-lg font-semibold text-text-primary mb-4">Health Scores</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <HealthScoreCard
             title="Compliance Health"
             icon={Shield}
@@ -154,19 +156,23 @@ export default function DashboardPage() {
             color="purple"
             isLoading={metricsLoading}
           />
+          </div>
         </div>
 
-        {/* Timeline Chart */}
-        <div className="mb-6">
+        {/* Contract Runs */}
+        <div className="mb-8">
+          <h2 className="text-lg font-semibold text-text-primary mb-4">Contract Runs</h2>
           <TimelineChart data={timeline || []} isLoading={timelineLoading} period="Past 30 days" />
         </div>
 
-        {/* Issues and Recommendations */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Issues and Recommendations Section */}
+        <div className="mb-6">
+          <h2 className="text-lg font-semibold text-text-primary mb-4">Issues & Recommendations</h2>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Active Issues */}
           <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
+            <CardHeader className="pb-4">
+              <div className="flex items-center justify-center gap-2">
                 <CardTitle className="flex items-center gap-2">
                   <AlertTriangle className="w-5 h-5 text-error-500" />
                   Active Issues
@@ -174,7 +180,7 @@ export default function DashboardPage() {
                 <Badge variant="error">{metrics?.activeIssues || 0}</Badge>
               </div>
             </CardHeader>
-            <CardContent className="space-y-3">
+            <CardContent className="space-y-4">
               {issuesLoading ? (
                 <>
                   <Skeleton className="h-16 w-full" />
@@ -187,7 +193,7 @@ export default function DashboardPage() {
                     <Link
                       key={issue.id}
                       href={`/studio/issues/${issue.id}`}
-                      className="block p-3 rounded-lg border border-border-default hover:bg-bg-hover transition-colors"
+                      className="block p-4 rounded-lg border border-border-default hover:bg-bg-hover transition-colors"
                     >
                       <div className="flex items-center justify-between">
                         <div>
@@ -200,9 +206,14 @@ export default function DashboardPage() {
                       </div>
                     </Link>
                   ))}
-                  <Button variant="ghost" className="w-full" asChild>
-                    <Link href="/studio/issues">View All Issues</Link>
-                  </Button>
+                  <div className="pt-2 border-t border-border-default mt-2">
+                    <Button variant="secondary" className="w-full" asChild>
+                      <Link href="/studio/issues">
+                        View All Issues
+                        <span className="ml-2">→</span>
+                      </Link>
+                    </Button>
+                  </div>
                 </>
               ) : (
                 <div className="text-center py-8 text-text-tertiary">
@@ -215,13 +226,15 @@ export default function DashboardPage() {
 
           {/* Recommendations */}
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Lightbulb className="w-5 h-5 text-primary-500" />
-                Recommendations
-              </CardTitle>
+            <CardHeader className="pb-4">
+              <div className="flex items-center justify-center">
+                <CardTitle className="flex items-center gap-2">
+                  <Lightbulb className="w-5 h-5 text-primary-500" />
+                  Recommendations
+                </CardTitle>
+              </div>
             </CardHeader>
-            <CardContent className="space-y-3">
+            <CardContent className="space-y-4">
               {recommendationsLoading ? (
                 <>
                   <Skeleton className="h-16 w-full" />
@@ -233,7 +246,7 @@ export default function DashboardPage() {
                   {recommendations.map((rec) => (
                     <div
                       key={rec.id}
-                      className="p-3 rounded-lg border border-border-default hover:bg-bg-hover transition-colors"
+                      className="p-4 rounded-lg border border-border-default hover:bg-bg-hover transition-colors"
                     >
                       <div className="flex items-start gap-3">
                         <div
@@ -264,6 +277,7 @@ export default function DashboardPage() {
               )}
             </CardContent>
           </Card>
+          </div>
         </div>
       </PageContainer>
     </PageShell>

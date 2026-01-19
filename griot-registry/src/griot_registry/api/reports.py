@@ -103,14 +103,21 @@ def _contract_to_report_data(contract) -> dict[str, Any]:
     """Convert contract to data suitable for report generation.
 
     This creates a simplified representation of the contract
-    for report generation purposes.
+    for report generation purposes, using ODCS schema format.
     """
     from datetime import datetime, timezone
 
+    # Extract properties from ODCS schema structure
     fields_data = []
-    for f in contract.fields:
-        field_dict = f.model_dump() if hasattr(f, 'model_dump') else dict(f)
-        fields_data.append(field_dict)
+    for schema_def in contract.schema or []:
+        for prop in schema_def.properties or []:
+            prop_dict = prop.model_dump() if hasattr(prop, 'model_dump') else dict(prop)
+            # Add schema name for context
+            prop_dict["schema_name"] = schema_def.name
+            # Map logical_type to type for backwards compatibility in reports
+            if "logical_type" in prop_dict and "type" not in prop_dict:
+                prop_dict["type"] = prop_dict.get("logical_type", "string")
+            fields_data.append(prop_dict)
 
     return {
         "contract_id": contract.id,
@@ -118,7 +125,7 @@ def _contract_to_report_data(contract) -> dict[str, Any]:
         "contract_version": contract.version,
         "description": contract.description,
         "owner": contract.owner,
-        "fields": fields_data,
+        "fields": fields_data,  # Kept as "fields" for report compatibility
         "generated_at": datetime.now(timezone.utc).isoformat(),
     }
 

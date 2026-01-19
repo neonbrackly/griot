@@ -11,7 +11,7 @@ import pytest
 
 from griot_core.models import Field, GriotModel
 from griot_core.types import FieldFormat, Severity
-from griot_core.validation import (
+from griot_validate.validation import (
     FieldStats,
     FieldValidationError,
     ValidationResult,

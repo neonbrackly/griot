@@ -277,10 +277,10 @@ export default function IssuesPage() {
 
   return (
     <PageContainer>
-      <Breadcrumbs items={breadcrumbs} />
       <PageHeader
         title="Issues"
         description="All issues across your contracts"
+        breadcrumbs={<Breadcrumbs items={breadcrumbs} />}
         actions={
           <Button variant="secondary" onClick={handleExportCSV}>
             <Download className="w-4 h-4 mr-2" />
@@ -289,26 +289,30 @@ export default function IssuesPage() {
         }
       />
 
-      <Tabs
-        value={severity}
-        onValueChange={setSeverity}
-      >
-        <TabsList>
-          <TabsTrigger value="all">All ({severityCounts.all})</TabsTrigger>
-          <TabsTrigger value="critical" className="data-[state=active]:text-red-600">
-            Critical ({severityCounts.critical})
-          </TabsTrigger>
-          <TabsTrigger value="warning" className="data-[state=active]:text-yellow-600">
-            Warning ({severityCounts.warning})
-          </TabsTrigger>
-          <TabsTrigger value="info">Info ({severityCounts.info})</TabsTrigger>
-          <TabsTrigger value="resolved" className="data-[state=active]:text-green-600">
-            Resolved ({severityCounts.resolved})
-          </TabsTrigger>
-        </TabsList>
-      </Tabs>
+      {/* Status Tabs */}
+      <div className="mb-6">
+        <Tabs
+          value={severity}
+          onValueChange={setSeverity}
+        >
+          <TabsList>
+            <TabsTrigger value="all">All ({severityCounts.all})</TabsTrigger>
+            <TabsTrigger value="critical" className="data-[state=active]:text-red-600">
+              Critical ({severityCounts.critical})
+            </TabsTrigger>
+            <TabsTrigger value="warning" className="data-[state=active]:text-yellow-600">
+              Warning ({severityCounts.warning})
+            </TabsTrigger>
+            <TabsTrigger value="info">Info ({severityCounts.info})</TabsTrigger>
+            <TabsTrigger value="resolved" className="data-[state=active]:text-green-600">
+              Resolved ({severityCounts.resolved})
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+      </div>
 
-      <div className="flex gap-4">
+      {/* Filters */}
+      <div className="mb-6 flex gap-4">
         <Input
           placeholder="Search issues..."
           value={search}
@@ -330,6 +334,7 @@ export default function IssuesPage() {
         </Select>
       </div>
 
+      {/* Issues List */}
       {isLoading ? (
         <IssuesListSkeleton />
       ) : filteredIssues.length === 0 ? (

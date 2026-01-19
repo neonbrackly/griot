@@ -1,8 +1,8 @@
 # Griot Implementation Status Board
 
-> **Last Updated:** 2026-01-11 by orchestrator (Phase 6 - Open Data Contract Standard)
-> **Current Phase:** Phase 6 - Contract Schema Overhaul
-> **Status:** 🔄 Phase 6 Initiated - Open Data Contract Standard Implementation
+> **Last Updated:** 2026-01-18 by core (Phase 9 - Validation Restructure & Privacy)
+> **Current Phase:** Phase 9 - Validation Module Restructure & Privacy-by-Default
+> **Status:** 🆕 Phase 9 Initiated - Adapter Pattern & Kenya DPA/GDPR Compliance
 
 ---
 
@@ -339,6 +339,758 @@ When creating contracts in griot-hub, apply these audit-ready defaults:
 
 ---
 
+### Phase 7 - Documentation Updates for ODCS 🆕
+
+> **Goal:** Update all module documentation to reflect the Phase 6 ODCS overhaul changes.
+
+#### Epic 7.1: Core Documentation Updates (griot-core)
+
+| Task ID | Task | Agent | Priority | Status | Dependencies | Requirement |
+|---------|------|-------|----------|--------|--------------|-------------|
+| T-400 | Document all new ODCS dataclasses (40+ classes) | core | High | ✅ Done | None | — |
+| T-401 | Document new enums (ContractStatus, PhysicalType, QualityRuleType, etc.) | core | High | ✅ Done | None | — |
+| T-402 | Document breaking change detection API (`detect_breaking_changes()`, `BreakingChange`, `BreakingChangeType`) | core | High | ✅ Done | None | — |
+| T-403 | Document schema migration API (`migrate_contract()`, `detect_schema_version()`, `MigrationResult`) | core | High | ✅ Done | None | — |
+| T-404 | Document quality rule validation (`validate_quality_rules()`, `QualityRuleResult`) | core | Medium | ✅ Done | None | — |
+| T-405 | Update user guide with ODCS contract structure examples | core | Medium | ✅ Done | T-400 | — |
+| T-406 | Add migration guide (v0 → v1 contracts) | core | Medium | ✅ Done | T-403 | — |
+
+#### Epic 7.2: CLI Documentation Updates (griot-cli)
+
+| Task ID | Task | Agent | Priority | Status | Dependencies | Requirement |
+|---------|------|-------|----------|--------|--------------|-------------|
+| T-410 | Document `griot init` command (new ODCS contract scaffolding) | cli | High | ✅ Done | None | — |
+| T-411 | Document `griot migrate` command (schema migration) | cli | High | ✅ Done | None | — |
+| T-412 | Update `griot push` docs with `--allow-breaking` flag | cli | High | ✅ Done | None | — |
+| T-413 | Update `griot lint` docs with `--odcs-only` and `--summary` flags | cli | Medium | ✅ Done | None | — |
+| T-414 | Update `griot diff` docs with breaking change output format | cli | Medium | ✅ Done | None | — |
+| T-415 | Add ODCS quality rules reference (G006-G015) | cli | Medium | ✅ Done | None | — |
+
+#### Epic 7.3: Registry Documentation Updates (griot-registry)
+
+| Task ID | Task | Agent | Priority | Status | Dependencies | Requirement |
+|---------|------|-------|----------|--------|--------------|-------------|
+| T-420 | Document ODCS Pydantic schemas (50+ models) | registry | High | ✅ Done | None | — |
+| T-421 | Document breaking change validation on PUT /contracts/{id} | registry | High | ✅ Done | None | — |
+| T-422 | Document `?allow_breaking=true` query parameter | registry | High | ✅ Done | None | — |
+| T-423 | Document schema version negotiation (Accept headers) | registry | Medium | ✅ Done | None | — |
+| T-424 | Document breaking change history tracking | registry | Medium | ✅ Done | None | — |
+| T-425 | Update API reference with 409 response for breaking changes | registry | Medium | ✅ Done | None | — |
+
+#### Epic 7.4: Hub Documentation Updates (griot-hub)
+
+| Task ID | Task | Agent | Priority | Status | Dependencies | Requirement |
+|---------|------|-------|----------|--------|--------------|-------------|
+| T-430 | Document new components (BreakingChangeWarning, VersionComparison) | hub | High | 📋 Ready | None | — |
+| T-431 | Document SLAWizard and GovernanceWorkflow components | hub | High | 📋 Ready | None | — |
+| T-432 | Document smart defaults system (`lib/defaults.ts`) | hub | High | 📋 Ready | None | — |
+| T-433 | Document privacy auto-detection (`inferPrivacyFromFieldName()`) | hub | Medium | 📋 Ready | None | — |
+| T-434 | Update Contract Studio documentation with ODCS sections | hub | High | 📋 Ready | None | — |
+| T-435 | Document TypeScript types for ODCS (`lib/types.ts`) | hub | Medium | 📋 Ready | None | — |
+| T-436 | Add compliance presets reference (GDPR, CCPA, HIPAA, PCI-DSS, SOX) | hub | Medium | 📋 Ready | None | — |
+
+#### Documentation Standards for Phase 7
+
+**All documentation updates should include:**
+1. **API Reference** - Function signatures, parameters, return types
+2. **Usage Examples** - Real-world code snippets
+3. **Migration Notes** - How to update from Phase 5 patterns
+4. **Cross-references** - Links to related documentation
+
+**Core Documentation Priorities:**
+- Breaking change detection is critical for CI/CD users
+- Schema migration is critical for existing contract users
+- ODCS dataclasses needed for advanced contract customization
+
+**CLI Documentation Priorities:**
+- `griot init` and `griot migrate` are new commands users need to discover
+- Breaking change flags affect existing push workflows
+
+**Registry Documentation Priorities:**
+- API consumers need updated OpenAPI spec
+- 409 response handling for breaking changes
+
+**Hub Documentation Priorities:**
+- New component props and usage patterns
+- Smart defaults help users create compliant contracts faster
+
+---
+
+### Phase 8 - Contract-Schema Delineation & Pandera Validation 🆕
+
+> **Goal:** Separate GriotContract from GriotSchema to support multi-schema contracts, and implement Pandera-based validation with support for pandas, polars, pyspark, and dask DataFrames.
+
+#### Epic 8.1: Contract-Schema Separation (griot-core) ✅ COMPLETE
+
+| Task ID | Task | Agent | Priority | Status | Dependencies | Requirement |
+|---------|------|-------|----------|--------|--------------|-------------|
+| T-450 | Design and create `GriotContract` class (api_version, kind, id, version, status, schemas list) | core | High | ✅ Done | None | — |
+| T-451 | Create contract-level dataclasses (ContractDescription, ContractTeam, etc.) | core | High | ✅ Done | T-450 | — |
+| T-452 | Create `GriotSchemaDefinition` class (schema-level only, no contract metadata) | core | High | ✅ Done | T-450 | — |
+| T-453 | Create `GriotSchemaField` and `GriotSchemaFieldInfo` | core | High | ✅ Done | T-452 | — |
+| T-454 | Update YAML deserialization to parse into GriotContract with embedded GriotSchemas | core | High | ✅ Done | T-450, T-452 | — |
+| T-455 | Update YAML serialization to export GriotContract structure correctly | core | High | ✅ Done | T-454 | — |
+| T-456 | Implement contract-schema relationship (one contract → many schemas) | core | Medium | ✅ Done | T-450, T-452 | — |
+| T-457 | Add schema lookup methods to GriotContract (`get_schema()`, `list_schemas()`, `get_schema_by_name()`) | core | Medium | ✅ Done | T-456 | — |
+
+**Contract-Schema Design Notes (T-450):**
+- `GriotContract` is the top-level entity containing contract metadata and multiple schemas
+- Contract-level fields: `api_version`, `kind`, `id`, `name`, `version`, `status`, `data_product`, `description`, `tags`, `team`, `roles`, `servers`, `sla_properties`, `support`, `custom_properties`
+- `GriotSchema` represents a single schema/table within a contract (e.g., `schema[0]` in example_contract.yaml)
+- Schema-level fields: `id`, `name`, `logical_type`, `physical_type`, `physical_name`, `description`, `business_name`, `properties`, `quality`, `authoritative_definitions`, `tags`
+
+#### Epic 8.2: Pandera-Based Validation Engine (griot-core)
+
+| Task ID | Task | Agent | Priority | Status | Dependencies | Requirement |
+|---------|------|-------|----------|--------|--------------|-------------|
+| T-460 | Add pandera as optional dependency, design `DataFrameValidatorRegistry` pattern | core | High | 📋 Ready | None | — |
+| T-461 | Implement base `DataFrameValidator` abstract class with common interface | core | High | 📋 Ready | T-460 | — |
+| T-462 | Implement `PanderaSchemaGenerator` - generate pandera schema from GriotSchema | core | High | 📋 Ready | T-461, T-452 | — |
+| T-463 | Implement `PandasValidator` using pandera for pandas DataFrames | core | High | 📋 Ready | T-462 | — |
+| T-464 | Implement `PolarsValidator` for polars DataFrames (via pandera-polars) | core | High | 📋 Ready | T-462 | — |
+| T-465 | Implement `PySparkValidator` for PySpark DataFrames (via pandera pyspark integration) | core | High | 📋 Ready | T-462 | — |
+| T-466 | Implement `DaskValidator` for dask DataFrames (via pandera dask integration) | core | High | 📋 Ready | T-462 | — |
+| T-467 | Implement list-of-dicts validation (convert to in-memory pandas DataFrame, then validate) | core | Medium | 📋 Ready | T-463 | — |
+| T-468 | Ensure lazy validation support for big data compatibility (pandera lazy mode) | core | High | 📋 Ready | T-463, T-464, T-465, T-466 | — |
+
+**Registry Pattern Design (T-460):**
+```python
+class DataFrameValidatorRegistry:
+    """Registry for DataFrame validators. Supports pandas, polars, pyspark, dask."""
+    _validators: Dict[str, Type[DataFrameValidator]] = {}
+
+    @classmethod
+    def register(cls, df_type: str):
+        """Decorator to register a validator for a DataFrame type."""
+        ...
+
+    @classmethod
+    def get_validator(cls, df_type: str) -> DataFrameValidator:
+        """Get validator for a DataFrame type."""
+        ...
+
+    @classmethod
+    def detect_df_type(cls, data) -> str:
+        """Auto-detect DataFrame type from data object."""
+        ...
+```
+
+**Supported DataFrame Types:**
+- `pandas`: pandas.DataFrame
+- `polars`: polars.DataFrame, polars.LazyFrame
+- `pyspark`: pyspark.sql.DataFrame
+- `dask`: dask.dataframe.DataFrame
+
+#### Epic 8.3: Two-Fold Validation Interface (griot-core)
+
+| Task ID | Task | Agent | Priority | Status | Dependencies | Requirement |
+|---------|------|-------|----------|--------|--------------|-------------|
+| T-470 | Implement `validate_contract_structure()` - lint/validate contract structure, fields, types | core | High | 📋 Ready | T-450 | — |
+| T-471 | Implement `validate_schema_data()` - validate DataFrame against a single GriotSchema | core | High | 📋 Ready | T-463 | — |
+| T-472 | Implement mapping interface: `validate_data_mapping(Dict[GriotSchema, DataFrame])` | core | Medium | 📋 Ready | T-471 | — |
+| T-473 | Implement tuple list interface: `validate_data_batch(List[Tuple[DataFrame|list, GriotSchema]])` | core | Medium | 📋 Ready | T-471 | — |
+| T-474 | Update `ValidationResult` to support schema-level results for multi-schema validation | core | Medium | 📋 Ready | T-472, T-473 | — |
+| T-475 | Deprecate old contract-level `validate(data)` method with migration warning | core | Low | 📋 Ready | T-471, T-474 | — |
+
+**Two-Fold Validation Design:**
+
+1. **Contract Structure Validation (T-470):**
+   - Validates the contract YAML/dict structure itself (not data)
+   - Checks: required fields present, correct types, valid enums, proper nesting
+   - Returns `ContractLintResult` with issues (ERROR, WARNING, INFO)
+
+2. **Data Validation (T-471-T-473):**
+   - Validates actual data against a `GriotSchema` (not `GriotContract`)
+   - Accepts:
+     - Single DataFrame + GriotSchema
+     - Dict mapping: `{schema1: df1, schema2: df2}`
+     - List of tuples: `[(df1, schema1), (raw_data_list, schema2)]`
+   - Returns `SchemaValidationResult` per schema
+
+**Example Usage:**
+```python
+# Contract structure validation
+contract = GriotContract.from_yaml("contract.yaml")
+lint_result = validate_contract_structure(contract)
+
+# Single schema data validation
+schema = contract.get_schema("employees")
+result = validate_schema_data(schema, employees_df)
+
+# Multi-schema validation with mapping
+results = validate_data_mapping({
+    contract.get_schema("employees"): employees_df,
+    contract.get_schema("departments"): departments_df,
+})
+
+# Multi-schema validation with tuple list
+results = validate_data_batch([
+    (employees_df, contract.get_schema("employees")),
+    (raw_customer_data, contract.get_schema("customers")),  # list of dicts
+])
+```
+
+#### Epic 8.4: Testing & Quality (quality) 🔓 UNBLOCKED
+
+> **Goal:** Comprehensive test coverage for all Phase 8 validation features. All dependencies are now complete.
+
+##### 8.4.1: Contract-Schema Separation Tests
+
+| Task ID | Task | Agent | Priority | Status | Dependencies | Requirement |
+|---------|------|-------|----------|--------|--------------|-------------|
+| T-480 | Unit tests for `GriotContract` class (creation, serialization, deserialization) | quality | High | 📋 Ready | T-457 ✅ | — |
+| T-481 | Unit tests for `GriotSchemaDefinition` and field classes | quality | High | 📋 Ready | T-453 ✅ | — |
+| T-482 | Unit tests for contract-schema relationship (add/remove/get schemas) | quality | High | 📋 Ready | T-457 ✅ | — |
+| T-483 | Unit tests for YAML round-trip (load → modify → save → reload) | quality | High | 📋 Ready | T-455 ✅ | — |
+| T-484 | Unit tests for `validate_contract_structure()` function | quality | High | 📋 Ready | T-470 ✅ | — |
+
+##### 8.4.2: PanderaSchemaGenerator Tests
+
+| Task ID | Task | Agent | Priority | Status | Dependencies | Requirement |
+|---------|------|-------|----------|--------|--------------|-------------|
+| T-510 | Unit tests for logical type → Pandera dtype mapping | quality | High | 📋 Ready | T-462 ✅ | — |
+| T-511 | Unit tests for constraint generation (min_length, max_length, pattern, min, max, enum) | quality | High | 📋 Ready | T-462 ✅ | — |
+| T-512 | Unit tests for nullable/required field handling | quality | High | 📋 Ready | T-462 ✅ | — |
+| T-513 | Unit tests for `_has_zero_null_requirement()` method (BUG-001 fix) | quality | High | 📋 Ready | T-462 ✅ | — |
+
+##### 8.4.3: PandasValidator Tests
+
+| Task ID | Task | Agent | Priority | Status | Dependencies | Requirement |
+|---------|------|-------|----------|--------|--------------|-------------|
+| T-520 | Integration tests for basic type validation (string, int, float, bool, date) | quality | High | 📋 Ready | T-463 ✅ | — |
+| T-521 | Integration tests for null value detection with `QualityRule.null_values(must_be=0)` | quality | High | 📋 Ready | T-463 ✅ | — |
+| T-522 | Integration tests for duplicate value detection with `QualityRule.duplicate_values()` | quality | High | 📋 Ready | T-463 ✅ | — |
+| T-523 | Integration tests for pattern validation with regex constraints | quality | High | 📋 Ready | T-463 ✅ | — |
+| T-524 | Integration tests for enum validation with `valid_values` constraint | quality | High | 📋 Ready | T-463 ✅ | — |
+| T-525 | Integration tests for numeric range validation (min, max) | quality | Medium | 📋 Ready | T-463 ✅ | — |
+| T-526 | Integration tests for string length validation (min_length, max_length) | quality | Medium | 📋 Ready | T-463 ✅ | — |
+| T-527 | Integration tests for unique constraint enforcement | quality | High | 📋 Ready | T-463 ✅ | — |
+| T-528 | Integration tests for combined quality rules on same field | quality | High | 📋 Ready | T-463 ✅ | — |
+| T-529 | Integration tests for `ValidationMode.LAZY` (collect all errors) | quality | High | 📋 Ready | T-468 ✅ | — |
+| T-530 | Integration tests for `ValidationMode.EAGER` (fail fast) | quality | Medium | 📋 Ready | T-468 ✅ | — |
+
+##### 8.4.4: PolarsValidator Tests
+
+| Task ID | Task | Agent | Priority | Status | Dependencies | Requirement |
+|---------|------|-------|----------|--------|--------------|-------------|
+| T-540 | Integration tests for polars DataFrame basic validation | quality | High | 📋 Ready | T-464 ✅ | — |
+| T-541 | Integration tests for polars LazyFrame validation | quality | High | 📋 Ready | T-464 ✅ | — |
+| T-542 | Integration tests for `_extract_series()` helper (BUG-002 fix) | quality | High | 📋 Ready | T-464 ✅ | — |
+| T-543 | Integration tests for polars null value detection | quality | High | 📋 Ready | T-464 ✅ | — |
+| T-544 | Integration tests for polars pattern/enum validation | quality | Medium | 📋 Ready | T-464 ✅ | — |
+| T-545 | Integration tests for polars quality rules | quality | Medium | 📋 Ready | T-464 ✅ | — |
+
+##### 8.4.5: PySparkValidator Tests
+
+| Task ID | Task | Agent | Priority | Status | Dependencies | Requirement |
+|---------|------|-------|----------|--------|--------------|-------------|
+| T-550 | Integration tests for PySpark DataFrame basic validation | quality | Medium | 📋 Ready | T-465 ✅ | — |
+| T-551 | Integration tests for PySpark null value detection | quality | Medium | 📋 Ready | T-465 ✅ | — |
+| T-552 | Integration tests for PySpark quality rules | quality | Medium | 📋 Ready | T-465 ✅ | — |
+| T-553 | Integration tests for PySpark lazy evaluation compatibility | quality | Medium | 📋 Ready | T-465 ✅ | — |
+
+##### 8.4.6: DaskValidator Tests
+
+| Task ID | Task | Agent | Priority | Status | Dependencies | Requirement |
+|---------|------|-------|----------|--------|--------------|-------------|
+| T-560 | Integration tests for Dask DataFrame basic validation | quality | Medium | 📋 Ready | T-466 ✅ | — |
+| T-561 | Integration tests for Dask partition-aware validation | quality | Medium | 📋 Ready | T-466 ✅ | — |
+| T-562 | Integration tests for Dask null value detection | quality | Medium | 📋 Ready | T-466 ✅ | — |
+| T-563 | Integration tests for Dask quality rules | quality | Medium | 📋 Ready | T-466 ✅ | — |
+
+##### 8.4.7: Multi-Schema & Two-Fold Validation Tests
+
+| Task ID | Task | Agent | Priority | Status | Dependencies | Requirement |
+|---------|------|-------|----------|--------|--------------|-------------|
+| T-570 | Unit tests for `validate_schema_data()` auto-detection | quality | High | 📋 Ready | T-471 ✅ | — |
+| T-571 | Unit tests for `validate_data_mapping()` with multiple schemas | quality | High | 📋 Ready | T-472 ✅ | — |
+| T-572 | Unit tests for `validate_data_batch()` with tuple list | quality | High | 📋 Ready | T-473 ✅ | — |
+| T-573 | Unit tests for `MultiSchemaValidationResult` methods | quality | High | 📋 Ready | T-474 ✅ | — |
+| T-574 | Integration tests for mixed DataFrame types in batch validation | quality | Medium | 📋 Ready | T-473 ✅ | — |
+
+##### 8.4.8: Backward Compatibility & Edge Cases
+
+| Task ID | Task | Agent | Priority | Status | Dependencies | Requirement |
+|---------|------|-------|----------|--------|--------------|-------------|
+| T-580 | Tests for `validate_list_of_dicts()` function | quality | High | 📋 Ready | T-467 ✅ | — |
+| T-581 | Tests for single dict validation (auto-converts to list) | quality | Medium | 📋 Ready | T-467 ✅ | — |
+| T-582 | Tests for legacy `GriotSchema.validate()` with deprecation warning | quality | High | 📋 Ready | T-475 ✅ | — |
+| T-583 | Tests for validation with both legacy and new schema types | quality | High | 📋 Ready | T-506 ✅ | — |
+| T-584 | Tests for empty DataFrame handling | quality | Medium | 📋 Ready | T-463 ✅ | — |
+| T-585 | Tests for DataFrame with all null values | quality | Medium | 📋 Ready | T-463 ✅ | — |
+| T-586 | Tests for schema with no quality rules | quality | Medium | 📋 Ready | T-463 ✅ | — |
+
+##### 8.4.9: Performance Tests
+
+| Task ID | Task | Agent | Priority | Status | Dependencies | Requirement |
+|---------|------|-------|----------|--------|--------------|-------------|
+| T-590 | Performance tests for lazy validation with 100K+ rows (pandas) | quality | High | 📋 Ready | T-468 ✅ | — |
+| T-591 | Performance tests for lazy validation with 100K+ rows (polars) | quality | High | 📋 Ready | T-468 ✅ | — |
+| T-592 | Performance tests for lazy validation with 100K+ rows (dask) | quality | Medium | 📋 Ready | T-468 ✅ | — |
+| T-593 | Memory usage tests for large DataFrame validation | quality | Medium | 📋 Ready | T-468 ✅ | — |
+| T-594 | Benchmark comparison: eager vs lazy validation modes | quality | Low | 📋 Ready | T-468 ✅ | — |
+
+##### 8.4.10: Bug Fix Regression Tests
+
+| Task ID | Task | Agent | Priority | Status | Dependencies | Requirement |
+|---------|------|-------|----------|--------|--------------|-------------|
+| T-595 | Regression test for BUG-001: null values with `must_be=0` quality rule | quality | High | 📋 Ready | — | — |
+| T-596 | Regression test for BUG-002: PolarsData wrapper handling | quality | High | 📋 Ready | — | — |
+| T-597 | Regression test for BUG-003: pattern validation with re.match | quality | High | 📋 Ready | — | — |
+| T-598 | Regression test for BUG-004: element_wise=False parameter | quality | High | 📋 Ready | — | — |
+
+**Testing Notes:**
+
+1. **Test File Structure:**
+   ```
+   tests/
+   ├── test_griot_contract.py        # T-480 to T-484
+   ├── test_pandera_generator.py     # T-510 to T-513
+   ├── test_pandas_validator.py      # T-520 to T-530
+   ├── test_polars_validator.py      # T-540 to T-545
+   ├── test_pyspark_validator.py     # T-550 to T-553
+   ├── test_dask_validator.py        # T-560 to T-563
+   ├── test_multi_schema.py          # T-570 to T-574
+   ├── test_backward_compat.py       # T-580 to T-586
+   ├── test_performance.py           # T-590 to T-594
+   └── test_bug_regressions.py       # T-595 to T-598
+   ```
+
+2. **Required Test Fixtures:**
+   - Sample `GriotContract` with multiple schemas
+   - Sample `GriotSchemaDefinition` with various field types
+   - Sample DataFrames (pandas, polars, pyspark, dask) with valid/invalid data
+   - Quality rules for each metric type (null_values, duplicate_values, invalid_values, etc.)
+
+3. **Optional Dependencies:**
+   - polars: `pip install polars`
+   - pyspark: `pip install pyspark` (tests can be skipped if not installed)
+   - dask: `pip install dask[dataframe]`
+
+4. **Test Markers:**
+   ```python
+   @pytest.mark.pandas      # Pandas-specific tests
+   @pytest.mark.polars      # Polars-specific tests (skip if not installed)
+   @pytest.mark.pyspark     # PySpark-specific tests (skip if not installed)
+   @pytest.mark.dask        # Dask-specific tests (skip if not installed)
+   @pytest.mark.slow        # Performance tests
+   @pytest.mark.regression  # Bug fix regression tests
+   ```
+
+#### Epic 8.6: Code Harmonization (core) 🆕
+
+> **Goal:** Remove duplication between `models.py` (legacy) and `griot_schema.py` (new). Currently both files contain nearly identical field classes, metaclasses, and helper functions.
+
+| Task ID | Task | Agent | Priority | Status | Dependencies | Requirement |
+|---------|------|-------|----------|--------|--------------|-------------|
+| T-500 | Consolidate `SchemaFieldInfo` and `GriotSchemaFieldInfo` into single canonical class | core | High | 📋 Ready | T-453 | — |
+| T-501 | Consolidate `SchemaField` and `GriotSchemaField` into single canonical class | core | High | 📋 Ready | T-500 | — |
+| T-502 | Consolidate metaclasses (`GriotSchemaMeta` + `GriotSchemaDefinitionMeta`) | core | High | 📋 Ready | T-501 | — |
+| T-503 | Extract shared helper functions to `_utils.py` (remove duplication) | core | Medium | 📋 Ready | T-502 | — |
+| T-504 | Refactor `GriotSchema` to remove contract-level metadata (align with `GriotSchemaDefinition`) | core | High | 📋 Ready | T-502 | — |
+| T-505 | Create backward-compatible aliases (`SchemaField = GriotSchemaField`, etc.) | core | High | 📋 Ready | T-504 | — |
+| T-506 | Update `validation.py` to work with both legacy and new schema classes | core | High | 📋 Ready | T-505 | — |
+| T-507 | Update `__init__.py` exports to use consolidated classes with aliases | core | Medium | 📋 Ready | T-506 | — |
+| T-508 | Update all internal imports across griot-core to use consolidated classes | core | Medium | 📋 Ready | T-507 | — |
+| T-509 | Add deprecation warnings to legacy class aliases | core | Low | 📋 Ready | T-508 | — |
+
+**Duplication Analysis:**
+
+| Component | models.py (Legacy) | griot_schema.py (New) | Action |
+|-----------|-------------------|----------------------|--------|
+| FieldInfo | `SchemaFieldInfo` | `GriotSchemaFieldInfo` | Keep new, alias legacy |
+| Field Descriptor | `SchemaField` | `GriotSchemaField` | Keep new, alias legacy |
+| Metaclass | `GriotSchemaMeta` | `GriotSchemaDefinitionMeta` | Merge into single metaclass |
+| Base Class | `GriotSchema` (has contract metadata) | `GriotSchemaDefinition` (schema-only) | Keep both, refactor `GriotSchema` |
+| Helpers | `_extract_base_type`, etc. | Same functions duplicated | Move to `_utils.py` |
+
+**Recommended Consolidation Strategy:**
+1. `GriotSchemaFieldInfo` becomes the canonical class (in `griot_schema.py`)
+2. `SchemaFieldInfo = GriotSchemaFieldInfo` alias in `models.py` for backward compatibility
+3. `GriotSchema` should delegate to `GriotSchemaDefinition` OR be deprecated
+4. Helper functions moved to `griot_core/_utils.py`
+
+---
+
+#### Epic 8.5: Sphinx Documentation Updates (core) 🔄 UPDATED
+
+> **Goal:** Update Sphinx documentation to cover all Phase 8 classes. Currently NO documentation exists for `GriotContract`, `GriotSchemaDefinition`, or related classes.
+
+| Task ID | Task | Agent | Priority | Status | Dependencies | Requirement |
+|---------|------|-------|----------|--------|--------------|-------------|
+| T-490 | Create `api/griot-contract.rst` - document `GriotContract` class and contract-level dataclasses | core | High | 📋 Ready | T-457 | — |
+| T-491 | Create `api/griot-schema.rst` - document `GriotSchemaDefinition`, `GriotSchemaField`, `GriotSchemaFieldInfo` | core | High | 📋 Ready | T-453 | — |
+| T-492 | Update `user-guide/defining-contracts.rst` - add `GriotContract` usage examples | core | High | 📋 Ready | T-490 | — |
+| T-493 | Create `user-guide/multi-schema-contracts.rst` - document multi-schema support | core | High | 📋 Ready | T-490 | — |
+| T-494 | Update `api/index.rst` - add new API pages to toctree | core | Medium | 📋 Ready | T-490, T-491 | — |
+| T-495 | Update `types/dataclasses.rst` - add contract-level dataclasses (ContractDescription, ContractTeam, etc.) | core | Medium | 📋 Ready | T-490 | — |
+| T-496 | Update `getting-started/quickstart.rst` - add `GriotContract` quick example | core | Medium | 📋 Ready | T-492 | — |
+| T-497 | Create migration guide from `GriotSchema` to `GriotContract`/`GriotSchemaDefinition` | core | High | 📋 Ready | T-504 | — |
+| T-498 | Document Pandera-based validation API (once Epic 8.2 complete) | core | High | ⏳ Waiting | T-468 | — |
+| T-499 | Document multi-DataFrame support with examples (once Epic 8.2 complete) | core | High | ⏳ Waiting | T-468 | — |
+
+**Documentation Gaps Identified:**
+
+| File | Exists | Contains Phase 8 | Action Needed |
+|------|--------|------------------|---------------|
+| `api/griot-contract.rst` | ❌ No | — | Create new |
+| `api/griot-schema.rst` | ❌ No | — | Create new |
+| `user-guide/defining-contracts.rst` | ✅ Yes | ❌ No | Update |
+| `user-guide/multi-schema-contracts.rst` | ❌ No | — | Create new |
+| `types/dataclasses.rst` | ✅ Yes | ❌ No | Update |
+| `getting-started/quickstart.rst` | ✅ Yes | ❌ No | Update |
+
+---
+
+### Phase 9 - Validation Module Restructure & Privacy-by-Default 🆕
+
+> **Goal:** Restructure the validation module using the Adapter Pattern for consistency across all DataFrame backends, and implement privacy-by-default compliance based on Kenya DPA and EU GDPR.
+
+#### Epic 9.1: Validation Module Restructure (core) 🆕
+
+> **Goal:** Replace the current Pandera-centric validation with a clean Adapter Pattern that separates framework-specific code from validation logic.
+
+##### 9.1.1: Module Structure & Types
+
+| Task ID | Task | Agent | Priority | Status | Dependencies | Requirement |
+|---------|------|-------|----------|--------|--------------|-------------|
+| T-600 | Create `validation/` package structure with `__init__.py` | core | High | 📋 Ready | None | — |
+| T-601 | Create `validation/types.py` - ValidationMode, ErrorType, ErrorSeverity enums | core | High | 📋 Ready | T-600 | — |
+| T-602 | Create `ValidationError` dataclass with full context (field, error_type, message, actual/expected, operator, unit, details) | core | High | 📋 Ready | T-601 | — |
+| T-603 | Create `RuleResult` dataclass for quality rule evaluation results | core | High | 📋 Ready | T-601 | — |
+| T-604 | Create `ValidationResult` dataclass with summary(), is_valid, errors, warnings | core | High | 📋 Ready | T-602, T-603 | — |
+
+##### 9.1.2: DataFrame Adapters
+
+| Task ID | Task | Agent | Priority | Status | Dependencies | Requirement |
+|---------|------|-------|----------|--------|--------------|-------------|
+| T-610 | Create `validation/adapters/base.py` - Abstract `DataFrameAdapter` class | core | High | 📋 Ready | T-604 | — |
+| T-611 | Implement `PandasAdapter` - all DataFrame operations for pandas | core | High | 📋 Ready | T-610 | — |
+| T-612 | Implement `PolarsAdapter` - all DataFrame operations for polars | core | High | 📋 Ready | T-610 | — |
+| T-613 | Implement `PySparkAdapter` - all DataFrame operations for PySpark | core | Medium | 📋 Ready | T-610 | — |
+| T-614 | Implement `DaskAdapter` - all DataFrame operations for Dask | core | Medium | 📋 Ready | T-610 | — |
+| T-615 | Create `validation/adapters/__init__.py` - AdapterRegistry with auto-detection | core | High | 📋 Ready | T-611, T-612 | — |
+
+**DataFrameAdapter Interface:**
+```python
+class DataFrameAdapter(ABC):
+    # Schema info
+    def get_columns(self) -> list[str]: ...
+    def get_column_dtype(self, column: str) -> str: ...
+    def row_count(self) -> int: ...
+
+    # Counting operations (return int - framework-agnostic)
+    def count_nulls(self, column: str) -> int: ...
+    def count_duplicates(self, column: str) -> int: ...
+    def count_not_in_set(self, column: str, valid_values: list) -> int: ...
+    def count_not_matching_pattern(self, column: str, pattern: str) -> int: ...
+    def count_outside_range(self, column: str, min_val, max_val) -> int: ...
+
+    # Aggregation (for distribution checks)
+    def get_column_values(self, column: str) -> list: ...
+    def get_mean(self, column: str) -> float: ...
+    def get_std(self, column: str) -> float: ...
+
+    # Sampling (for error details)
+    def sample_invalid_values(self, column: str, condition: str, limit: int) -> list: ...
+```
+
+##### 9.1.3: Quality Rule Evaluators
+
+| Task ID | Task | Agent | Priority | Status | Dependencies | Requirement |
+|---------|------|-------|----------|--------|--------------|-------------|
+| T-620 | Create `validation/rules/base.py` - Abstract `RuleEvaluator` class | core | High | 📋 Ready | T-610 | — |
+| T-621 | Implement `NullValuesEvaluator` - evaluate nullValues quality rules | core | High | 📋 Ready | T-620 | — |
+| T-622 | Implement `DuplicateValuesEvaluator` - evaluate duplicateValues quality rules | core | High | 📋 Ready | T-620 | — |
+| T-623 | Implement `InvalidValuesEvaluator` - evaluate invalidValues (enum, pattern, range) | core | High | 📋 Ready | T-620 | — |
+| T-624 | Implement `RowCountEvaluator` - evaluate rowCount quality rules | core | Medium | 📋 Ready | T-620 | — |
+| T-625 | Implement `FreshnessEvaluator` - evaluate freshness quality rules | core | Medium | 📋 Ready | T-620 | — |
+| T-626 | Create `validation/rules/__init__.py` - RuleEvaluatorRegistry | core | High | 📋 Ready | T-621, T-622, T-623 | — |
+
+**RuleEvaluator Pattern (MEASURE → CALCULATE → COMPARE → REPORT):**
+```python
+class RuleEvaluator(ABC):
+    def evaluate(self, adapter: DataFrameAdapter, field: str, rule: dict) -> RuleResult:
+        # 1. MEASURE - Use adapter to count (framework-specific)
+        count = adapter.count_nulls(field)
+        total = adapter.row_count()
+
+        # 2. CALCULATE - Convert to metric (framework-agnostic)
+        metric_value = self._calculate_metric(count, total, unit)
+
+        # 3. COMPARE - Apply operator (framework-agnostic)
+        passed = self._compare(operator, metric_value, threshold)
+
+        # 4. REPORT - Build result with context (framework-agnostic)
+        return RuleResult(passed=passed, field=field, metric_value=metric_value, ...)
+```
+
+##### 9.1.4: Pre-Validation & Engine
+
+| Task ID | Task | Agent | Priority | Status | Dependencies | Requirement |
+|---------|------|-------|----------|--------|--------------|-------------|
+| T-630 | Create `validation/pre_validation.py` - column existence, type compatibility checks | core | High | 📋 Ready | T-610 | — |
+| T-631 | Create `validation/engine.py` - ValidationEngine orchestrator | core | High | 📋 Ready | T-626, T-630 | — |
+| T-632 | Implement `validate_dataframe()` public API function | core | High | 📋 Ready | T-631 | — |
+| T-633 | Deprecate old `dataframe_validation.py` with backward-compat shim | core | Medium | 📋 Ready | T-632 | — |
+
+**Validation Flow:**
+```
+validate_dataframe(df, schema)
+├── Phase 1: Pre-validation (column existence, type compatibility)
+│   └── Returns early with CLEAR errors if columns missing
+├── Phase 2: Quality rule evaluation (per-field, per-rule)
+│   └── For each rule: adapter.measure() → calculate() → compare() → report()
+└── Phase 3: Result aggregation (consistent format across all backends)
+```
+
+---
+
+#### Epic 9.2: Privacy Framework Types (core) 🆕
+
+> **Goal:** Define privacy-by-default types, enums, and patterns based on Kenya DPA and EU GDPR.
+
+##### 9.2.1: Privacy Types & Enums
+
+| Task ID | Task | Agent | Priority | Status | Dependencies | Requirement |
+|---------|------|-------|----------|--------|--------------|-------------|
+| T-640 | Create `validation/privacy/types.py` - Sensitivity enum (PUBLIC, INTERNAL, CONFIDENTIAL) | core | High | 📋 Ready | T-600 | Kenya DPA S.26 |
+| T-641 | Create `PIIType` enum - all PII categories (EMAIL, PHONE, NATIONAL_ID, CREDIT_CARD, HEALTH, etc.) | core | High | 📋 Ready | T-640 | Kenya DPA S.2, GDPR Art.4 |
+| T-642 | Create `MaskingStrategy` enum - masking strategies (NONE, PARTIAL, FULL, HASH, ENCRYPT, REDACT, PSEUDONYMIZE) | core | High | 📋 Ready | T-640 | GDPR Art.32 |
+| T-643 | Create `PrivacyInfo` dataclass - field-level privacy metadata | core | High | 📋 Ready | T-640, T-641, T-642 | — |
+| T-644 | Create `PrivacyErrorType` enum - privacy violation types | core | High | 📋 Ready | T-640 | — |
+| T-645 | Create `PrivacyCheckResult` dataclass - privacy check result with regulatory context | core | High | 📋 Ready | T-644 | — |
+| T-646 | Create `PrivacyValidationResult` dataclass - aggregated privacy results | core | High | 📋 Ready | T-645 | — |
+
+**PrivacyInfo Dataclass:**
+```python
+@dataclass
+class PrivacyInfo:
+    is_pii: bool = False
+    sensitivity: Sensitivity = Sensitivity.INTERNAL
+    pii_type: PIIType | None = None
+    requires_masking: bool = False
+    masking_strategy: MaskingStrategy = MaskingStrategy.NONE
+    requires_consent: bool = False          # GDPR Art.7, Kenya DPA S.32
+    retention_days: int | None = None       # Data minimization
+    legal_basis: str | None = None          # GDPR Art.6
+    purpose: str | None = None              # Purpose limitation
+```
+
+##### 9.2.2: PII Detection Patterns
+
+| Task ID | Task | Agent | Priority | Status | Dependencies | Requirement |
+|---------|------|-------|----------|--------|--------------|-------------|
+| T-650 | Create `validation/privacy/patterns.py` - PIIPattern dataclass | core | High | 📋 Ready | T-641 | — |
+| T-651 | Implement Kenya-specific patterns (National ID, KRA PIN, Kenya phone) | core | High | 📋 Ready | T-650 | Kenya DPA |
+| T-652 | Implement EU/International patterns (IBAN, EU VAT, EU passport) | core | High | 📋 Ready | T-650 | GDPR |
+| T-653 | Implement universal patterns (email, credit card, IP address, GPS) | core | High | 📋 Ready | T-650 | — |
+| T-654 | Implement masking detection patterns (asterisks, hashes, [REDACTED]) | core | High | 📋 Ready | T-650 | — |
+| T-655 | Create `detect_pii_type()` function - detect PII from string value | core | High | 📋 Ready | T-651, T-652, T-653 | — |
+| T-656 | Create `is_masked()` function - detect if value is masked | core | High | 📋 Ready | T-654 | — |
+
+**PII Patterns Coverage:**
+| Category | Patterns | Region |
+|----------|----------|--------|
+| Email | `^[\w.-]+@[\w.-]+\.\w{2,}$` | Universal |
+| Kenya Phone | `^(?:\+254\|254\|0)?[17]\d{8}$` | Kenya |
+| Kenya National ID | `^\d{7,8}$` | Kenya |
+| Kenya KRA PIN | `^[AP]\d{9}[A-Z]$` | Kenya |
+| Credit Card | Visa, Mastercard, Amex patterns | Universal |
+| IBAN | `^[A-Z]{2}\d{2}[A-Z0-9]{4,30}$` | EU |
+| IPv4/IPv6 | Standard IP patterns | Universal |
+| GPS Coordinates | Lat/Long decimal format | Universal |
+
+---
+
+#### Epic 9.3: Privacy Evaluators (core) 🆕
+
+> **Goal:** Implement privacy validation evaluators for masking, undeclared PII detection, and sensitivity enforcement.
+
+| Task ID | Task | Agent | Priority | Status | Dependencies | Requirement |
+|---------|------|-------|----------|--------|--------------|-------------|
+| T-660 | Create `validation/privacy/evaluators/base.py` - Abstract `PrivacyEvaluator` | core | High | 📋 Ready | T-610, T-645 | — |
+| T-661 | Implement `MaskingEvaluator` - verify PII fields are properly masked | core | High | 📋 Ready | T-660, T-656 | GDPR Art.32, Kenya DPA S.26 |
+| T-662 | Implement `UndeclaredPIIEvaluator` - detect PII in non-PII columns | core | High | 📋 Ready | T-660, T-655 | GDPR Art.5(1)(c), Kenya DPA S.25 |
+| T-663 | Implement `SensitivityEvaluator` - enforce sensitivity-appropriate protections | core | High | 📋 Ready | T-660 | GDPR Art.9, Kenya DPA S.31 |
+| T-664 | Create `validation/privacy/evaluators/__init__.py` - PrivacyEvaluatorRegistry | core | High | 📋 Ready | T-661, T-662, T-663 | — |
+| T-665 | Create `validation/privacy/engine.py` - PrivacyValidationEngine | core | High | 📋 Ready | T-664 | — |
+| T-666 | Implement `validate_privacy()` public API function | core | High | 📋 Ready | T-665 | — |
+
+**Privacy Evaluators:**
+| Evaluator | Checks | Regulatory Basis |
+|-----------|--------|------------------|
+| `MaskingEvaluator` | PII fields with `requires_masking=True` are actually masked | GDPR Art.32, Kenya DPA S.26 |
+| `UndeclaredPIIEvaluator` | Non-PII columns don't contain PII patterns (data minimization) | GDPR Art.5(1)(c), Art.30, Kenya DPA S.25, S.27 |
+| `SensitivityEvaluator` | Special category data is CONFIDENTIAL, consent required | GDPR Art.9, Kenya DPA S.31 |
+
+---
+
+#### Epic 9.4: Schema Integration (core) 🆕
+
+> **Goal:** Integrate privacy metadata into Field definition and schema classes.
+
+| Task ID | Task | Agent | Priority | Status | Dependencies | Requirement |
+|---------|------|-------|----------|--------|--------------|-------------|
+| T-670 | Update `Field()` function to accept `privacy` parameter (PrivacyInfo) | core | High | 📋 Ready | T-643 | — |
+| T-671 | Add convenience shortcuts to `Field()` - `is_pii`, `sensitivity`, `pii_type` | core | High | 📋 Ready | T-670 | — |
+| T-672 | Update `GriotSchemaFieldInfo` to store privacy metadata | core | High | 📋 Ready | T-670 | — |
+| T-673 | Add `get_privacy_info()` method to field info classes | core | High | 📋 Ready | T-672 | — |
+| T-674 | Update YAML serialization to include privacy metadata | core | Medium | 📋 Ready | T-672 | — |
+| T-675 | Update YAML deserialization to parse privacy metadata | core | Medium | 📋 Ready | T-674 | — |
+
+**Field Definition with Privacy:**
+```python
+class CustomerSchema(Schema):
+    email: str = Field(
+        "Customer email",
+        # Option 1: Full PrivacyInfo object
+        privacy=PrivacyInfo(
+            is_pii=True,
+            sensitivity=Sensitivity.CONFIDENTIAL,
+            pii_type=PIIType.EMAIL,
+            requires_masking=True,
+            legal_basis="Contract performance (GDPR Art.6(1)(b))"
+        )
+    )
+
+    phone: str = Field(
+        "Phone number",
+        # Option 2: Convenience shortcuts
+        is_pii=True,
+        sensitivity=Sensitivity.CONFIDENTIAL,
+        pii_type=PIIType.PHONE
+    )
+```
+
+---
+
+#### Epic 9.5: Testing & Documentation (quality/core) 🆕
+
+> **Goal:** Comprehensive tests and documentation for the new validation module.
+
+##### 9.5.1: Adapter Tests
+
+| Task ID | Task | Agent | Priority | Status | Dependencies | Requirement |
+|---------|------|-------|----------|--------|--------------|-------------|
+| T-680 | Unit tests for `PandasAdapter` - all counting operations | quality | High | ⏳ Waiting | T-611 | — |
+| T-681 | Unit tests for `PolarsAdapter` - all counting operations | quality | High | ⏳ Waiting | T-612 | — |
+| T-682 | Unit tests for `PySparkAdapter` - all counting operations | quality | Medium | ⏳ Waiting | T-613 | — |
+| T-683 | Unit tests for `DaskAdapter` - all counting operations | quality | Medium | ⏳ Waiting | T-614 | — |
+| T-684 | Unit tests for `AdapterRegistry` - auto-detection | quality | High | ⏳ Waiting | T-615 | — |
+
+##### 9.5.2: Rule Evaluator Tests
+
+| Task ID | Task | Agent | Priority | Status | Dependencies | Requirement |
+|---------|------|-------|----------|--------|--------------|-------------|
+| T-685 | Unit tests for `NullValuesEvaluator` | quality | High | ⏳ Waiting | T-621 | — |
+| T-686 | Unit tests for `DuplicateValuesEvaluator` | quality | High | ⏳ Waiting | T-622 | — |
+| T-687 | Unit tests for `InvalidValuesEvaluator` - enum, pattern, range | quality | High | ⏳ Waiting | T-623 | — |
+| T-688 | Unit tests for `RuleEvaluatorRegistry` | quality | High | ⏳ Waiting | T-626 | — |
+
+##### 9.5.3: Privacy Tests
+
+| Task ID | Task | Agent | Priority | Status | Dependencies | Requirement |
+|---------|------|-------|----------|--------|--------------|-------------|
+| T-690 | Unit tests for PII pattern detection (Kenya patterns) | quality | High | ⏳ Waiting | T-651 | — |
+| T-691 | Unit tests for PII pattern detection (EU patterns) | quality | High | ⏳ Waiting | T-652 | — |
+| T-692 | Unit tests for PII pattern detection (universal patterns) | quality | High | ⏳ Waiting | T-653 | — |
+| T-693 | Unit tests for masking detection | quality | High | ⏳ Waiting | T-656 | — |
+| T-694 | Unit tests for `MaskingEvaluator` | quality | High | ⏳ Waiting | T-661 | — |
+| T-695 | Unit tests for `UndeclaredPIIEvaluator` | quality | High | ⏳ Waiting | T-662 | — |
+| T-696 | Unit tests for `SensitivityEvaluator` | quality | High | ⏳ Waiting | T-663 | — |
+| T-697 | Integration tests for `validate_privacy()` | quality | High | ⏳ Waiting | T-666 | — |
+
+##### 9.5.4: End-to-End Tests
+
+| Task ID | Task | Agent | Priority | Status | Dependencies | Requirement |
+|---------|------|-------|----------|--------|--------------|-------------|
+| T-698 | E2E test: validate_dataframe with pandas (all quality rules) | quality | High | ⏳ Waiting | T-632 | — |
+| T-699 | E2E test: validate_dataframe with polars (all quality rules) | quality | High | ⏳ Waiting | T-632 | — |
+| T-700 | E2E test: validate_dataframe + validate_privacy combined | quality | High | ⏳ Waiting | T-666, T-632 | — |
+| T-701 | E2E test: Full schema with quality + privacy rules | quality | High | ⏳ Waiting | T-675 | — |
+
+##### 9.5.5: Documentation
+
+| Task ID | Task | Agent | Priority | Status | Dependencies | Requirement |
+|---------|------|-------|----------|--------|--------------|-------------|
+| T-710 | Create `docs/api/validation.rst` - new validation module API | core | High | ⏳ Waiting | T-632 | — |
+| T-711 | Create `docs/api/privacy.rst` - privacy module API | core | High | ⏳ Waiting | T-666 | — |
+| T-712 | Create `docs/user-guide/data-quality.rst` - quality rules guide | core | High | ⏳ Waiting | T-632 | — |
+| T-713 | Create `docs/user-guide/privacy-compliance.rst` - privacy-by-default guide | core | High | ⏳ Waiting | T-666 | Kenya DPA, GDPR |
+| T-714 | Update `docs/user-guide/defining-contracts.rst` - add privacy examples | core | Medium | ⏳ Waiting | T-675 | — |
+| T-715 | Create `docs/guides/kenya-dpa-compliance.rst` - Kenya-specific guidance | core | Medium | ⏳ Waiting | T-666 | Kenya DPA |
+| T-716 | Create `docs/guides/gdpr-compliance.rst` - EU GDPR guidance | core | Medium | ⏳ Waiting | T-666 | GDPR |
+
+---
+
+#### Epic 9.6: CLI Integration (cli) 🆕
+
+> **Goal:** Add CLI commands for privacy validation.
+
+| Task ID | Task | Agent | Priority | Status | Dependencies | Requirement |
+|---------|------|-------|----------|--------|--------------|-------------|
+| T-720 | Add `griot validate --privacy` flag to include privacy checks | cli | High | ⏳ Waiting | T-666 | — |
+| T-721 | Add `griot privacy check` command - standalone privacy validation | cli | High | ⏳ Waiting | T-666 | — |
+| T-722 | Add `griot privacy scan` command - scan DataFrame for undeclared PII | cli | High | ⏳ Waiting | T-662 | — |
+| T-723 | Add `griot privacy report` command - generate privacy compliance report | cli | Medium | ⏳ Waiting | T-666 | — |
+| T-724 | Update `griot lint` to warn about PII fields without privacy metadata | cli | Medium | ⏳ Waiting | T-673 | — |
+
+---
+
+#### Phase 9 Task Summary
+
+| Epic | Tasks | Agent | Status |
+|------|-------|-------|--------|
+| 9.1: Validation Module Restructure | T-600 to T-633 (20 tasks) | core | 📋 Ready |
+| 9.2: Privacy Framework Types | T-640 to T-656 (14 tasks) | core | 📋 Ready |
+| 9.3: Privacy Evaluators | T-660 to T-666 (7 tasks) | core | 📋 Ready |
+| 9.4: Schema Integration | T-670 to T-675 (6 tasks) | core | 📋 Ready |
+| 9.5: Testing & Documentation | T-680 to T-716 (26 tasks) | quality/core | ⏳ Waiting |
+| 9.6: CLI Integration | T-720 to T-724 (5 tasks) | cli | ⏳ Waiting |
+| **Total** | **78 tasks** | | |
+
+**Recommended Implementation Order:**
+1. **Epic 9.1 (Validation Restructure):** T-600 → T-601 → T-602 → T-603 → T-604 → T-610 → T-611 → T-612 → T-620 → T-621 → T-622 → T-623 → T-626 → T-630 → T-631 → T-632
+2. **Epic 9.2 (Privacy Types):** T-640 → T-641 → T-642 → T-643 → T-650 → T-651 → T-652 → T-653 → T-654 → T-655 → T-656
+3. **Epic 9.3 (Privacy Evaluators):** T-660 → T-661 → T-662 → T-663 → T-664 → T-665 → T-666
+4. **Epic 9.4 (Schema Integration):** T-670 → T-671 → T-672 → T-673 → T-674 → T-675
+5. **Epic 9.5 (Testing):** Can start once each epic completes
+6. **Epic 9.6 (CLI):** Depends on T-666 completion
+
+---
+
+#### Implementation Notes for Phase 8
+
+**Pandera Integration Strategy:**
+- Use `pandera[io]` for pandas support (core dependency)
+- Use `pandera[polars]` for polars support (optional)
+- Use `pandera[pyspark]` for PySpark support (optional)
+- Use `pandera[dask]` for dask support (optional)
+
+**Lazy Validation for Big Data (T-468):**
+```python
+# Pandera supports lazy validation by default
+@pa.check_types(lazy=True)
+def process_data(df: DataFrame[GriotPanderaSchema]) -> DataFrame:
+    ...
+
+# For large datasets, validation happens at computation time (e.g., dask/spark)
+# NOT during schema definition
+```
+
+**Backward Compatibility (T-467, T-475):**
+- `contract.validate(data)` will continue to work but emit `DeprecationWarning`
+- Internally converts to: get first schema → `validate_schema_data(schema, data)`
+- List of dicts automatically converted to pandas DataFrame before validation
+
+**Error Handling:**
+- `SchemaValidationError`: Raised when data fails schema validation
+- `ContractStructureError`: Raised when contract YAML structure is invalid
+- `UnsupportedDataFrameError`: Raised when DataFrame type not registered
+
+---
+
 ## 📊 Phase Overview
 
 | Phase | Name | Status | Progress | Key Deliverables |
@@ -348,7 +1100,10 @@ When creating contracts in griot-hub, apply these audit-ready defaults:
 | 3 | Runtime | ✅ Complete | 100% | Enforce (✅), Registry API (✅), All Orchestrators (✅) |
 | 4 | UI | ✅ Complete | 100% | Hub (✅), All Dashboards (✅), Settings (✅) |
 | 5 | Documentation | ✅ Complete | 100% | Sphinx docs (✅), All modules documented (✅) |
-| 6 | **ODCS Overhaul** | ✅ Complete | 100% | Core (✅), CLI (✅), Registry (✅), Hub (✅), Tests (✅) |
+| 6 | ODCS Overhaul | ✅ Complete | 100% | Core (✅), CLI (✅), Registry (✅), Hub (✅), Tests (✅) |
+| 7 | ODCS Docs | 🔄 In Progress | 73% | Core (✅), CLI (✅), Registry (✅), Hub (0%) |
+| 8 | **Contract-Schema & Pandera** | 🔄 In Progress | 45% | GriotContract (✅), Pandera (✅), Two-Fold (✅), Harmonization (✅), **Testing (0/55)** |
+| 9 | **Validation Restructure & Privacy** | 🆕 New | 0% | Adapter Pattern, Privacy-by-Default, Kenya DPA/GDPR Compliance |
 
 **Phase 6 Progress:** 65/65 tasks complete (100%) 🎉🎉🎉
 
@@ -360,7 +1115,33 @@ When creating contracts in griot-hub, apply these audit-ready defaults:
 - Epic 6.6: Hub Updates - 9/9 ✅ COMPLETE
 - Epic 6.7: Testing & Quality - 5/5 ✅ COMPLETE
 
-**🎉 TOTAL PROJECT TASKS: 160/160 (100%) - PROJECT COMPLETE! 🎉**
+**Phase 7 Progress:** 19/26 tasks complete (73%)
+
+- Epic 7.1: Core Documentation - 7/7 ✅ COMPLETE
+- Epic 7.2: CLI Documentation - 6/6 ✅ COMPLETE
+- Epic 7.3: Registry Documentation - 6/6 ✅ COMPLETE
+- Epic 7.4: Hub Documentation - 0/7 (📋 All Ready)
+
+**Phase 8 Progress:** 45/100 tasks (45%)
+
+- Epic 8.1: Contract-Schema Separation - 8/8 ✅ COMPLETE
+- Epic 8.2: Pandera Validation Engine - 9/9 ✅ COMPLETE
+- Epic 8.3: Two-Fold Validation Interface - 6/6 ✅ COMPLETE
+- Epic 8.4: Testing & Quality - 0/55 (📋 Ready - ALL UNBLOCKED) 🆕
+- Epic 8.5: Sphinx Documentation - 8/8 ✅ COMPLETE
+- Epic 8.6: Code Harmonization - 10/10 ✅ COMPLETE
+- Bug Fixes (untracked) - 4/4 ✅ COMPLETE
+
+**Phase 9 Progress:** 0/78 tasks (0%) 🆕
+
+- Epic 9.1: Validation Module Restructure - 0/20 (📋 Ready)
+- Epic 9.2: Privacy Framework Types - 0/14 (📋 Ready)
+- Epic 9.3: Privacy Evaluators - 0/7 (📋 Ready)
+- Epic 9.4: Schema Integration - 0/6 (📋 Ready)
+- Epic 9.5: Testing & Documentation - 0/26 (⏳ Waiting)
+- Epic 9.6: CLI Integration - 0/5 (⏳ Waiting)
+
+**TOTAL PROJECT TASKS: 364** (232 complete + 132 remaining)
 
 ---
 
@@ -384,15 +1165,154 @@ When creating contracts in griot-hub, apply these audit-ready defaults:
 
 ## 🔄 In Progress
 
-## 🎉🎉🎉 ALL TASKS COMPLETE! PROJECT FINISHED! 🎉🎉🎉
+**Phase 7: Documentation Updates - Only 7 Hub tasks remaining!**
 
-**No remaining tasks - all 160 tasks across 6 phases are complete!**
+### Completed Epics ✅
+- **Epic 7.1 (Core):** 7/7 complete - API reference, user guides, migration guide
+- **Epic 7.2 (CLI):** 6/6 complete - New commands, updated flags, quality rules reference
+- **Epic 7.3 (Registry):** 6/6 complete - ODCS schemas, breaking changes, version negotiation
 
-### Final Completions (Review #13)
-| Task ID | Task | Agent | Completed |
-|---------|------|-------|-----------|
-| T-364 | `griot migrate` command | cli | 2026-01-11 |
-| T-392 | E2E tests for Hub breaking change warnings | quality | 2026-01-11 |
+### Hub Agent (7 tasks remaining)
+| Task ID | Task | Priority | Status |
+|---------|------|----------|--------|
+| T-430 | Document BreakingChangeWarning, VersionComparison | High | 📋 Ready |
+| T-431 | Document SLAWizard, GovernanceWorkflow | High | 📋 Ready |
+| T-432 | Document smart defaults system | High | 📋 Ready |
+| T-433 | Document privacy auto-detection | Medium | 📋 Ready |
+| T-434 | Update Contract Studio docs | High | 📋 Ready |
+| T-435 | Document TypeScript types for ODCS | Medium | 📋 Ready |
+| T-436 | Add compliance presets reference | Medium | 📋 Ready |
+
+**All 7 Hub documentation tasks are unblocked and ready!**
+
+---
+
+**Phase 9: Validation Module Restructure & Privacy-by-Default** 🆕
+
+### Core Agent - Phase 9 Priority Tasks
+
+**Epic 9.1: Validation Module Restructure (20 tasks - HIGH PRIORITY)**
+| Task ID | Task | Priority | Status |
+|---------|------|----------|--------|
+| T-600 | Create `validation/` package structure | High | 📋 Ready |
+| T-601 | Create `validation/types.py` - enums | High | 📋 Ready |
+| T-602 | Create `ValidationError` dataclass | High | 📋 Ready |
+| T-603 | Create `RuleResult` dataclass | High | 📋 Ready |
+| T-604 | Create `ValidationResult` dataclass | High | 📋 Ready |
+| T-610 | Create abstract `DataFrameAdapter` | High | 📋 Ready |
+| T-611 | Implement `PandasAdapter` | High | 📋 Ready |
+| T-612 | Implement `PolarsAdapter` | High | 📋 Ready |
+| T-620 | Create abstract `RuleEvaluator` | High | 📋 Ready |
+| T-621 | Implement `NullValuesEvaluator` | High | 📋 Ready |
+| T-622 | Implement `DuplicateValuesEvaluator` | High | 📋 Ready |
+| T-623 | Implement `InvalidValuesEvaluator` | High | 📋 Ready |
+| T-630 | Create `pre_validation.py` | High | 📋 Ready |
+| T-631 | Create `ValidationEngine` | High | 📋 Ready |
+| T-632 | Implement `validate_dataframe()` API | High | 📋 Ready |
+
+**Epic 9.2: Privacy Framework Types (14 tasks)**
+| Task ID | Task | Priority | Status |
+|---------|------|----------|--------|
+| T-640 | Create `Sensitivity` enum | High | 📋 Ready |
+| T-641 | Create `PIIType` enum | High | 📋 Ready |
+| T-642 | Create `MaskingStrategy` enum | High | 📋 Ready |
+| T-643 | Create `PrivacyInfo` dataclass | High | 📋 Ready |
+| T-650 | Create `PIIPattern` dataclass | High | 📋 Ready |
+| T-651 | Kenya-specific PII patterns | High | 📋 Ready |
+| T-652 | EU/International PII patterns | High | 📋 Ready |
+| T-653 | Universal PII patterns | High | 📋 Ready |
+
+**Epic 9.3: Privacy Evaluators (7 tasks)**
+| Task ID | Task | Priority | Status |
+|---------|------|----------|--------|
+| T-660 | Create abstract `PrivacyEvaluator` | High | 📋 Ready |
+| T-661 | Implement `MaskingEvaluator` | High | 📋 Ready |
+| T-662 | Implement `UndeclaredPIIEvaluator` | High | 📋 Ready |
+| T-663 | Implement `SensitivityEvaluator` | High | 📋 Ready |
+| T-666 | Implement `validate_privacy()` API | High | 📋 Ready |
+
+**Recommended order for core agent:**
+1. **Validation Module First:** T-600 → T-604 → T-610 → T-611 → T-612 → T-620 → T-623 → T-630 → T-631 → T-632
+2. **Privacy Types:** T-640 → T-643 → T-650 → T-656
+3. **Privacy Evaluators:** T-660 → T-666
+4. **Schema Integration:** T-670 → T-675
+
+---
+
+**Phase 8: Contract-Schema Delineation & Pandera Validation** 🔄 (PAUSED - Superseded by Phase 9)
+
+### Epic 8.1: Contract-Schema Separation - ✅ COMPLETE (8/8)
+Tasks T-450 through T-457 implemented by core agent.
+
+### Core Agent - Phase 8 Remaining Tasks (Lower Priority)
+
+**Epic 8.6: Code Harmonization (NEW - 10 tasks)**
+| Task ID | Task | Priority | Status |
+|---------|------|----------|--------|
+| T-500 | Consolidate `SchemaFieldInfo` + `GriotSchemaFieldInfo` | High | 📋 Ready |
+| T-501 | Consolidate `SchemaField` + `GriotSchemaField` | High | 📋 Ready |
+| T-502 | Consolidate metaclasses | High | 📋 Ready |
+| T-503 | Extract shared helpers to `_utils.py` | Medium | 📋 Ready |
+| T-504 | Refactor `GriotSchema` (remove contract metadata) | High | 📋 Ready |
+| T-505 | Create backward-compatible aliases | High | 📋 Ready |
+
+**Epic 8.5: Sphinx Documentation (10 tasks)**
+| Task ID | Task | Priority | Status |
+|---------|------|----------|--------|
+| T-490 | Create `api/griot-contract.rst` | High | 📋 Ready |
+| T-491 | Create `api/griot-schema.rst` | High | 📋 Ready |
+| T-492 | Update `user-guide/defining-contracts.rst` | High | 📋 Ready |
+| T-493 | Create `user-guide/multi-schema-contracts.rst` | High | 📋 Ready |
+| T-497 | Create migration guide (GriotSchema → GriotContract) | High | 📋 Ready |
+
+**Epic 8.2: Pandera Validation (9 tasks)**
+| Task ID | Task | Priority | Status |
+|---------|------|----------|--------|
+| T-460 | Add pandera dependency, design `DataFrameValidatorRegistry` | High | 📋 Ready |
+| T-461 | Implement base `DataFrameValidator` abstract class | High | 📋 Ready |
+| T-462 | Implement `PanderaSchemaGenerator` | High | 📋 Ready |
+| T-463 | Implement `PandasValidator` | High | 📋 Ready |
+
+**Recommended order for core agent:**
+1. **Code Harmonization First:** T-500 → T-501 → T-502 → T-503 → T-504 → T-505 → T-506 → T-507 → T-508
+2. **Then Sphinx Docs:** T-490, T-491 (parallel) → T-492, T-493, T-497
+3. **Then Pandera:** T-460 → T-461 → T-462 → T-463 → T-464/T-465/T-466 (parallel)
+
+### Quality Agent - 55 Testing Tasks Ready! 🔓
+
+All dependencies are now complete. Quality agent can begin comprehensive testing.
+
+**High Priority Tasks (28 tasks):**
+| Category | Tasks | Count |
+|----------|-------|-------|
+| Contract-Schema Tests | T-480 to T-484 | 5 |
+| PanderaSchemaGenerator | T-510 to T-513 | 4 |
+| PandasValidator | T-520 to T-530 | 11 |
+| Multi-Schema Validation | T-570 to T-574 | 5 |
+| Backward Compatibility | T-580, T-582, T-583 | 3 |
+
+**Medium Priority Tasks (19 tasks):**
+| Category | Tasks | Count |
+|----------|-------|-------|
+| PolarsValidator | T-540 to T-545 | 6 |
+| PySparkValidator | T-550 to T-553 | 4 |
+| DaskValidator | T-560 to T-563 | 4 |
+| Edge Cases | T-581, T-584, T-585, T-586, T-574 | 5 |
+
+**Performance & Regression Tests (8 tasks):**
+| Category | Tasks | Count |
+|----------|-------|-------|
+| Performance Tests | T-590 to T-594 | 5 |
+| Bug Regressions | T-595 to T-598 | 4 |
+
+**Recommended Order:**
+1. **Start with:** T-480-484 (Contract-Schema) + T-510-513 (PanderaSchemaGenerator)
+2. **Then:** T-520-530 (PandasValidator - most critical)
+3. **Then:** T-570-574 (Multi-Schema) + T-580-586 (Backward Compat)
+4. **Then:** T-540-545 (Polars) if polars installed
+5. **Then:** T-550-553 (PySpark) if pyspark installed
+6. **Then:** T-560-563 (Dask) if dask installed
+7. **Finally:** T-590-598 (Performance + Regression)
 
 ---
 
@@ -585,6 +1505,171 @@ See `status/requests/` for full details.
 ---
 
 ## 📝 Notes
+
+### 2026-01-18 (orchestrator - Comprehensive Testing Tasks)
+
+**Epic 8.4 Expanded: 55 Testing Tasks for Quality Agent**
+
+Created comprehensive testing tasks organized into 10 sub-categories:
+
+| Sub-Epic | Tasks | Count | Priority |
+|----------|-------|-------|----------|
+| 8.4.1 Contract-Schema Tests | T-480 to T-484 | 5 | High |
+| 8.4.2 PanderaSchemaGenerator | T-510 to T-513 | 4 | High |
+| 8.4.3 PandasValidator | T-520 to T-530 | 11 | High |
+| 8.4.4 PolarsValidator | T-540 to T-545 | 6 | Medium |
+| 8.4.5 PySparkValidator | T-550 to T-553 | 4 | Medium |
+| 8.4.6 DaskValidator | T-560 to T-563 | 4 | Medium |
+| 8.4.7 Multi-Schema Tests | T-570 to T-574 | 5 | High |
+| 8.4.8 Backward Compat | T-580 to T-586 | 7 | High/Medium |
+| 8.4.9 Performance Tests | T-590 to T-594 | 5 | High/Medium |
+| 8.4.10 Bug Regressions | T-595 to T-598 | 4 | High |
+| **TOTAL** | — | **55** | — |
+
+**Test Coverage Areas:**
+- Basic type validation (string, int, float, bool, date)
+- Null value detection with quality rules
+- Duplicate value detection
+- Pattern/regex validation
+- Enum/valid_values validation
+- Numeric range constraints (min, max)
+- String length constraints (min_length, max_length)
+- Unique constraint enforcement
+- Validation modes (LAZY vs EAGER)
+- Multi-schema validation
+- Backward compatibility with legacy classes
+- Performance with 100K+ rows
+- Bug fix regression tests
+
+**All 55 testing tasks are now UNBLOCKED and ready for quality agent.**
+
+---
+
+### 2026-01-17 (orchestrator - Phase 8 Update #2)
+
+**Code Harmonization & Documentation Tasks Added**
+
+After reconnaissance of core agent work, identified:
+1. **Code Duplication:** `models.py` and `griot_schema.py` contain nearly identical field classes
+2. **Documentation Gap:** No Sphinx docs exist for Phase 8 classes (`GriotContract`, `GriotSchemaDefinition`)
+
+**New Tasks Created:**
+
+| Epic | Tasks | Focus |
+|------|-------|-------|
+| Epic 8.6 | T-500 to T-509 (10 tasks) | Code harmonization - remove duplication |
+| Epic 8.5 | T-490 to T-499 (10 tasks) | Sphinx documentation updates |
+
+**Updated Epic 8.1 Status:** Marked 8/8 tasks as ✅ Done (verified in code)
+
+**Core Agent Priority Order:**
+1. Code Harmonization (Epic 8.6) - fix duplication first
+2. Sphinx Documentation (Epic 8.5) - document Phase 8 classes
+3. Pandera Validation (Epic 8.2) - implement validation engine
+
+**Total Phase 8 Tasks:** 59 (8 complete, 51 remaining)
+
+---
+
+### 2026-01-17 (orchestrator - Phase 8 Creation)
+
+**Phase 8: Contract-Schema Delineation & Pandera Validation - CREATED**
+
+Created 39 new tasks across 5 epics based on user requirements for griot-core improvements:
+
+| Epic | Agent | Tasks | Focus |
+|------|-------|-------|-------|
+| 8.1 | core | 8 | Separate GriotContract from GriotSchema |
+| 8.2 | core | 9 | Pandera-based validation with DataFrame registry |
+| 8.3 | core | 6 | Two-fold validation (contract structure vs data) |
+| 8.4 | quality | 8 | Testing for all new features |
+| 8.5 | core | 7 | Documentation updates |
+
+**Key Requirements Addressed:**
+
+1. **Contract-Schema Separation:**
+   - `GriotContract` = contract-level (api_version, kind, multiple schemas)
+   - `GriotSchema` = schema-level (properties, quality rules, NO contract metadata)
+   - New field classes: `GriotContractField`, `GriotSchemaField`
+
+2. **Pandera-Based Validation:**
+   - Registry pattern for DataFrame validators
+   - Support for pandas, polars, pyspark, dask
+   - List of dicts converted to pandas for validation
+   - Lazy validation for big data compatibility
+
+3. **Two-Fold Validation:**
+   - `validate_contract_structure()` - lint/validate contract YAML structure
+   - `validate_schema_data()` - validate DataFrame against GriotSchema
+   - Accept: single schema+df, mapping, tuple list
+
+4. **Backward Compatibility:**
+   - Old `contract.validate(data)` still works (with deprecation warning)
+   - Auto-converts list of dicts to pandas DataFrame
+
+**Priority for core agent:**
+1. Start with T-450 (GriotContract) and T-460 (Pandera setup) in parallel
+2. These unlock the rest of Epic 8.1 and Epic 8.2
+
+**Total Tasks: 39** (22 core, 8 quality, 7 docs, 2 waiting)
+
+---
+
+### 2026-01-11 (orchestrator - Review #14)
+
+**Phase 7 Documentation Progress: 73% Complete!**
+
+**Core Agent - 7 tasks complete (Epic 7.1 DONE):**
+- T-400: Document ODCS dataclasses (~900 lines added) ✅
+- T-401: Document new enums (~240 lines added) ✅
+- T-402: Document breaking change API (~300 lines) ✅
+- T-403: Document schema migration API (~350 lines) ✅
+- T-404: Document quality validation (~300 lines) ✅
+- T-405: Update user guide with ODCS examples (~400 lines) ✅
+- T-406: Add migration guide v0→v1 (~400 lines) ✅
+
+**CLI Agent - 6 tasks complete (Epic 7.2 DONE):**
+- T-410: Document `griot init` (220 lines) ✅
+- T-411: Document `griot migrate` (215 lines) ✅
+- T-412: Update `griot push` docs ✅
+- T-413: Update `griot lint` docs ✅
+- T-414: Update `griot diff` docs ✅
+- T-415: Add ODCS quality rules reference (350 lines) ✅
+
+**Registry Agent - 6 tasks complete (Epic 7.3 DONE):**
+- T-420: Document ODCS Pydantic schemas (~600 lines) ✅
+- T-421: Document breaking change validation ✅
+- T-422: Document ?allow_breaking parameter ✅
+- T-423: Document schema version negotiation ✅
+- T-424: Document breaking change history ✅
+- T-425: Update API reference (409 responses) ✅
+
+**Remaining: 7 Hub documentation tasks (T-430 through T-436)**
+
+---
+
+### 2026-01-11 (orchestrator - Phase 7 Creation)
+
+**Created Phase 7: Documentation Updates for ODCS**
+
+Added 26 new documentation tasks across 4 agents:
+
+| Epic | Agent | Tasks | Focus |
+|------|-------|-------|-------|
+| 7.1 | core | 7 | ODCS dataclasses, enums, migration API, breaking changes |
+| 7.2 | cli | 6 | New commands (init, migrate), updated flags |
+| 7.3 | registry | 6 | Pydantic schemas, breaking change API, version negotiation |
+| 7.4 | hub | 7 | New components, smart defaults, TypeScript types |
+
+**High Priority Tasks (must complete first):**
+- T-400, T-401, T-402, T-403 (core) - API reference for new types
+- T-410, T-411, T-412 (cli) - New command documentation
+- T-420, T-421, T-422 (registry) - API breaking change docs
+- T-430, T-431, T-432, T-434 (hub) - Component documentation
+
+**All 26 tasks are ready with no blockers.**
+
+---
 
 ### 2026-01-11 (orchestrator - Review #13) 🎉🎉🎉
 

@@ -10,8 +10,9 @@ A Schema contains:
 """
 from __future__ import annotations
 
+import copy
 from dataclasses import dataclass, field as dataclass_field
-from typing import Any, Callable, ClassVar, TypeVar
+from typing import Any, Callable, ClassVar, TypeVar, TYPE_CHECKING
 
 from griot_core.types import DataType
 from griot_core._utils import (
@@ -21,11 +22,7 @@ from griot_core._utils import (
     logical_type_to_python,
 )
 
-# Privacy imports - using TYPE_CHECKING to avoid circular imports
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from griot_core.validation.privacy import PrivacyInfo
+from griot_core import QualityRule
 
 __all__ = [
     "Schema",
@@ -132,7 +129,7 @@ class FieldInfo:
             return None
 
         # Import here to avoid circular imports
-        from griot_core.validation.privacy import PrivacyInfo as PI
+        from griot_validate.validation import PrivacyInfo as PI
 
         if isinstance(privacy_data, PI):
             return privacy_data
@@ -575,8 +572,8 @@ class Schema(metaclass=SchemaMeta):
     def __init__(
         self,
         *,
-        id: str | None = None,
-        name: str = "",
+        id: str,
+        name: str,
         logical_type: str = "object",
         physical_type: str | None = None,
         physical_name: str | None = None,
@@ -623,7 +620,7 @@ class Schema(metaclass=SchemaMeta):
                 elif isinstance(prop, dict):
                     field_info = FieldInfo.from_dict(prop)
                     self._instance_fields[field_info.name] = field_info
-
+        self._auto_add_quality_rules()
     # -------------------------------------------------------------------------
     # Field Access
     # -------------------------------------------------------------------------
@@ -634,6 +631,22 @@ class Schema(metaclass=SchemaMeta):
         result = dict(self._schema_fields)
         result.update(self._instance_fields)
         return result
+
+    def _auto_add_quality_rules(self)->None:
+        """Automatically add quality rules based on field properties."""
+
+        for prop  in self._schema_fields.values():
+            quality_rules:list = []
+            if prop.primary_key :
+                quality_rules.append(QualityRule.duplicate_rows(must_be=0))
+                quality_rules.append(QualityRule.null_values(must_be=0))
+            if prop.unique:
+                if QualityRule.duplicate_rows(must_be=0) not in quality_rules:
+                    quality_rules.append(QualityRule.duplicate_rows(must_be=0))
+            if prop.required:
+                if QualityRule.null_values(must_be=0) not in quality_rules:
+                    quality_rules.append(QualityRule.null_values(must_be=0))
+            prop.quality = quality_rules
 
     @classmethod
     def list_fields(cls) -> list[FieldInfo]:

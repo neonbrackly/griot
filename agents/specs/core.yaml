@@ -20,7 +20,7 @@ updated_by: orchestrator
 # ├── __init__.py       # Public API exports
 # ├── models.py         # GriotModel, Field
 # ├── contract.py       # Contract class
-# ├── types.py          # Enums, type definitions
+# ├── privacy_types.py          # Enums, type definitions
 # ├── constraints.py    # Constraint logic
 # ├── validation.py     # Validation engine
 # ├── mock.py           # Mock data generator
@@ -29,7 +29,7 @@ updated_by: orchestrator
 # =============================================================================
 
 # =============================================================================
-# FILE: types.py
+# FILE: privacy_types.py
 # Enums and type definitions
 # =============================================================================
 types:

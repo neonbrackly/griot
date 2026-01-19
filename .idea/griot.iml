@@ -4,9 +4,9 @@
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$/griot-cli/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/griot-core/src" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/griot-enforce/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/griot-registry/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/griot/griot-core/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/griot-validate/src" isTestSource="false" />
     </content>
     <orderEntry type="jdk" jdkName="Python 3.13 virtualenv at C:\Users\BracklyMurunga\Desktop\AI SUNDAYS\Griot\griot\.venv" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />

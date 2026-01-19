@@ -11,6 +11,7 @@ It provides a RESTful API for contract lifecycle management, validation history 
    getting-started
    deployment
    api-reference
+   odcs-schemas
    storage
    authentication
    administration
@@ -26,6 +27,14 @@ Features
 - **Authentication**: API key and OAuth2/OIDC support
 - **Approval Workflows**: Multi-step approval chains for contract changes
 - **Report Generation**: Analytics, AI readiness, and audit reports
+
+**Phase 6 - ODCS Features (New!):**
+
+- **ODCS Schema Support**: Full Open Data Contract Standard v1.0.0 compliance
+- **Breaking Change Detection**: Automatic validation of contract updates
+- **Schema Version Negotiation**: Content negotiation via Accept headers
+- **Breaking Change History**: Track which versions introduced breaking changes
+- **50+ Pydantic Models**: Comprehensive schema for all ODCS sections
 
 Quick Links
 -----------

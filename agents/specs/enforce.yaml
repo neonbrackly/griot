@@ -15,7 +15,7 @@ updated_by: orchestrator
 # =============================================================================
 # PACKAGE STRUCTURE
 # =============================================================================
-# griot-enforce/src/griot_enforce/
+# griot-validate/src/griot_validate/
 # ├── __init__.py           # Public API exports
 # ├── validator.py          # Core RuntimeValidator
 # ├── airflow/
@@ -37,9 +37,9 @@ dependencies:
   required:
     - griot-core  # SDK for validation logic
   optional:
-    - apache-airflow  # griot-enforce[airflow]
-    - dagster         # griot-enforce[dagster]
-    - prefect         # griot-enforce[prefect]
+    - apache-airflow  # griot-validate[airflow]
+    - dagster         # griot-validate[dagster]
+    - prefect         # griot-validate[prefect]
 
 # =============================================================================
 # FILE: validator.py

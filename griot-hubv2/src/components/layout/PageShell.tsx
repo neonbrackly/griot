@@ -74,7 +74,7 @@ export function PageContainer({
   }[maxWidth]
 
   return (
-    <div className={cn('p-6', maxWidthClass, maxWidthClass && 'mx-auto', className)}>
+    <div className={cn('px-8 py-8', maxWidthClass, maxWidthClass && 'mx-auto', className)}>
       {children}
     </div>
   )

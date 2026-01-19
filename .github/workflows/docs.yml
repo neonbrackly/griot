@@ -8,7 +8,7 @@ on:
       - 'docs/**'
       - 'griot/griot-core/src/**'
       - 'griot/griot-cli/src/**'
-      - 'griot/griot-enforce/src/**'
+      - 'griot/griot-validate/src/**'
       - 'griot/griot-registry/src/**'
       - '.github/workflows/docs.yml'
   pull_request:

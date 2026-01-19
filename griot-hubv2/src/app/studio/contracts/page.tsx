@@ -183,41 +183,44 @@ function ContractsListPageContent() {
 
   return (
     <PageContainer>
-      <Breadcrumbs items={breadcrumbs} />
       <PageHeader
         title="Data Contracts"
         description="Manage data contracts between producers and consumers"
+        breadcrumbs={<Breadcrumbs items={breadcrumbs} />}
         actions={
           <Button onClick={() => router.push('/studio/contracts/new')}>
-            <Plus className="h-4 w-4" />
+            <Plus className="h-4 w-4 mr-2" />
             New Contract
           </Button>
         }
       />
 
       {/* Status Tabs */}
-      <Tabs value={statusFilter} onValueChange={(value) => updateFilters({ status: value })}>
-        <TabsList>
-          {statusOptions.map((option) => (
-            <TabsTrigger key={option.value} value={option.value}>
-              {option.label}
-              {statusCounts[option.value as keyof typeof statusCounts] > 0 && (
-                <Badge
-                  variant={statusFilter === option.value ? 'primary' : 'secondary'}
-                  size="sm"
-                  className="ml-2"
-                >
-                  {statusCounts[option.value as keyof typeof statusCounts]}
-                </Badge>
-              )}
-            </TabsTrigger>
-          ))}
-        </TabsList>
-      </Tabs>
+      <div className="mb-6">
+        <Tabs value={statusFilter} onValueChange={(value) => updateFilters({ status: value })}>
+          <TabsList>
+            {statusOptions.map((option) => (
+              <TabsTrigger key={option.value} value={option.value}>
+                {option.label}
+                {statusCounts[option.value as keyof typeof statusCounts] > 0 && (
+                  <Badge
+                    variant={statusFilter === option.value ? 'primary' : 'secondary'}
+                    size="sm"
+                    className="ml-2"
+                  >
+                    {statusCounts[option.value as keyof typeof statusCounts]}
+                  </Badge>
+                )}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
+      </div>
 
       {/* Filters */}
-      <Card className="p-4">
-        <div className="flex flex-col sm:flex-row gap-4">
+      <div className="mb-6">
+        <Card className="p-4">
+          <div className="flex flex-col sm:flex-row gap-4">
           {/* Search */}
           <div className="flex-1">
             <Input
@@ -257,7 +260,8 @@ function ContractsListPageContent() {
             </Button>
           )}
         </div>
-      </Card>
+        </Card>
+      </div>
 
       {/* Table */}
       <Card>

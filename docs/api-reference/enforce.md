@@ -6,19 +6,19 @@ Runtime validation for data orchestrators.
 
 ```bash
 # Core only
-pip install griot-enforce
+pip install griot-validate
 
 # With Airflow
-pip install griot-enforce[airflow]
+pip install griot-validate[airflow]
 
 # With Dagster
-pip install griot-enforce[dagster]
+pip install griot-validate[dagster]
 
 # With Prefect
-pip install griot-enforce[prefect]
+pip install griot-validate[prefect]
 
 # All orchestrators
-pip install griot-enforce[all]
+pip install griot-validate[all]
 ```
 
 ## RuntimeValidator
@@ -35,7 +35,7 @@ The core validator class for runtime data validation.
 ### Usage
 
 ```python
-from griot_enforce import RuntimeValidator
+from griot_validate import RuntimeValidator
 
 # Create validator
 validator = RuntimeValidator(
@@ -70,7 +70,7 @@ result = validator.validate_local(
 **Usage:**
 
 ```python
-from griot_enforce.airflow import GriotValidateOperator
+from griot_validate.airflow import GriotValidateOperator
 
 validate_task = GriotValidateOperator(
     task_id="validate_customer_data",
@@ -111,7 +111,8 @@ validate_task = GriotValidateOperator(
 
 ```python
 from dagster import Definitions, asset
-from griot_enforce.dagster import GriotResource
+from griot_validate.dagster import GriotResource
+
 
 @asset
 def customer_data(griot: GriotResource):
@@ -119,6 +120,7 @@ def customer_data(griot: GriotResource):
     result = griot.validate("customer", data)
     result.raise_on_failure()
     return data
+
 
 defs = Definitions(
     assets=[customer_data],
@@ -139,7 +141,8 @@ defs = Definitions(
 **Usage:**
 
 ```python
-from griot_enforce.dagster import griot_asset
+from griot_validate.dagster import griot_asset
+
 
 @griot_asset(contract="customer")
 def customer_data():
@@ -158,11 +161,13 @@ def customer_data():
 
 ```python
 from prefect import flow
-from griot_enforce.prefect import validate_task
+from griot_validate.prefect import validate_task
+
 
 @validate_task(contract="customer")
 def process_customers(data):
     return transform(data)
+
 
 @flow
 def customer_pipeline():

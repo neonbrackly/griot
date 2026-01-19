@@ -249,7 +249,7 @@ paths:
       tags: [validations]
       summary: Report validation result
       operationId: reportValidation
-      description: Called by griot-enforce to report runtime validation results
+      description: Called by griot-validate to report runtime validation results
       requestBody:
         required: true
         content:

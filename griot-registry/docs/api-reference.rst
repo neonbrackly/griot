@@ -169,49 +169,153 @@ GET /contracts/{name}
 
 Get a specific contract by name.
 
-**Request:**
+.. note::
+
+   **Schema Version Negotiation (Phase 6)**
+
+   This endpoint supports content negotiation via the ``Accept`` header. Use
+   versioned media types to request specific schema versions and formats.
+
+**Query Parameters:**
+
+.. list-table::
+   :header-rows: 1
+   :widths: 20 15 15 50
+
+   * - Parameter
+     - Type
+     - Default
+     - Description
+   * - ``version``
+     - string
+     - latest
+     - Specific version to retrieve
+
+**Content Negotiation:**
+
+Use the ``Accept`` header to request specific formats and schema versions:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 40 60
+
+   * - Accept Header
+     - Description
+   * - ``application/json``
+     - JSON response (default)
+   * - ``application/x-yaml``
+     - YAML response
+   * - ``application/vnd.griot.v1+json``
+     - JSON with ODCS v1 schema
+   * - ``application/vnd.griot.v1+yaml``
+     - YAML with ODCS v1 schema
+   * - ``application/vnd.griot.v1.0.0+yaml``
+     - YAML with specific schema version
+
+**Response Headers:**
+
+The response includes the schema version used:
+
+.. code-block:: text
+
+   X-Griot-Schema-Version: v1.0.0
+
+**Request (Default JSON):**
 
 .. code-block:: bash
 
    curl http://localhost:8000/api/v1/contracts/user_profile \
      -H "X-API-Key: your-key"
 
+**Request (ODCS v1 YAML):**
+
+.. code-block:: bash
+
+   curl http://localhost:8000/api/v1/contracts/user_profile \
+     -H "X-API-Key: your-key" \
+     -H "Accept: application/vnd.griot.v1+yaml"
+
 **Response (200 OK):**
 
 .. code-block:: json
 
    {
-     "name": "user_profile",
-     "description": "User profile data contract",
-     "owner": "data-team",
-     "current_version": "1.2.0",
+     "apiVersion": "v1.0.0",
+     "kind": "DataContract",
+     "id": "user_profile",
+     "name": "User Profile",
+     "version": "1.2.0",
      "status": "active",
-     "fields": [
+     "description": {
+       "purpose": "User profile data for personalization",
+       "usage": "Analytics, ML training"
+     },
+     "schema": [
        {
-         "name": "user_id",
-         "type": "string",
-         "required": true
-       },
-       {
-         "name": "email",
-         "type": "string",
-         "format": "email",
-         "pii": {
-           "category": "contact",
-           "sensitivity": "high"
-         }
+         "name": "users",
+         "physicalType": "table",
+         "properties": [
+           {
+             "name": "user_id",
+             "logicalType": "string",
+             "nullable": false,
+             "primary_key": true
+           },
+           {
+             "name": "email",
+             "logicalType": "string",
+             "privacy": {
+               "contains_pii": true,
+               "pii_category": "email",
+               "sensitivity_level": "confidential"
+             }
+           }
+         ]
        }
      ],
-     "metadata": {
-       "tags": ["users", "pii"],
-       "domain": "identity"
+     "team": {
+       "name": "data-team",
+       "steward": {"name": "Alice", "email": "alice@company.com"}
      }
+   }
+
+**Response (406 Not Acceptable - Unsupported Schema Version):**
+
+.. code-block:: json
+
+   {
+     "code": "UNSUPPORTED_SCHEMA_VERSION",
+     "message": "Schema version 'v2' is not supported",
+     "supported_versions": ["v1", "v1.0.0"]
    }
 
 PUT /contracts/{name}
 ~~~~~~~~~~~~~~~~~~~~~
 
 Update an existing contract. Creates a new version.
+
+.. note::
+
+   **Breaking Change Validation (Phase 6)**
+
+   This endpoint now validates updates for breaking changes. If breaking changes
+   are detected, the update will be blocked with a 409 response unless explicitly
+   allowed using the ``allow_breaking`` query parameter.
+
+**Query Parameters:**
+
+.. list-table::
+   :header-rows: 1
+   :widths: 20 15 15 50
+
+   * - Parameter
+     - Type
+     - Default
+     - Description
+   * - ``allow_breaking``
+     - boolean
+     - false
+     - Set to ``true`` to allow updates with breaking changes
 
 **Request Body:**
 
@@ -233,6 +337,78 @@ Update an existing contract. Creates a new version.
      "previous_version": "1.2.0",
      "changelog": "Added phone_number field"
    }
+
+**Response (409 Conflict - Breaking Changes Detected):**
+
+When breaking changes are detected and ``allow_breaking`` is not set to ``true``:
+
+.. code-block:: json
+
+   {
+     "code": "BREAKING_CHANGES_DETECTED",
+     "message": "Update contains 2 breaking change(s) that require explicit acknowledgment",
+     "breaking_changes": [
+       {
+         "change_type": "field_removed",
+         "field": "legacy_id",
+         "description": "Field 'legacy_id' was removed",
+         "from_value": "string",
+         "to_value": null,
+         "migration_hint": "Add the field back or migrate consumers"
+       },
+       {
+         "change_type": "type_changed_incompatible",
+         "field": "age",
+         "description": "Type changed from 'string' to 'integer'",
+         "from_value": "string",
+         "to_value": "integer",
+         "migration_hint": "Use a compatible type or create a new field"
+       }
+     ],
+     "allow_breaking_hint": "Add ?allow_breaking=true to force the update"
+   }
+
+**Breaking Change Types:**
+
+.. list-table::
+   :header-rows: 1
+   :widths: 30 70
+
+   * - Change Type
+     - Description
+   * - ``field_removed``
+     - An existing field was removed from the contract
+   * - ``type_changed_incompatible``
+     - Field type changed to an incompatible type
+   * - ``nullable_to_required``
+     - A nullable field became required
+   * - ``enum_values_removed``
+     - Allowed enum values were removed
+   * - ``constraint_tightened``
+     - Constraints became more restrictive
+   * - ``pattern_changed``
+     - Regex pattern was modified
+   * - ``primary_key_changed``
+     - Primary key field changed
+   * - ``required_field_added``
+     - Required field added without default value
+
+**Forcing Breaking Changes:**
+
+To force an update with breaking changes:
+
+.. code-block:: bash
+
+   curl -X PUT "http://localhost:8000/api/v1/contracts/user_profile?allow_breaking=true" \
+     -H "X-API-Key: your-key" \
+     -H "Content-Type: application/json" \
+     -d '{"fields": [...]}'
+
+When ``allow_breaking=true``:
+
+- The update proceeds with a **major version bump** (e.g., 1.2.0 → 2.0.0)
+- Breaking changes are recorded in version history
+- The version metadata includes ``is_breaking: true``
 
 DELETE /contracts/{name}
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -264,6 +440,14 @@ GET /contracts/{name}/versions
 
 List all versions of a contract.
 
+.. note::
+
+   **Breaking Change History (Phase 6)**
+
+   Version listings now include ``is_breaking`` flags to identify versions
+   that introduced breaking changes. This helps consumers understand
+   compatibility when upgrading.
+
 **Response (200 OK):**
 
 .. code-block:: json
@@ -272,25 +456,68 @@ List all versions of a contract.
      "contract": "user_profile",
      "versions": [
        {
+         "version": "2.0.0",
+         "created_at": "2024-01-15T10:00:00Z",
+         "created_by": "alice@example.com",
+         "change_type": "major",
+         "changelog": "Removed legacy_id field, changed age type",
+         "is_breaking": true
+       },
+       {
          "version": "1.2.0",
          "created_at": "2024-01-10T14:30:00Z",
          "created_by": "alice@example.com",
-         "changelog": "Added email validation"
+         "change_type": "minor",
+         "changelog": "Added email validation",
+         "is_breaking": false
        },
        {
          "version": "1.1.0",
          "created_at": "2024-01-05T10:00:00Z",
          "created_by": "bob@example.com",
-         "changelog": "Added age field"
+         "change_type": "minor",
+         "changelog": "Added age field",
+         "is_breaking": false
        },
        {
          "version": "1.0.0",
          "created_at": "2024-01-01T00:00:00Z",
          "created_by": "alice@example.com",
-         "changelog": "Initial version"
+         "change_type": "major",
+         "changelog": "Initial version",
+         "is_breaking": false
        }
-     ]
+     ],
+     "total": 4
    }
+
+**Version Fields:**
+
+.. list-table::
+   :header-rows: 1
+   :widths: 20 15 65
+
+   * - Field
+     - Type
+     - Description
+   * - ``version``
+     - string
+     - Semantic version number
+   * - ``created_at``
+     - datetime
+     - When the version was created
+   * - ``created_by``
+     - string
+     - User who created the version
+   * - ``change_type``
+     - string
+     - patch, minor, or major
+   * - ``changelog``
+     - string
+     - Description of changes
+   * - ``is_breaking``
+     - boolean
+     - Whether this version introduced breaking changes
 
 GET /contracts/{name}/versions/{version}
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -616,10 +843,10 @@ All error responses follow this format:
 
 .. list-table::
    :header-rows: 1
-   :widths: 25 15 60
+   :widths: 30 10 60
 
    * - Code
-     - HTTP Status
+     - HTTP
      - Description
    * - ``VALIDATION_ERROR``
      - 422
@@ -633,6 +860,12 @@ All error responses follow this format:
    * - ``VERSION_NOT_FOUND``
      - 404
      - Specified version does not exist
+   * - ``BREAKING_CHANGES_DETECTED``
+     - 409
+     - Update contains breaking changes (use ``?allow_breaking=true`` to force)
+   * - ``UNSUPPORTED_SCHEMA_VERSION``
+     - 406
+     - Requested schema version is not supported
    * - ``UNAUTHORIZED``
      - 401
      - Missing or invalid authentication
@@ -642,6 +875,27 @@ All error responses follow this format:
    * - ``STORAGE_ERROR``
      - 500
      - Storage backend error
+
+**Breaking Changes Response:**
+
+When ``BREAKING_CHANGES_DETECTED`` is returned, the response includes detailed
+information about each breaking change:
+
+.. code-block:: json
+
+   {
+     "code": "BREAKING_CHANGES_DETECTED",
+     "message": "Update contains breaking changes",
+     "breaking_changes": [
+       {
+         "change_type": "field_removed",
+         "field": "old_field",
+         "description": "Field 'old_field' was removed",
+         "migration_hint": "Add the field back or migrate consumers"
+       }
+     ],
+     "allow_breaking_hint": "Add ?allow_breaking=true to force the update"
+   }
 
 Rate Limiting
 -------------

@@ -127,13 +127,13 @@ interface ReportSectionProps {
 export function ReportSection({ title, children, action }: ReportSectionProps) {
   return (
     <Card className="mb-6">
-      <CardHeader>
+      <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
           <CardTitle>{title}</CardTitle>
           {action}
         </div>
       </CardHeader>
-      <CardContent>{children}</CardContent>
+      <CardContent className="pt-2">{children}</CardContent>
     </Card>
   )
 }

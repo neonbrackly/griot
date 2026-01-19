@@ -249,10 +249,10 @@ export default function IssueDetailPage() {
 
   return (
     <PageContainer>
-      <Breadcrumbs items={breadcrumbs} />
+      <Breadcrumbs items={breadcrumbs} className="mb-6" />
 
       {/* Header */}
-      <div className="flex items-start gap-4">
+      <div className="flex items-start gap-4 mb-6">
         <SeverityIcon severity={issue.severity} size="lg" />
         <div className="flex-1 min-w-0">
           <h1 className="text-2xl font-semibold text-text-primary">{issue.title}</h1>

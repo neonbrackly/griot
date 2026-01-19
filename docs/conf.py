@@ -10,7 +10,7 @@ from datetime import datetime
 # Add source directories to path for autodoc
 sys.path.insert(0, os.path.abspath("../griot/griot-core/src"))
 sys.path.insert(0, os.path.abspath("../griot/griot-cli/src"))
-sys.path.insert(0, os.path.abspath("../griot/griot-enforce/src"))
+sys.path.insert(0, os.path.abspath("../griot/griot-validate/src"))
 sys.path.insert(0, os.path.abspath("../griot/griot-registry/src"))
 
 # -- Project information -----------------------------------------------------

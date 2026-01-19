@@ -98,12 +98,6 @@ from griot_core.contract import (
     to_camel_case,
 )
 
-# Schema classes
-from griot_core.schema import (
-    Schema,
-    Field,
-    FieldInfo,
-)
 
 # Types
 from griot_core.types import (
@@ -117,6 +111,12 @@ from griot_core.types import (
     QualityRule,
 )
 
+# Schema classes
+from griot_core.schema import (
+    Schema,
+    Field,
+    FieldInfo,
+)
 # Exceptions
 from griot_core.exceptions import (
     ConstraintError,

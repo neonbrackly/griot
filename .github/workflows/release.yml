@@ -19,7 +19,7 @@ on:
         options:
           - griot-core
           - griot-cli
-          - griot-enforce
+          - griot-validate
           - griot-registry
           - all
       dry-run:
@@ -44,7 +44,7 @@ jobs:
           - griot-core
           # Future packages will be added here:
           # - griot-cli
-          # - griot-enforce
+          # - griot-validate
           # - griot-registry
 
     steps:

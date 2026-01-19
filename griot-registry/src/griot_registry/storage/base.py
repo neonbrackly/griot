@@ -132,6 +132,26 @@ class StorageBackend(ABC):
         ...
 
     @abstractmethod
+    async def update_contract_status(
+        self,
+        contract_id: str,
+        new_status: str,
+    ) -> Contract:
+        """Update the status of a contract.
+
+        Used by the approval workflow to transition contract status.
+        Valid status values: draft, active, deprecated, retired
+
+        Args:
+            contract_id: The contract identifier.
+            new_status: The new status to set.
+
+        Returns:
+            The updated contract with new status.
+        """
+        ...
+
+    @abstractmethod
     async def list_contracts(
         self,
         limit: int = 50,
@@ -202,7 +222,7 @@ class StorageBackend(ABC):
         """Record a validation result.
 
         Args:
-            report: The validation report from griot-enforce.
+            report: The validation report from griot-validate.
 
         Returns:
             The stored validation record.

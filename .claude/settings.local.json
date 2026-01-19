@@ -7,7 +7,9 @@
       "Bash(git commit:*)",
       "Bash(wc:*)",
       "Bash(python -m pytest:*)",
-      "Bash(python:*)"
+      "Bash(python:*)",
+      "Bash(dir \"C:\\\\Users\\\\BracklyMurunga\\\\Desktop\\\\AI SUNDAYS\\\\Griot\\\\griot\\\\griot-core\\\\docs\")",
+      "Bash(PYTHONPATH=src python:*)"
     ]
   }
 }

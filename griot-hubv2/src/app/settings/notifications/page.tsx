@@ -157,7 +157,7 @@ export default function NotificationSettingsPage() {
         </div>
       </Card>
 
-      <div className="flex justify-end">
+      <div className="flex justify-end mt-6">
         <Button onClick={handleSave} disabled={isSaving}>
           Save Preferences
         </Button>

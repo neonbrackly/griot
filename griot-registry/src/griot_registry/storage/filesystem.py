@@ -15,7 +15,8 @@ from griot_registry.schemas import (
     ContractDiff,
     ContractList,
     ContractUpdate,
-    FieldDefinition,
+    FieldConstraints,
+    SchemaProperty,
     SearchHit,
     SearchResults,
     SectionChange,
@@ -80,7 +81,10 @@ class FilesystemStorage(StorageBackend):
     # Contract CRUD
     # =========================================================================
     async def create_contract(self, contract: ContractCreate) -> Contract:
-        """Create a new contract with version 1.0.0."""
+        """Create a new contract with version 1.0.0.
+
+        Supports both legacy fields format and ODCS schema format.
+        """
         contract_dir = self.contracts_dir / contract.id
         versions_dir = contract_dir / "versions"
         versions_dir.mkdir(parents=True, exist_ok=True)
@@ -88,15 +92,32 @@ class FilesystemStorage(StorageBackend):
         now = datetime.now(timezone.utc)
         version = "1.0.0"
 
-        # Create the full contract
+        # Create the full contract with all ODCS sections
         full_contract = Contract(
+            # Core identifiers
             id=contract.id,
             name=contract.name,
+            api_version=contract.api_version,
+            kind=contract.kind,
             description=contract.description,
             owner=contract.owner,
+            # Version info
             version=version,
             status="draft",
-            fields=contract.fields,
+            # ODCS sections
+            description_section=contract.description_section,
+            schema=contract.schema,
+            legal=contract.legal,
+            compliance=contract.compliance,
+            lineage=contract.lineage,
+            sla=contract.sla,
+            access=contract.access,
+            distribution=contract.distribution,
+            governance=contract.governance,
+            team=contract.team,
+            servers=contract.servers,
+            roles=contract.roles,
+            # Timestamps
             created_at=now,
             updated_at=now,
         )
@@ -197,13 +218,30 @@ class FilesystemStorage(StorageBackend):
 
         now = datetime.now(timezone.utc)
         updated = Contract(
+            # Core identifiers
             id=current.id,
             name=update.name if update.name else current.name,
+            api_version=current.api_version,
+            kind=current.kind,
             description=update.description if update.description else current.description,
             owner=current.owner,
+            # Version info
             version=new_version,
             status=current.status,
-            fields=update.fields if update.fields else current.fields,
+            # ODCS sections - update if provided, otherwise keep current
+            description_section=update.description_section if update.description_section else current.description_section,
+            schema=update.schema if update.schema else current.schema,
+            legal=update.legal if update.legal else current.legal,
+            compliance=update.compliance if update.compliance else current.compliance,
+            lineage=update.lineage if update.lineage else current.lineage,
+            sla=update.sla if update.sla else current.sla,
+            access=update.access if update.access else current.access,
+            distribution=update.distribution if update.distribution else current.distribution,
+            governance=update.governance if update.governance else current.governance,
+            team=update.team if update.team else current.team,
+            servers=update.servers if update.servers else current.servers,
+            roles=update.roles if update.roles else current.roles,
+            # Timestamps
             created_at=current.created_at,
             updated_at=now,
         )
@@ -244,6 +282,39 @@ class FilesystemStorage(StorageBackend):
             contract.status = "deprecated"
             version_file = contract_dir / "versions" / f"{contract.version}.yaml"
             self._save_contract_yaml(version_file, contract)
+
+    async def update_contract_status(
+        self,
+        contract_id: str,
+        new_status: str,
+    ) -> Contract:
+        """Update contract status.
+
+        Used by the approval workflow to transition contract status.
+        """
+        contract_dir = self.contracts_dir / contract_id
+        metadata = self._load_json(contract_dir / "metadata.json")
+        if metadata is None:
+            raise ValueError(f"Contract {contract_id} not found")
+
+        # Update metadata status
+        old_status = metadata.get("status", "draft")
+        metadata["status"] = new_status
+        metadata["status_changed_at"] = datetime.now(timezone.utc).isoformat()
+        metadata["status_changed_from"] = old_status
+        self._save_json(contract_dir / "metadata.json", metadata)
+
+        # Update the latest version file
+        contract = await self.get_contract(contract_id)
+        if contract is None:
+            raise ValueError(f"Contract {contract_id} not found")
+
+        contract.status = new_status
+        contract.updated_at = datetime.now(timezone.utc)
+        version_file = contract_dir / "versions" / f"{contract.version}.yaml"
+        self._save_contract_yaml(version_file, contract)
+
+        return contract
 
     async def list_contracts(
         self,
@@ -322,34 +393,37 @@ class FilesystemStorage(StorageBackend):
         to_contract: Contract,
     ) -> ContractDiff:
         """Compute diff between two contract versions (T-374 enhanced for ODCS)."""
-        from_fields = {f.name: f for f in from_contract.fields}
-        to_fields = {f.name: f for f in to_contract.fields}
+        # Extract properties from ODCS schema (schema_name.property_name format)
+        from_props = self._extract_all_properties(from_contract.schema)
+        to_props = self._extract_all_properties(to_contract.schema)
 
-        added = [name for name in to_fields if name not in from_fields]
-        removed = [name for name in from_fields if name not in to_fields]
+        added = [name for name in to_props if name not in from_props]
+        removed = [name for name in from_props if name not in to_props]
 
         type_changes: list[TypeChange] = []
         constraint_changes: list[ConstraintChange] = []
 
-        # Check for changes in existing fields
-        for name in from_fields:
-            if name not in to_fields:
+        # Check for changes in existing properties
+        for name in from_props:
+            if name not in to_props:
                 continue
 
-            from_f = from_fields[name]
-            to_f = to_fields[name]
+            from_p = from_props[name]
+            to_p = to_props[name]
 
-            # Type change
-            if from_f.type != to_f.type:
+            # Type change (using logical_type from SchemaProperty)
+            from_type = from_p.logical_type if from_p.logical_type else "string"
+            to_type = to_p.logical_type if to_p.logical_type else "string"
+            if from_type != to_type:
                 type_changes.append(TypeChange(
                     field=name,
-                    from_type=from_f.type,
-                    to_type=to_f.type,
+                    from_type=from_type,
+                    to_type=to_type,
                     is_breaking=True,
                 ))
 
             # Constraint changes
-            self._compare_constraints(name, from_f, to_f, constraint_changes)
+            self._compare_property_constraints(name, from_p, to_p, constraint_changes)
 
         # T-374: Detect ODCS section changes
         section_changes: list[SectionChange] = []
@@ -580,27 +654,30 @@ class FilesystemStorage(StorageBackend):
                     snippet=self._snippet(contract.description, query),
                 ))
 
-            # Search fields
-            for field in contract.fields:
-                if field_filter and field.name != field_filter:
-                    continue
+            # Search schema properties (ODCS format)
+            for schema_def in contract.schema or []:
+                for prop in schema_def.properties or []:
+                    full_name = f"{schema_def.name}.{prop.name}"
+                    if field_filter and prop.name != field_filter:
+                        continue
 
-                if query_lower in field.name.lower():
-                    hits.append(SearchHit(
-                        contract_id=contract.id,
-                        contract_name=contract.name,
-                        field_name=field.name,
-                        match_type="field",
-                        snippet=f"{field.name}: {field.description}",
-                    ))
-                elif query_lower in field.description.lower():
-                    hits.append(SearchHit(
-                        contract_id=contract.id,
-                        contract_name=contract.name,
-                        field_name=field.name,
-                        match_type="field",
-                        snippet=self._snippet(field.description, query),
-                    ))
+                    prop_desc = prop.description or ""
+                    if query_lower in prop.name.lower():
+                        hits.append(SearchHit(
+                            contract_id=contract.id,
+                            contract_name=contract.name,
+                            field_name=full_name,
+                            match_type="field",
+                            snippet=f"{full_name}: {prop_desc}",
+                        ))
+                    elif prop_desc and query_lower in prop_desc.lower():
+                        hits.append(SearchHit(
+                            contract_id=contract.id,
+                            contract_name=contract.name,
+                            field_name=full_name,
+                            match_type="field",
+                            snippet=self._snippet(prop_desc, query),
+                        ))
 
         total = len(hits)
         items = hits[offset : offset + limit]
@@ -623,39 +700,33 @@ class FilesystemStorage(StorageBackend):
             return json.load(f)
 
     def _save_contract_yaml(self, path: Path, contract: Contract) -> None:
-        """Save contract as YAML."""
-        data = {
-            "id": contract.id,
-            "name": contract.name,
-            "description": contract.description,
-            "version": contract.version,
-            "status": contract.status,
-            "owner": contract.owner,
-            "fields": [f.model_dump(exclude_none=True) for f in contract.fields],
-            "created_at": contract.created_at.isoformat(),
-            "updated_at": contract.updated_at.isoformat(),
-        }
+        """Save contract as YAML with full ODCS support."""
+        # Use Pydantic's model_dump to serialize all fields properly
+        data = contract.model_dump(
+            mode="json",
+            exclude_none=True,
+            by_alias=True,  # Use aliases like description_odcs
+        )
+
+        # Convert datetime strings if needed (model_dump in json mode handles this)
         with open(path, "w") as f:
             yaml.safe_dump(data, f, default_flow_style=False, sort_keys=False)
 
     def _load_contract_yaml(self, path: Path) -> Contract:
-        """Load contract from YAML."""
+        """Load contract from YAML with full ODCS support."""
         with open(path) as f:
             data = yaml.safe_load(f)
 
-        fields = [FieldDefinition(**f) for f in data.get("fields", [])]
+        # Convert string timestamps to datetime
+        if isinstance(data.get("created_at"), str):
+            data["created_at"] = datetime.fromisoformat(data["created_at"].replace("Z", "+00:00"))
+        if isinstance(data.get("updated_at"), str):
+            data["updated_at"] = datetime.fromisoformat(data["updated_at"].replace("Z", "+00:00"))
 
-        return Contract(
-            id=data["id"],
-            name=data["name"],
-            description=data.get("description"),
-            version=data["version"],
-            status=data["status"],
-            owner=data.get("owner"),
-            fields=fields,
-            created_at=datetime.fromisoformat(data["created_at"]),
-            updated_at=datetime.fromisoformat(data["updated_at"]),
-        )
+        # Remove legacy fields if present (migrating old contracts)
+        data.pop("fields", None)
+
+        return Contract(**data)
 
     def _bump_version(self, version: str, change_type: str) -> str:
         """Increment version based on change type."""
@@ -675,16 +746,36 @@ class FilesystemStorage(StorageBackend):
         parts = version.split(".")
         return (int(parts[0]), int(parts[1]), int(parts[2]))
 
-    def _compare_constraints(
+    def _extract_all_properties(
+        self,
+        schema_list: list | None,
+    ) -> dict[str, SchemaProperty]:
+        """Extract all properties from ODCS schema into a flat dictionary.
+
+        Keys are in format 'schema_name.property_name' for uniqueness.
+        """
+        properties: dict[str, SchemaProperty] = {}
+        if not schema_list:
+            return properties
+
+        for schema_def in schema_list:
+            schema_name = schema_def.name
+            for prop in schema_def.properties or []:
+                key = f"{schema_name}.{prop.name}"
+                properties[key] = prop
+
+        return properties
+
+    def _compare_property_constraints(
         self,
         field_name: str,
-        from_f: FieldDefinition,
-        to_f: FieldDefinition,
+        from_p: SchemaProperty,
+        to_p: SchemaProperty,
         changes: list[ConstraintChange],
     ) -> None:
-        """Compare constraints between two field definitions."""
-        from_c = from_f.constraints or FieldConstraints()
-        to_c = to_f.constraints or FieldConstraints()
+        """Compare constraints between two schema properties."""
+        from_c = from_p.constraints or FieldConstraints()
+        to_c = to_p.constraints or FieldConstraints()
 
         constraint_fields = [
             "min_length", "max_length", "pattern", "format",

@@ -6,12 +6,12 @@ Tests to verify NFR-SDK-004: 100K rows validation <5s.
 from __future__ import annotations
 
 import time
-from typing import Any, Generator
+from typing import Any
 
 import pytest
 
 from griot_core.models import Field, GriotModel
-from griot_core.validation import validate_data
+from griot_validate.validation import validate_data
 
 
 class BenchmarkCustomer(GriotModel):

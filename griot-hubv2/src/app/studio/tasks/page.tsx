@@ -420,13 +420,14 @@ export default function MyTasksPage() {
 
   return (
     <PageContainer>
-      <Breadcrumbs items={breadcrumbs} />
       <PageHeader
         title="My Tasks"
         description="Items requiring your attention"
+        breadcrumbs={<Breadcrumbs items={breadcrumbs} />}
       />
 
-      <Tabs defaultValue="authorizations">
+      <div className="mb-6">
+        <Tabs defaultValue="authorizations">
         <TabsList>
           <TabsTrigger value="authorizations" className="flex items-center gap-2">
             Pending Authorization
@@ -472,6 +473,7 @@ export default function MyTasksPage() {
           <DraftsList items={tasks?.drafts} isLoading={isLoading} />
         </TabsContent>
       </Tabs>
+      </div>
     </PageContainer>
   )
 }
