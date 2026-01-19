@@ -482,6 +482,9 @@ class Contract:
         self.name = name
         self.version = version
 
+        if not schemas:
+            raise ValueError("A contract must have at least one schema.")
+
         if isinstance(status, str):
             try:
                 self.status = ContractStatus(status)
@@ -542,7 +545,7 @@ class Contract:
 
         self.authoritative_definitions = authoritative_definitions or []
         self.custom_properties = custom_properties or {}
-        self._schemas: list[Schema] = schemas or []
+        self._schemas: list[Schema] = list(set(schemas)) or []
 
     # -------------------------------------------------------------------------
     # Schema Management
@@ -555,15 +558,24 @@ class Contract:
 
     def add_schema(self, schema: Schema) -> None:
         """Add a schema to this contract."""
+        if schema.id in [existing_schema.id for existing_schema in self._schemas]:
+            print(f"Schema {schema.id} already exists in contract. Skipping addition.")
+            return
+        print(f"Schema {schema.id} added to contract.")
         self._schemas.append(schema)
 
     def remove_schema(self, schema: Schema) -> bool:
         """Remove a schema from this contract."""
-        try:
-            self._schemas.remove(schema)
-            return True
-        except ValueError:
+
+        if len(self._schemas) == 1:
+            print("A contract must have at least one schema. Cannot remove the last schema.")
             return False
+        if schema.id in [existing_schema.id for existing_schema in self._schemas]:
+            self._schemas.remove(schema)
+            print(f"Schema {schema.id} removed from contract.")
+            return True
+        print(f"Schema {schema.id} not found in contract.")
+        return False
 
     def get_schema(self, index: int) -> Schema | None:
         """Get schema by index."""
@@ -675,7 +687,6 @@ class Contract:
 
         return cls(
             api_version=data.get("api_version", "v1.0.0"),
-            kind=data.get("kind", "DataContract"),
             id=data.get("id"),
             name=data.get("name", ""),
             version=data.get("version", "1.0.0"),
@@ -985,15 +996,38 @@ def validate_contract_structure(contract: Contract) -> ContractStructureResult:
                 ))
             else:
                 has_primary_key = False
+
                 for field_name, field_info in fields.items():
                     field_path = f"{schema_path}.properties.{field_name}"
 
                     if field_info.primary_key:
                         has_primary_key = True
 
+                    if not field_info.quality:
+                        issues.append(
+                            ContractStructureIssue(
+                                code="CS-020",
+                                path=f"{field_path}.quality",
+                                message=f"Field '{field_name}' has no quality checks",
+                                severity=Severity.WARNING,
+                                suggestion=f"Add a quality check to the {field_info} field",
+                            )
+                        )
+
+                    if field_info.custom_properties.get("privacy").get("is_pii") and field_info.custom_properties.get("privacy").get("pii_type") is None:
+                        issues.append(
+                            ContractStructureIssue(
+                                code="CS-022",
+                                path=f"{field_path}.privacy",
+                                message=f"Field '{field_name}' has no PII tag",
+                                severity=Severity.WARNING,
+                                suggestion=f"Consider adding a PII type to the {field_name} field",
+                            )
+                        )
+
                     if not field_info.description:
                         issues.append(ContractStructureIssue(
-                            code="CS-020",
+                            code="CS-023",
                             path=f"{field_path}.description",
                             message=f"Field '{field_name}' has no description",
                             severity=Severity.WARNING,

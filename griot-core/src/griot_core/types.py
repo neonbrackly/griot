@@ -357,7 +357,7 @@ class QualityRule:
         arguments: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         """Build a quality rule dictionary from typed parameters."""
-        rule: dict[str, Any] = {"metric": metric.value}
+        rule: dict[str, Any] = {"id":rule_id,"metric": metric.value}
 
         # Add operator
         if must_be is not None:
@@ -380,8 +380,6 @@ class QualityRule:
         # Add optional fields
         if unit is not None:
             rule["unit"] = unit.value
-        if rule_id is not None:
-            rule["id"] = rule_id
         if name is not None:
             rule["name"] = name
         if arguments is not None:
@@ -401,7 +399,7 @@ class QualityRule:
         must_be_greater_or_equal_to: int | None = None,
         must_be_between: list[int] | tuple[int, int] | None = None,
         unit: QualityUnit = QualityUnit.ROWS,
-        rule_id: str | None = None,
+        rule_id: str | None = "null_values_check",
         name: str | None = None,
     ) -> dict[str, Any]:
         """
@@ -449,7 +447,7 @@ class QualityRule:
         must_be_between: list[int] | tuple[int, int] | None = None,
         unit: QualityUnit = QualityUnit.ROWS,
         missing_values_list: list[Any] | None = None,
-        rule_id: str | None = None,
+        rule_id: str | None = "Missing_values_check",
         name: str | None = None,
     ) -> dict[str, Any]:
         """
@@ -507,7 +505,7 @@ class QualityRule:
         max_value: int | float | None = None,
         min_length: int | None = None,
         max_length: int | None = None,
-        rule_id: str | None = None,
+        rule_id: str | None = "invalid_values_check",
         name: str | None = None,
     ) -> dict[str, Any]:
         """
@@ -566,7 +564,7 @@ class QualityRule:
         must_be_less_than: int | None = None,
         must_be_less_or_equal_to: int | None = None,
         unit: QualityUnit = QualityUnit.ROWS,
-        rule_id: str | None = None,
+        rule_id: str | None = "duplicate_values_check",
         name: str | None = None,
     ) -> dict[str, Any]:
         """
@@ -608,7 +606,7 @@ class QualityRule:
         must_be_less_than: int | None = None,
         must_be_less_or_equal_to: int | None = None,
         must_be_between: list[int] | tuple[int, int] | None = None,
-        rule_id: str | None = None,
+        rule_id: str | None = "row_count_check",
         name: str | None = None,
     ) -> dict[str, Any]:
         """
@@ -653,7 +651,7 @@ class QualityRule:
         must_be_less_or_equal_to: int | None = None,
         unit: QualityUnit = QualityUnit.ROWS,
         properties: list[str] | None = None,
-        rule_id: str | None = None,
+        rule_id: str | None = "duplicate_rows_check",
         name: str | None = None,
     ) -> dict[str, Any]:
         """

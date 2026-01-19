@@ -218,7 +218,7 @@ class PrivacyInfo:
             "sensitivity": self.sensitivity.value,
         }
 
-        if self.pii_type:
+        if self.pii_type is not None:
             result["pii_type"] = self.pii_type.value
 
         if self.requires_masking:

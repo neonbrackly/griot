@@ -14,6 +14,7 @@ import copy
 from dataclasses import dataclass, field as dataclass_field
 from typing import Any, Callable, ClassVar, TypeVar, TYPE_CHECKING
 
+from griot_core.privacy_types import Sensitivity, PIIType
 from griot_core.types import DataType
 from griot_core._utils import (
     extract_base_type,
@@ -303,6 +304,10 @@ class Field:
         unique: bool = False,
         nullable: bool = True,
         critical_data_element: bool = False,
+        is_pii: bool = False,
+        pii_type: PIIType | None = None,
+        sensitivity: Sensitivity  = Sensitivity.INTERNAL,
+        requires_masking: bool = False,
         relationships: list[dict[str, Any]] | None = None,
         tags: list[str] | None = None,
         custom_properties: dict[str, Any] | None = None,
@@ -355,12 +360,49 @@ class Field:
         self.quality = quality or []
         self.privacy = privacy
 
+        # Auto add quality rules
+        if quality is not None:
+            self.quality = quality
+        else:
+            self._auto_add_quality_rules()
+
         # Store privacy in custom_properties for ODCS serialization
         if privacy is not None:
             self.custom_properties["privacy"] = privacy.to_dict()
+        else:
+            self._check_pii_settings(sensitivity, requires_masking, is_pii, pii_type)
 
         if self._has_default and self.default_factory is not None:
             raise ValueError("Cannot specify both 'default' and 'default_factory'")
+
+    def _auto_add_quality_rules(self)->None:
+        """Automatically add quality rules based on field properties."""
+
+        if self.primary_key :
+            self.quality.extend([QualityRule.duplicate_rows(must_be=0)])
+            self.quality.extend([QualityRule.null_values(must_be=0)])
+        if self.unique:
+            if QualityRule.duplicate_rows(must_be=0) not in self.quality:
+                self.quality.extend([QualityRule.duplicate_rows(must_be=0)])
+        if self.required:
+            if QualityRule.null_values(must_be=0) not in self.quality:
+                self.quality.extend([QualityRule.null_values(must_be=0)])
+
+    def _check_pii_settings(self,sensitivity, requires_masking, is_pii, pii_type) -> None:
+        """Check and set privacy settings if any PII-related args are provided."""
+
+        if is_pii and pii_type is None:
+            raise ValueError("'pii_type' must be specified if 'is_pii' is True")
+        from griot_core.privacy_types import PrivacyInfo
+        privacy_args = [sensitivity, requires_masking, is_pii, pii_type]
+        if any(arg is not None for arg in privacy_args):
+            privacy = PrivacyInfo(
+                is_pii=is_pii,
+                pii_type=pii_type,
+                sensitivity=Sensitivity.RESTRICTED if is_pii else sensitivity,
+                requires_masking=requires_masking,
+            )
+            self.custom_properties["privacy"] = privacy.to_dict()
 
     def __set_name__(self, owner: type, name: str) -> None:
         """Set field name when used as descriptor."""
@@ -620,7 +662,6 @@ class Schema(metaclass=SchemaMeta):
                 elif isinstance(prop, dict):
                     field_info = FieldInfo.from_dict(prop)
                     self._instance_fields[field_info.name] = field_info
-        self._auto_add_quality_rules()
     # -------------------------------------------------------------------------
     # Field Access
     # -------------------------------------------------------------------------
@@ -632,21 +673,6 @@ class Schema(metaclass=SchemaMeta):
         result.update(self._instance_fields)
         return result
 
-    def _auto_add_quality_rules(self)->None:
-        """Automatically add quality rules based on field properties."""
-
-        for prop  in self._schema_fields.values():
-            quality_rules:list = []
-            if prop.primary_key :
-                quality_rules.append(QualityRule.duplicate_rows(must_be=0))
-                quality_rules.append(QualityRule.null_values(must_be=0))
-            if prop.unique:
-                if QualityRule.duplicate_rows(must_be=0) not in quality_rules:
-                    quality_rules.append(QualityRule.duplicate_rows(must_be=0))
-            if prop.required:
-                if QualityRule.null_values(must_be=0) not in quality_rules:
-                    quality_rules.append(QualityRule.null_values(must_be=0))
-            prop.quality = quality_rules
 
     @classmethod
     def list_fields(cls) -> list[FieldInfo]:
