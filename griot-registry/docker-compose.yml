@@ -1,0 +1,124 @@
+# =============================================================================
+# Griot Registry - Docker Compose
+# =============================================================================
+# Production-ready setup with MongoDB and the Registry API
+#
+# Usage:
+#   # Build and start (from monorepo root)
+#   docker-compose -f griot-registry/docker-compose.yml up -d
+#
+#   # View logs
+#   docker-compose -f griot-registry/docker-compose.yml logs -f
+#
+#   # Stop
+#   docker-compose -f griot-registry/docker-compose.yml down
+#
+#   # Stop and remove volumes (WARNING: deletes data)
+#   docker-compose -f griot-registry/docker-compose.yml down -v
+# =============================================================================
+
+version: '3.8'
+
+services:
+  # ---------------------------------------------------------------------------
+  # MongoDB Database
+  # ---------------------------------------------------------------------------
+  mongodb:
+    image: mongo:7
+    container_name: griot-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      # For production, set these via .env file
+      MONGO_INITDB_DATABASE: griot_registry
+    volumes:
+      - mongodb_data:/data/db
+      - mongodb_config:/data/configdb
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - griot-network
+
+  # ---------------------------------------------------------------------------
+  # Griot Registry API
+  # ---------------------------------------------------------------------------
+  registry:
+    build:
+      context: ..
+      dockerfile: griot-registry/Dockerfile
+    container_name: griot-registry
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      # MongoDB connection
+      MONGODB_URI: mongodb://mongodb:27017
+      MONGODB_DATABASE: griot_registry
+
+      # Server settings
+      HOST: 0.0.0.0
+      PORT: 8000
+      LOG_LEVEL: INFO
+
+      # Authentication - CHANGE THESE IN PRODUCTION
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-change-me-in-production-use-strong-random-key}
+      JWT_ACCESS_TOKEN_EXPIRE_MINUTES: ${JWT_ACCESS_TOKEN_EXPIRE_MINUTES:-30}
+      JWT_REFRESH_TOKEN_EXPIRE_DAYS: ${JWT_REFRESH_TOKEN_EXPIRE_DAYS:-7}
+
+      # API Keys (JSON array) - optional
+      API_KEYS: ${API_KEYS:-[]}
+
+      # CORS origins (JSON array or comma-separated)
+      CORS_ORIGINS: ${CORS_ORIGINS:-["*"]}
+
+      # Validation settings
+      VALIDATE_ON_CREATE: "true"
+      VALIDATE_ON_UPDATE: "true"
+      BLOCK_ON_LINT_ERRORS: "false"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/health/live')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - griot-network
+
+  # ---------------------------------------------------------------------------
+  # Mongo Express (Optional - Web-based MongoDB Admin)
+  # ---------------------------------------------------------------------------
+  mongo-express:
+    image: mongo-express:latest
+    container_name: griot-mongo-express
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    environment:
+      ME_CONFIG_MONGODB_URL: mongodb://mongodb:27017
+      ME_CONFIG_BASICAUTH: "false"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    profiles:
+      - admin  # Only starts with: docker-compose --profile admin up
+    networks:
+      - griot-network
+
+volumes:
+  mongodb_data:
+    name: griot-mongodb-data
+  mongodb_config:
+    name: griot-mongodb-config
+
+networks:
+  griot-network:
+    name: griot-network
+    driver: bridge

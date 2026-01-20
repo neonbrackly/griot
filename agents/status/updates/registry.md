@@ -4,6 +4,439 @@
 
 ---
 
+## Session: 2026-01-20 (API Testing & Documentation Revamp)
+
+### Summary
+Complete end-to-end API testing of all 41 registry endpoints and 29 Python client methods against a running MongoDB instance, fixing 5 critical bugs discovered during testing, followed by a comprehensive documentation revamp.
+
+### Bug Fixes Applied
+
+#### 1. griot-core: NoneType Bug Fix
+**File:** `griot-core/src/griot_core/contract.py:1017`
+
+```python
+# Before (caused 500 error):
+if field_info.custom_properties.get("privacy").get("is_pii")...
+
+# After:
+privacy = field_info.custom_properties.get("privacy") or {}
+if privacy.get("is_pii") and privacy.get("pii_type") is None:
+```
+**Impact:** Fixed contracts without `customProperties.privacy` causing Internal Server Error
+
+#### 2. JWT Role Parsing Bug
+**File:** `griot-registry/src/griot_registry/auth/jwt.py:220`
+
+```python
+# Before (all roles filtered out):
+roles = [UserRole(r) for r in payload.roles if r in UserRole.__members__.values()]
+
+# After:
+roles = [UserRole(r) for r in payload.roles if r in UserRole._value2member_map_]
+```
+**Impact:** JWT tokens now correctly preserve roles they were created with
+
+#### 3. Token Roles Query Parameter Bug
+**File:** `griot-registry/src/griot_registry/api/auth.py:30`
+
+```python
+# Before (roles not exposed in OpenAPI):
+roles: list[str] | None = None,
+
+# After:
+roles: list[str] | None = Query(default=None, description="User roles (admin, editor, viewer)"),
+```
+**Impact:** The `roles` parameter is now properly accepted by the token endpoint
+
+#### 4. MongoDB Update Conflict Bug
+**File:** `griot-registry/src/griot_registry/storage/mongodb.py:130-143`
+
+```python
+# Before (caused conflict error):
+doc["_meta"] = {"updated_at": now, "updated_by": updated_by}
+result = await self._contracts.update_one(
+    {"id": entity_id},
+    {"$set": doc, "$setOnInsert": {"_meta.created_at": now}},
+)
+
+# After:
+set_doc = {**doc}
+set_doc["_meta.updated_at"] = now
+set_doc["_meta.updated_by"] = updated_by
+result = await self._contracts.update_one(
+    {"id": entity_id},
+    {"$set": set_doc},
+)
+```
+**Impact:** Contract updates (PUT /contracts/{id}) now work correctly
+
+#### 5. Approvals Route Order Fix
+**File:** `griot-registry/src/griot_registry/api/approvals.py`
+
+- Moved `/approvals/pending` endpoint BEFORE `/approvals/{request_id}`
+- FastAPI now correctly routes to the pending endpoint
+
+**Impact:** GET /api/v1/approvals/pending returns list of pending approvals (not 404)
+
+### Test Results
+
+**Total Tests: 70 (All Passed)**
+
+| Category | Tests | Status |
+|----------|-------|--------|
+| API Endpoints | 41 | PASS |
+| Python Client (Async) | 19 | PASS |
+| Python Client (Sync) | 10 | PASS |
+
+**API Endpoints Verified:**
+
+| Endpoint | Method | Status |
+|----------|--------|--------|
+| /contracts | POST | PASS |
+| /contracts | GET | PASS |
+| /contracts/{id} | GET | PASS |
+| /contracts/{id} | PUT | PASS |
+| /contracts/{id}/status | PATCH | PASS |
+| /contracts/{id} | DELETE | PASS |
+| /contracts/{id}/versions | GET | PASS |
+| /contracts/{id}/versions/{v} | GET | PASS |
+| /contracts/validate | POST | PASS |
+| /auth/token | GET | PASS |
+| /auth/me | GET | PASS |
+| /approvals | POST | PASS |
+| /approvals/pending | GET | PASS |
+| /approvals/{id} | GET | PASS |
+| /approvals/{id}/approve | POST | PASS |
+| /approvals/{id}/reject | POST | PASS |
+
+### Documentation Revamp
+
+**Files Updated (7 total):**
+
+1. **`docs/source/getting_started.rst`**
+   - Fixed incorrect Contract/Schema/SchemaField constructor patterns
+   - Updated to use `load_contract_from_dict()` with ODCS format
+   - Added correct curl examples with actual working JSON
+   - Documented correct authentication flow (GET token with query params)
+
+2. **`docs/source/client/index.rst`**
+   - Replaced all incorrect Python examples
+   - Added working token acquisition example
+   - Updated contract creation with ODCS format
+   - Fixed API reference documentation
+
+3. **`docs/source/client/examples.rst`**
+   - Complete rewrite with verified working examples
+   - Added comprehensive error handling section
+   - Added FastAPI integration example
+   - Added concurrent operations example
+   - Added complete workflow example
+
+4. **`docs/source/api/contracts.rst`**
+   - Updated all JSON examples to ODCS format
+   - Fixed request body documentation
+   - Added error response documentation
+   - Documented breaking change detection
+
+5. **`docs/source/authentication.rst`**
+   - Corrected auth endpoint documentation (GET not POST)
+   - Removed incorrect password-based auth
+   - Removed nonexistent refresh token endpoint
+   - Added correct roles query parameter usage
+
+6. **`docs/source/index.rst`**
+   - Updated quick start example with correct patterns
+   - Fixed Python client example
+
+7. **`README.md`**
+   - Complete rewrite with accurate startup instructions
+   - Added step-by-step quick start guide
+   - Fixed Python client examples
+   - Added correct ODCS contract format documentation
+   - Added key API endpoints reference
+
+### Key Corrections Made
+
+**Before (INCORRECT - doesn't work):**
+```python
+from griot_core import Contract, Schema, SchemaField
+contract = Contract(
+    name="user-events",
+    schemas=[Schema(name="...", fields=[SchemaField(...)])]
+)
+```
+
+**After (CORRECT - verified working):**
+```python
+from griot_core import load_contract_from_dict
+contract = load_contract_from_dict({
+    "apiVersion": "v1.0.0",
+    "kind": "DataContract",
+    "id": "unique-id",
+    "name": "contract_name",
+    "version": "1.0.0",
+    "status": "draft",
+    "schema": [
+        {
+            "name": "SchemaName",
+            "id": "schema-id",
+            "logicalType": "object",
+            "properties": [
+                {"name": "field", "logicalType": "string", "required": True}
+            ]
+        }
+    ]
+})
+```
+
+### Session Artifacts
+
+- Test documentation: `agents/status/tests/griot-registry.md`
+- Bug fix tracking: `agents/status/CHANGES-PENDING-RESTART.md`
+
+### OpenAPI Spec Update (Complete)
+
+Updated `agents/specs/registry.yaml` with complete API specification covering all 12 endpoint categories:
+
+**Endpoint Categories (45 total endpoints):**
+
+| Category | Endpoints | Description |
+|----------|-----------|-------------|
+| health | 3 | `/health`, `/health/live`, `/health/ready` |
+| auth | 2 | `/auth/token`, `/auth/me` |
+| contracts | 6 | CRUD + validate + status update |
+| versions | 2 | List versions, get specific version |
+| schemas | 3 | Find schemas, get by name, rebuild catalog |
+| validations | 3 | Record, list, get stats |
+| runs | 4 | Create, get, update, list |
+| issues | 5 | Create, get, update, list, resolve |
+| comments | 6 | CRUD + reactions + list by contract |
+| approvals | 5 | Create, pending, get, approve, reject |
+| search | 2 | Basic search, advanced search |
+
+**Key Schema Definitions:**
+- `ODCSContract` - ODCS format (apiVersion, kind, id, name, version, status, schema)
+- `SchemaDefinition` and `SchemaProperty` with `logicalType`
+- `SchemaCatalogEntry` - Schema catalog queries
+- `ValidationRecord`, `ValidationStats` - Validation tracking
+- `Run` - Pipeline run tracking
+- `Issue` - Issue management
+- `Comment` - Collaboration comments with reactions
+- `ApprovalRequest` - Approval workflows
+- `SearchHit`, `SearchResponse` - Search functionality
+- `BreakingChangesResponse` - Breaking change detection
+
+**Version:** 0.2.0
+
+### Status
+- All API endpoints working correctly
+- All Python client methods verified
+- Documentation production-ready with accurate examples
+- OpenAPI spec matches actual implementation
+- No known bugs remaining
+
+---
+
+## Session: 2026-01-20 (Complete Registry Overhaul)
+
+### Major Overhaul Summary
+Complete redesign of griot-registry with MongoDB storage, new authentication system, and comprehensive API endpoints. This was a ground-up rebuild removing all legacy storage backends.
+
+### Changes Made
+
+#### 1. Storage Layer - MongoDB Backend
+**Removed:**
+- `storage/filesystem.py` - Deleted
+- `storage/git.py` - Deleted
+- `storage/postgres.py` - Deleted
+
+**Added:**
+- `storage/base.py` - Abstract repository pattern interfaces
+  - `StorageBackend` - Main storage interface
+  - `ContractRepository` - Contract CRUD operations
+  - `SchemaCatalogRepository` - Cross-contract schema queries
+  - `ValidationRecordRepository` - Validation history
+  - `RunRepository` - Pipeline run tracking
+  - `IssueRepository` - Issue management
+  - `CommentRepository` - Collaboration comments
+  - `ApprovalRepository` - Approval workflows
+
+- `storage/mongodb.py` - Full MongoDB implementation using motor (async driver)
+  - Collections: contracts, contract_versions, schema_catalog, validation_records, runs, issues, comments, approvals
+  - Full-text search indexes
+  - Schema catalog as denormalized collection for O(1) cross-contract lookups
+
+#### 2. Authentication Layer
+**Added:**
+- `auth/models.py` - User, UserRole, AuthMethod, TokenPayload
+- `auth/jwt.py` - JWT authentication with access/refresh tokens
+- `auth/api_key.py` - API key authentication
+- `auth/dependencies.py` - FastAPI dependencies (CurrentUser, RequireAdmin, RequireEditor, RequireViewer)
+- `auth/__init__.py` - Clean exports
+
+#### 3. Services Layer
+**Added:**
+- `services/contracts.py` - ContractService with:
+  - Contract validation before storage
+  - Breaking change detection
+  - Semantic version auto-increment
+  - Status transition management
+  - Schema catalog synchronization
+
+- `services/validation.py` - ValidationService wrapping griot-core:
+  - `lint_contract()` integration
+  - `validate_contract_structure()` integration
+  - Configurable blocking on errors/warnings
+
+#### 4. API Endpoints (Complete Rewrite)
+**Files Created:**
+- `api/__init__.py` - Module exports
+- `api/dependencies.py` - Storage and service dependencies
+- `api/health.py` - Health checks (live, ready, detailed)
+- `api/auth.py` - Token and refresh endpoints
+- `api/contracts.py` - Full CRUD, versioning, validation
+- `api/schemas.py` - Schema catalog queries
+- `api/validations.py` - Validation records and statistics
+- `api/runs.py` - Pipeline run tracking
+- `api/issues.py` - Issue CRUD and resolution
+- `api/comments.py` - Threaded comments with reactions
+- `api/approvals.py` - Multi-approver workflow
+- `api/search.py` - Full-text and advanced search
+
+**Total API Routes: 47**
+
+#### 5. Python Client
+**Updated `client.py`:**
+- `RegistryClient` (async) - Full async client
+- `SyncRegistryClient` - Synchronous wrapper
+- All CRUD operations
+- Search and discovery methods
+- Validation recording
+- Uses griot-core Contract types directly
+
+#### 6. Configuration
+**Updated `config.py`:**
+- MongoDB settings (URI, database)
+- JWT settings (secret, algorithm, expiry)
+- API key settings
+- Validation settings (validate_on_create, block_on_lint_errors)
+- CORS settings
+
+#### 7. Server
+**Updated `server.py`:**
+- Lifespan handler for MongoDB connection
+- All 10 routers registered
+- CORS middleware
+- OpenAPI documentation
+
+#### 8. Docker Configuration
+**Updated:**
+- `Dockerfile` - Production multi-stage build with MongoDB
+- `Dockerfile.dev` - Development with hot-reload
+
+**Created:**
+- `docker-compose.yml` - Production stack (MongoDB + Registry + Mongo Express)
+- `docker-compose.dev.yml` - Development stack with volume mounts
+- `.env.example` - Environment variable template
+- `.dockerignore` - Build optimization
+- `scripts/start-dev.sh` - Linux/Mac startup script
+- `scripts/start-dev.ps1` - Windows PowerShell startup script
+
+#### 9. Sphinx Documentation
+**Created comprehensive documentation in `docs/`:**
+
+**Core Documentation:**
+- `docs/source/conf.py` - Sphinx configuration (Furo theme)
+- `docs/source/index.rst` - Main index
+- `docs/source/getting_started.rst` - Installation & quick start
+- `docs/source/configuration.rst` - All configuration options
+- `docs/source/authentication.rst` - JWT, API keys, RBAC
+- `docs/source/architecture.rst` - System design overview
+- `docs/source/storage.rst` - Repository pattern docs
+- `docs/source/services.rst` - Business logic docs
+- `docs/source/extending.rst` - Extension guide
+- `docs/source/changelog.rst` - Version history
+- `docs/source/api_reference.rst` - Auto-generated API docs
+
+**API Documentation (`docs/source/api/`):**
+- `endpoints.rst` - API overview
+- `contracts.rst` - Contract CRUD documentation
+- `schemas.rst` - Schema catalog documentation
+- `validations.rst` - Validation records documentation
+- `runs.rst` - Pipeline runs documentation
+- `issues.rst` - Issue tracking documentation
+- `comments.rst` - Comments/collaboration documentation
+- `approvals.rst` - Approval workflow documentation
+- `search.rst` - Search documentation
+
+**Client Documentation (`docs/source/client/`):**
+- `index.rst` - Client overview and API reference
+- `examples.rst` - Comprehensive usage examples with Contract class
+
+**Build Files:**
+- `docs/Makefile` - Unix build
+- `docs/make.bat` - Windows build
+- `docs/requirements.txt` - Doc dependencies
+
+**Total: 25 documentation files**
+
+#### 10. Project Configuration
+**Updated `pyproject.toml`:**
+- Version bumped to 0.2.0
+- Added dependencies: motor, pyjwt[crypto], httpx
+- Added `[docs]` optional dependencies for Sphinx
+
+**Updated `README.md`:**
+- Complete rewrite with usage examples
+- Configuration table
+- API endpoints overview
+- Docker instructions
+
+### Bug Fixes
+- Fixed `list` method shadowing built-in type in `client.py` (renamed to `list_contracts`)
+- Added `from __future__ import annotations` to `mongodb.py`, `base.py`, `client.py` to prevent type annotation evaluation issues
+
+### Dependencies Added
+- `motor>=3.3.0` - Async MongoDB driver
+- `pyjwt[crypto]>=2.8.0` - JWT authentication
+- `httpx>=0.26.0` - HTTP client for RegistryClient
+
+### Verification
+- All modules import successfully
+- 47 API routes registered
+- Package version: 0.2.0
+- Syntax validation passed
+
+### Files Changed Summary
+| Category | Files | Status |
+|----------|-------|--------|
+| Storage | 4 files | Rewritten |
+| Auth | 5 files | New |
+| Services | 3 files | New |
+| API | 12 files | Rewritten |
+| Client | 1 file | Updated |
+| Config | 1 file | Updated |
+| Server | 1 file | Updated |
+| Docker | 6 files | Updated/New |
+| Docs | 25 files | New |
+| Project | 2 files | Updated |
+
+### Architecture Notes
+- **MongoDB-only storage**: No more filesystem/git/postgres backends
+- **Repository pattern**: Easy to add new storage backends if needed
+- **griot-core integration**: Uses Contract, Schema, Field types directly
+- **Async-first**: All I/O operations are async
+- **Schema catalog**: Denormalized collection for cross-contract queries
+- **Never trust clients**: All contracts validated before storage
+
+### Next Steps (Recommendations)
+- Write integration tests with mongomock-motor
+- Add webhook support for contract events
+- Consider GraphQL API
+- Add metrics/monitoring endpoints
+
+---
+
 ## Session: 2026-01-11 (Phase 6 Implementation)
 
 ### Discovery

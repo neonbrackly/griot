@@ -5,9 +5,8 @@ from __future__ import annotations
 from typing import Any
 
 from .base import PrivacyEvaluator
-from griot_core.privacy_types import PrivacyInfo, PrivacyViolation, PIIType
 from griot_validate.validation.privacy.patterns import DEFAULT_REGISTRY, PIIPatternRegistry
-from griot_core.validation_types import ErrorSeverity
+from griot_core.types import ErrorSeverity, PIIType, PrivacyInfo, PrivacyViolation
 from ...adapters.base import DataFrameAdapter
 
 

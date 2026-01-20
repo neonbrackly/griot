@@ -5,7 +5,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import Any
 
-from griot_core.privacy_types import PrivacyInfo, PrivacyViolation
+from griot_core.types import PrivacyInfo, PrivacyViolation
 from ...adapters.base import DataFrameAdapter
 
 

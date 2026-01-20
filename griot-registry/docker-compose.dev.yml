@@ -1,0 +1,119 @@
+# =============================================================================
+# Griot Registry - Docker Compose (Development)
+# =============================================================================
+# Development setup with hot-reload and volume mounts for code changes
+#
+# Usage:
+#   # Build and start (from monorepo root)
+#   docker-compose -f griot-registry/docker-compose.dev.yml up --build
+#
+#   # Start in background
+#   docker-compose -f griot-registry/docker-compose.dev.yml up -d --build
+#
+#   # View logs
+#   docker-compose -f griot-registry/docker-compose.dev.yml logs -f registry
+#
+#   # Rebuild after dependency changes
+#   docker-compose -f griot-registry/docker-compose.dev.yml up --build --force-recreate
+#
+#   # Stop and clean up
+#   docker-compose -f griot-registry/docker-compose.dev.yml down -v
+# =============================================================================
+
+version: '3.8'
+
+services:
+  # ---------------------------------------------------------------------------
+  # MongoDB Database (Development)
+  # ---------------------------------------------------------------------------
+  mongodb:
+    image: mongo:7
+    container_name: griot-mongodb-dev
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: griot_registry_dev
+    volumes:
+      - mongodb_dev_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - griot-dev-network
+
+  # ---------------------------------------------------------------------------
+  # Griot Registry API (Development with Hot Reload)
+  # ---------------------------------------------------------------------------
+  registry:
+    build:
+      context: ..
+      dockerfile: griot-registry/Dockerfile.dev
+    container_name: griot-registry-dev
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      # MongoDB connection
+      MONGODB_URI: mongodb://mongodb:27017
+      MONGODB_DATABASE: griot_registry_dev
+
+      # Development settings
+      HOST: 0.0.0.0
+      PORT: 8000
+      DEBUG: "true"
+      LOG_LEVEL: DEBUG
+
+      # JWT (development only)
+      JWT_SECRET_KEY: dev-secret-key-do-not-use-in-production
+      JWT_ACCESS_TOKEN_EXPIRE_MINUTES: 60
+
+      # API Keys for testing
+      API_KEYS: '["test-api-key-1", "test-api-key-2"]'
+
+      # CORS - allow all in development
+      CORS_ORIGINS: '["*"]'
+
+      # Validation
+      VALIDATE_ON_CREATE: "true"
+      VALIDATE_ON_UPDATE: "true"
+      BLOCK_ON_LINT_ERRORS: "false"
+    volumes:
+      # Mount source code for hot-reload
+      - ../griot-core/src:/app/griot-core/src:ro
+      - ../griot-registry/src:/app/griot-registry/src:ro
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - griot-dev-network
+
+  # ---------------------------------------------------------------------------
+  # Mongo Express (MongoDB Admin UI)
+  # ---------------------------------------------------------------------------
+  mongo-express:
+    image: mongo-express:latest
+    container_name: griot-mongo-express-dev
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    environment:
+      ME_CONFIG_MONGODB_URL: mongodb://mongodb:27017
+      ME_CONFIG_BASICAUTH: "false"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - griot-dev-network
+
+volumes:
+  mongodb_dev_data:
+    name: griot-mongodb-dev-data
+
+networks:
+  griot-dev-network:
+    name: griot-dev-network
+    driver: bridge

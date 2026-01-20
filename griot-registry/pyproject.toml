@@ -1,6 +1,6 @@
 [project]
 name = "griot-registry"
-version = "0.1.0"
+version = "0.2.0"
 description = "Central registry API for Griot data contracts"
 readme = "README.md"
 license = { text = "Apache-2.0" }
@@ -22,20 +22,29 @@ dependencies = [
     "pydantic-settings>=2.1.0",
     "pyyaml>=6.0",
     "griot-core>=0.1.0",
+    # MongoDB
+    "motor>=3.3.0",
+    # Authentication
+    "pyjwt[crypto]>=2.8.0",
+    # HTTP client
+    "httpx>=0.26.0",
 ]
 
 [project.optional-dependencies]
-postgres = ["asyncpg>=0.29.0", "sqlalchemy[asyncio]>=2.0.0"]
-git = ["gitpython>=3.1.0"]
-oauth = ["httpx>=0.26.0", "pyjwt[crypto]>=2.8.0"]
 dev = [
     "pytest>=7.4.0",
     "pytest-asyncio>=0.23.0",
-    "httpx>=0.26.0",
     "pytest-cov>=4.1.0",
+    "mongomock-motor>=0.0.29",
 ]
-all = [
-    "griot-registry[postgres,git,oauth]",
+docs = [
+    "sphinx>=7.0.0",
+    "sphinx-autodoc-typehints>=2.0.0",
+    "furo>=2024.1.0",
+    "myst-parser>=3.0.0",
+    "sphinx-autobuild>=2024.0.0",
+    "sphinx_autodoc_typehints",
+    "furo"
 ]
 
 [project.scripts]

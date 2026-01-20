@@ -9,7 +9,17 @@
       "Bash(python -m pytest:*)",
       "Bash(python:*)",
       "Bash(dir \"C:\\\\Users\\\\BracklyMurunga\\\\Desktop\\\\AI SUNDAYS\\\\Griot\\\\griot\\\\griot-core\\\\docs\")",
-      "Bash(PYTHONPATH=src python:*)"
+      "Bash(PYTHONPATH=src python:*)",
+      "Bash(pip install:*)",
+      "Bash(dir:*)",
+      "Bash(curl:*)",
+      "Bash(export TOKEN:*)",
+      "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZXN0LXVzZXIiLCJlbWFpbCI6InRlc3RAZXhhbXBsZS5jb20iLCJuYW1lIjoiVGVzdCBVc2VyIiwicm9sZXMiOlsidmlld2VyIl0sImV4cCI6MTc2ODkyNTM3MywiaWF0IjoxNzY4OTIxNzczLCJpc3MiOiJncmlvdC1yZWdpc3RyeSIsInR5cGUiOiJhY2Nlc3MifQ.YDYVLx_acc1F2mdelTtGBOqL5Ua9rfZVbseQKa502nA\")",
+      "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZXN0LXVzZXIiLCJlbWFpbCI6InRlc3RAZXhhbXBsZS5jb20iLCJuYW1lIjoiVGVzdCBVc2VyIiwicm9sZXMiOlsidmlld2VyIl0sImV4cCI6MTc2ODkyNjY5MiwiaWF0IjoxNzY4OTIzMDkyLCJpc3MiOiJncmlvdC1yZWdpc3RyeSIsInR5cGUiOiJhY2Nlc3MifQ.49Tdigd6LRsxm79n7gRA3gqeW2eQ4CJrDjBcT0_ADEY\")",
+      "Bash(taskkill:*)",
+      "Bash(pkill:*)",
+      "Bash(./make.bat html)",
+      "Bash(grep:*)"
     ]
   }
 }

@@ -1,40 +1,53 @@
 """Health check endpoint."""
 
-from datetime import datetime, timezone
-from typing import Literal
+from typing import Any
 
-from fastapi import APIRouter, Request
-from pydantic import BaseModel
+from fastapi import APIRouter
+
+from griot_registry.api.dependencies import Storage
 
 router = APIRouter()
 
 
-class HealthResponse(BaseModel):
-    """Health check response schema."""
+@router.get(
+    "/health",
+    operation_id="healthCheck",
+    summary="Health check",
+    response_model=dict[str, Any],
+)
+async def health_check(storage: Storage) -> dict[str, Any]:
+    """Check the health of the registry service.
 
-    status: Literal["healthy", "degraded", "unhealthy"]
-    version: str
-    timestamp: datetime
-
-
-@router.get("/health", response_model=HealthResponse, operation_id="healthCheck")
-async def health_check(request: Request) -> HealthResponse:
-    """Check service health status.
-
-    Returns current health status, version, and timestamp.
+    Returns:
+        Health status including storage backend status.
     """
-    # Check storage backend health
-    status: Literal["healthy", "degraded", "unhealthy"] = "healthy"
-    if hasattr(request.app.state, "storage"):
-        try:
-            await request.app.state.storage.health_check()
-        except Exception:
-            status = "degraded"
-    else:
-        status = "unhealthy"
+    storage_health = await storage.health_check()
 
-    return HealthResponse(
-        status=status,
-        version="0.1.0",
-        timestamp=datetime.now(timezone.utc),
-    )
+    return {
+        "status": "healthy" if storage_health.get("status") == "healthy" else "degraded",
+        "version": "0.2.0",
+        "storage": storage_health,
+    }
+
+
+@router.get(
+    "/health/live",
+    operation_id="livenessCheck",
+    summary="Liveness probe",
+)
+async def liveness() -> dict[str, str]:
+    """Kubernetes liveness probe endpoint."""
+    return {"status": "alive"}
+
+
+@router.get(
+    "/health/ready",
+    operation_id="readinessCheck",
+    summary="Readiness probe",
+)
+async def readiness(storage: Storage) -> dict[str, str]:
+    """Kubernetes readiness probe endpoint."""
+    health = await storage.health_check()
+    if health.get("status") == "healthy":
+        return {"status": "ready"}
+    return {"status": "not ready"}

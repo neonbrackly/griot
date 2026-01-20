@@ -683,7 +683,12 @@ class Contract:
 
         schemas: list[Schema] = []
         for s in data.get("schema", []):
-            schemas.append(Schema.from_dict(s))
+            if isinstance(s, Schema):
+                schemas.append(s)
+            elif isinstance(s, dict):
+                schemas.append(Schema.from_dict(s))
+            else:
+                raise ValueError("schemas must be a list of dicts or schema")
 
         return cls(
             api_version=data.get("api_version", "v1.0.0"),
@@ -1014,7 +1019,8 @@ def validate_contract_structure(contract: Contract) -> ContractStructureResult:
                             )
                         )
 
-                    if field_info.custom_properties.get("privacy").get("is_pii") and field_info.custom_properties.get("privacy").get("pii_type") is None:
+                    privacy = field_info.custom_properties.get("privacy") or {}
+                    if privacy.get("is_pii") and privacy.get("pii_type") is None:
                         issues.append(
                             ContractStructureIssue(
                                 code="CS-022",

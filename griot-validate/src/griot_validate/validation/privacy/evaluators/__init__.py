@@ -15,7 +15,7 @@ from .base import PrivacyEvaluator
 from .undeclared_pii import UndeclaredPIIEvaluator
 from .masking import MaskingEvaluator
 from .sensitivity import SensitivityEvaluator
-from griot_core.privacy_types import PrivacyInfo, PrivacyViolation
+from griot_core.types import PrivacyInfo, PrivacyViolation
 from ...adapters.base import DataFrameAdapter
 
 

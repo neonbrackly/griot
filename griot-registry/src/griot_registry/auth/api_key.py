@@ -1,10 +1,16 @@
-"""API key authentication for griot-registry."""
+"""API key authentication for griot-registry.
+
+API keys are primarily used for service-to-service authentication.
+"""
+
+from __future__ import annotations
 
 from typing import Annotated
 
-from fastapi import Depends, HTTPException, Request, Security, status
+from fastapi import Depends, HTTPException, Security, status
 from fastapi.security import APIKeyHeader
 
+from griot_registry.auth.models import AuthMethod, User, UserRole
 from griot_registry.config import Settings, get_settings
 
 # API key header security scheme
@@ -16,48 +22,55 @@ def get_api_key_header() -> APIKeyHeader:
     return api_key_header
 
 
-async def api_key_auth(
-    request: Request,
+async def get_current_user_api_key(
     api_key: Annotated[str | None, Security(api_key_header)],
     settings: Annotated[Settings, Depends(get_settings)],
-) -> str | None:
-    """Validate API key authentication.
+) -> User | None:
+    """Get current user from API key.
 
-    If authentication is disabled, returns None.
-    If enabled, validates the provided API key against configured keys.
+    API key authentication creates a service user with editor permissions.
+    Returns None if no API key provided or auth is disabled.
+    Raises HTTPException if API key is invalid.
 
     Args:
-        request: The FastAPI request.
-        api_key: The API key from the header.
-        settings: Application settings.
+        api_key: The API key from the header
+        settings: Application settings
 
     Returns:
-        The validated API key, or None if auth is disabled.
+        User object for the service account, or None
 
     Raises:
-        HTTPException: If auth is enabled and key is missing or invalid.
+        HTTPException: If API key is provided but invalid
     """
     # Skip auth if disabled
     if not settings.auth_enabled:
         return None
 
-    # Check if API key is provided
+    # No API key provided - let other auth methods handle it
     if api_key is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail={"code": "UNAUTHORIZED", "message": "API key required"},
-            headers={"WWW-Authenticate": "ApiKey"},
-        )
+        return None
 
     # Validate API key
     if api_key not in settings.api_keys:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail={"code": "FORBIDDEN", "message": "Invalid API key"},
+            detail={"code": "INVALID_API_KEY", "message": "Invalid API key"},
         )
 
-    return api_key
+    # Create service user with the API key as identifier
+    # In production, you might want to map API keys to specific service accounts
+    key_index = settings.api_keys.index(api_key)
+    service_id = f"service-{key_index}"
+
+    return User(
+        id=service_id,
+        email=None,
+        name=f"Service Account {key_index}",
+        roles=[UserRole.SERVICE, UserRole.EDITOR],
+        auth_method=AuthMethod.API_KEY,
+        metadata={"api_key_index": key_index},
+    )
 
 
-# Dependency for protected routes
-ApiKeyAuth = Annotated[str | None, Depends(api_key_auth)]
+# Type alias for dependency injection
+ApiKeyUser = Annotated[User | None, Depends(get_current_user_api_key)]

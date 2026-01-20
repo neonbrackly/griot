@@ -12,7 +12,7 @@ import re
 from dataclasses import dataclass
 from typing import Callable
 
-from griot_core.privacy_types import PIIType, ComplianceFramework
+from griot_core.types import PIIType, ComplianceFramework
 
 
 @dataclass

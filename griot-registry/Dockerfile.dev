@@ -1,7 +1,7 @@
 # =============================================================================
 # Griot Registry Dockerfile (Development)
 # =============================================================================
-# Development image with hot-reload support
+# Development image with hot-reload support and MongoDB connection
 # Build from monorepo root:
 #   docker build -f griot-registry/Dockerfile.dev -t griot-registry:dev .
 # =============================================================================
@@ -24,15 +24,22 @@ COPY griot-registry/ ./griot-registry/
 RUN uv venv /app/.venv && \
     . /app/.venv/bin/activate && \
     uv pip install -e ./griot-core && \
-    uv pip install -e ./griot-registry
-
-# Create data directory
-RUN mkdir -p /app/data/contracts
+    uv pip install -e "./griot-registry[dev]"
 
 # Set environment
 ENV PATH="/app/.venv/bin:$PATH" \
     PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1
+    PYTHONDONTWRITEBYTECODE=1 \
+    # Development defaults
+    HOST=0.0.0.0 \
+    PORT=8000 \
+    DEBUG=true \
+    LOG_LEVEL=DEBUG \
+    # MongoDB (connect to compose service)
+    MONGODB_URI=mongodb://mongodb:27017 \
+    MONGODB_DATABASE=griot_registry_dev \
+    # JWT (development only - never use in production)
+    JWT_SECRET_KEY=dev-secret-key-not-for-production
 
 EXPOSE 8000
 

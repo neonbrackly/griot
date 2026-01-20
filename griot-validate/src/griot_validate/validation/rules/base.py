@@ -5,7 +5,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import Any
 
-from griot_core.validation_types import RuleResult
+from griot_validate.validation.types import RuleResult
 from ..adapters.base import DataFrameAdapter
 
 

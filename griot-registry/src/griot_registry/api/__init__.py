@@ -1,5 +1,30 @@
-"""API routers for griot-registry."""
+"""API routers for griot-registry.
 
-from griot_registry.api import approvals, contracts, health, reports, search, validations
+This module exports all API routers for inclusion in the FastAPI app.
+"""
 
-__all__ = ["approvals", "contracts", "health", "reports", "search", "validations"]
+from griot_registry.api import (
+    health,
+    auth,
+    contracts,
+    schemas,
+    validations,
+    runs,
+    issues,
+    comments,
+    approvals,
+    search,
+)
+
+__all__ = [
+    "health",
+    "auth",
+    "contracts",
+    "schemas",
+    "validations",
+    "runs",
+    "issues",
+    "comments",
+    "approvals",
+    "search",
+]

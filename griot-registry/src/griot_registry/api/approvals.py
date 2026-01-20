@@ -1,425 +1,352 @@
-"""Approval chain endpoints for contract governance (FR-REG-008)."""
+"""Approval workflow endpoints.
+
+Provides endpoints for contract approval workflows.
+"""
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
-from enum import Enum
-from typing import Annotated
-from uuid import uuid4
+from datetime import datetime
+from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, HTTPException, Query, status
 from pydantic import BaseModel, Field
+
+from griot_registry.api.dependencies import ContractSvc, Storage
+from griot_registry.auth import CurrentUser, RequireEditor
 
 router = APIRouter()
 
 
-class ApprovalStatus(str, Enum):
-    """Status of an approval request."""
-
-    PENDING = "pending"
-    APPROVED = "approved"
-    REJECTED = "rejected"
-    CANCELLED = "cancelled"
+# =============================================================================
+# Request/Response Models
+# =============================================================================
 
 
-class ApprovalDecisionType(str, Enum):
-    """Type of approval decision."""
+class ApprovalRequestCreate(BaseModel):
+    """Request to create an approval request."""
 
-    APPROVE = "approve"
-    REJECT = "reject"
-
-
-class ApproverInfo(BaseModel):
-    """Information about an approver."""
-
-    user_id: str
-    email: str
-    name: str | None = None
-    role: str | None = None
-
-
-class Approval(BaseModel):
-    """A single approval in the chain."""
-
-    id: str = Field(default_factory=lambda: str(uuid4()))
-    approver: ApproverInfo
-    status: ApprovalStatus = ApprovalStatus.PENDING
-    decision_at: datetime | None = None
-    comment: str | None = None
-    order: int = 0
-
-
-class ApprovalChain(BaseModel):
-    """An approval chain for a contract version."""
-
-    id: str = Field(default_factory=lambda: str(uuid4()))
     contract_id: str
-    contract_version: str
-    approvals: list[Approval]
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    created_by: str
-    status: ApprovalStatus = ApprovalStatus.PENDING
+    approvers: list[str] = Field(
+        ...,
+        min_length=1,
+        description="List of user IDs who need to approve",
+    )
+    notes: str | None = Field(
+        default=None,
+        description="Notes about the approval request",
+    )
+
+
+class ApproveRequest(BaseModel):
+    """Request to approve."""
+
+    comments: str | None = None
+
+
+class RejectRequest(BaseModel):
+    """Request to reject."""
+
+    reason: str = Field(..., min_length=1, description="Reason for rejection")
+
+
+class ApprovalEntry(BaseModel):
+    """A single approval entry."""
+
+    approver: str
+    comments: str | None = None
+    approved_at: datetime
+
+
+class RejectionEntry(BaseModel):
+    """A single rejection entry."""
+
+    rejector: str
+    reason: str
+    rejected_at: datetime
+
+
+class ApprovalRequest(BaseModel):
+    """An approval request record."""
+
+    id: str
+    contract_id: str
+    requested_by: str
+    approvers: list[str]
+    notes: str | None = None
+    status: str
+    approvals: list[ApprovalEntry] = Field(default_factory=list)
+    rejections: list[RejectionEntry] = Field(default_factory=list)
+    created_at: datetime
+    updated_at: datetime | None = None
     completed_at: datetime | None = None
 
-    @property
-    def current_approval(self) -> Approval | None:
-        """Get the current pending approval."""
-        for approval in sorted(self.approvals, key=lambda a: a.order):
-            if approval.status == ApprovalStatus.PENDING:
-                return approval
-        return None
 
-    @property
-    def is_complete(self) -> bool:
-        """Check if approval chain is complete."""
-        return all(a.status == ApprovalStatus.APPROVED for a in self.approvals)
+class ApprovalRequestList(BaseModel):
+    """List of approval requests."""
 
-    @property
-    def is_rejected(self) -> bool:
-        """Check if any approval was rejected."""
-        return any(a.status == ApprovalStatus.REJECTED for a in self.approvals)
+    items: list[ApprovalRequest]
 
 
-class ApprovalChainCreate(BaseModel):
-    """Request to create an approval chain."""
-
-    approvers: list[ApproverInfo]
-    require_all: bool = True
-    notify: bool = True
+# =============================================================================
+# Helper function to build ApprovalRequest response
+# =============================================================================
 
 
-class ApprovalDecision(BaseModel):
-    """A decision on an approval."""
+def _build_approval_response(approval: dict[str, Any]) -> ApprovalRequest:
+    """Build an ApprovalRequest from a storage dict."""
+    return ApprovalRequest(
+        id=approval["id"],
+        contract_id=approval["contract_id"],
+        requested_by=approval["requested_by"],
+        approvers=approval["approvers"],
+        notes=approval.get("notes"),
+        status=approval["status"],
+        approvals=[
+            ApprovalEntry(
+                approver=a["approver"],
+                comments=a.get("comments"),
+                approved_at=a["approved_at"],
+            )
+            for a in approval.get("approvals", [])
+        ],
+        rejections=[
+            RejectionEntry(
+                rejector=r["rejector"],
+                reason=r["reason"],
+                rejected_at=r["rejected_at"],
+            )
+            for r in approval.get("rejections", [])
+        ],
+        created_at=approval["created_at"],
+        updated_at=approval.get("updated_at"),
+        completed_at=approval.get("completed_at"),
+    )
 
-    decision: ApprovalDecisionType
-    comment: str | None = None
 
-
-class ApprovalChainStatus(BaseModel):
-    """Status summary of an approval chain."""
-
-    chain_id: str
-    contract_id: str
-    contract_version: str
-    status: ApprovalStatus
-    total_approvers: int
-    approved_count: int
-    pending_count: int
-    rejected_count: int
-    current_approver: ApproverInfo | None
-    created_at: datetime
-    completed_at: datetime | None
-
-
-# In-memory storage for approval chains (would be in database in production)
-_approval_chains: dict[str, ApprovalChain] = {}
-_approval_to_chain: dict[str, str] = {}
-
-
-def _get_chain_key(contract_id: str, version: str) -> str:
-    """Generate key for contract version approval chain."""
-    return f"{contract_id}@{version}"
+# =============================================================================
+# Endpoints
+# =============================================================================
 
 
 @router.post(
-    "/contracts/{contract_id}/versions/{version}/approval-chain",
-    response_model=ApprovalChain,
+    "/approvals",
+    operation_id="createApprovalRequest",
+    summary="Create an approval request",
     status_code=status.HTTP_201_CREATED,
-    summary="Create approval chain",
-    description="Create an approval chain for a contract version.",
+    response_model=ApprovalRequest,
 )
-async def create_approval_chain(
-    contract_id: str,
-    version: str,
-    request: ApprovalChainCreate,
-) -> ApprovalChain:
-    """Create an approval chain for a contract version.
+async def create_approval_request(
+    request: ApprovalRequestCreate,
+    storage: Storage,
+    user: CurrentUser,
+) -> ApprovalRequest:
+    """Create a new approval request for a contract.
 
-    This implements FR-REG-008: Approval workflow for contract changes.
+    This initiates the approval workflow. The specified approvers
+    will need to approve before the contract can be activated.
     """
-    chain_key = _get_chain_key(contract_id, version)
-
-    # Check if chain already exists
-    if chain_key in _approval_chains:
+    # Verify contract exists
+    contract = await storage.contracts.get(request.contract_id)
+    if contract is None:
         raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
+            status_code=status.HTTP_404_NOT_FOUND,
             detail={
-                "code": "CHAIN_EXISTS",
-                "message": f"Approval chain already exists for {contract_id}@{version}",
+                "code": "NOT_FOUND",
+                "message": f"Contract '{request.contract_id}' not found",
             },
         )
 
-    # Create approvals from approvers
-    approvals = [
-        Approval(
-            approver=approver,
-            order=i,
-        )
-        for i, approver in enumerate(request.approvers)
-    ]
-
-    # Create chain
-    chain = ApprovalChain(
-        contract_id=contract_id,
-        contract_version=version,
-        approvals=approvals,
-        created_by="system",  # Would come from auth context
+    approval = await storage.approvals.create_request(
+        contract_id=request.contract_id,
+        requested_by=user.id,
+        approvers=request.approvers,
+        notes=request.notes,
     )
 
-    # Store chain
-    _approval_chains[chain_key] = chain
-
-    # Map approval IDs to chain
-    for approval in approvals:
-        _approval_to_chain[approval.id] = chain_key
-
-    return chain
-
-
-@router.get(
-    "/contracts/{contract_id}/versions/{version}/approval-chain",
-    response_model=ApprovalChain,
-    summary="Get approval chain",
-    description="Get the approval chain for a contract version.",
-)
-async def get_approval_chain(
-    contract_id: str,
-    version: str,
-) -> ApprovalChain:
-    """Get the approval chain for a contract version."""
-    chain_key = _get_chain_key(contract_id, version)
-
-    if chain_key not in _approval_chains:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail={
-                "code": "CHAIN_NOT_FOUND",
-                "message": f"No approval chain found for {contract_id}@{version}",
-            },
-        )
-
-    return _approval_chains[chain_key]
-
-
-@router.get(
-    "/contracts/{contract_id}/versions/{version}/approval-status",
-    response_model=ApprovalChainStatus,
-    summary="Get approval status",
-    description="Get a summary of the approval chain status.",
-)
-async def get_approval_status(
-    contract_id: str,
-    version: str,
-) -> ApprovalChainStatus:
-    """Get approval chain status summary."""
-    chain_key = _get_chain_key(contract_id, version)
-
-    if chain_key not in _approval_chains:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail={
-                "code": "CHAIN_NOT_FOUND",
-                "message": f"No approval chain found for {contract_id}@{version}",
-            },
-        )
-
-    chain = _approval_chains[chain_key]
-    current = chain.current_approval
-
-    return ApprovalChainStatus(
-        chain_id=chain.id,
-        contract_id=chain.contract_id,
-        contract_version=chain.contract_version,
-        status=chain.status,
-        total_approvers=len(chain.approvals),
-        approved_count=sum(1 for a in chain.approvals if a.status == ApprovalStatus.APPROVED),
-        pending_count=sum(1 for a in chain.approvals if a.status == ApprovalStatus.PENDING),
-        rejected_count=sum(1 for a in chain.approvals if a.status == ApprovalStatus.REJECTED),
-        current_approver=current.approver if current else None,
-        created_at=chain.created_at,
-        completed_at=chain.completed_at,
-    )
-
-
-@router.get(
-    "/approvals/{approval_id}",
-    response_model=Approval,
-    summary="Get approval",
-    description="Get a specific approval by ID.",
-)
-async def get_approval(approval_id: str) -> Approval:
-    """Get a specific approval."""
-    if approval_id not in _approval_to_chain:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail={
-                "code": "APPROVAL_NOT_FOUND",
-                "message": f"Approval not found: {approval_id}",
-            },
-        )
-
-    chain_key = _approval_to_chain[approval_id]
-    chain = _approval_chains[chain_key]
-
-    for approval in chain.approvals:
-        if approval.id == approval_id:
-            return approval
-
-    raise HTTPException(
-        status_code=status.HTTP_404_NOT_FOUND,
-        detail={
-            "code": "APPROVAL_NOT_FOUND",
-            "message": f"Approval not found: {approval_id}",
-        },
-    )
-
-
-@router.post(
-    "/approvals/{approval_id}/decision",
-    response_model=Approval,
-    summary="Submit approval decision",
-    description="Submit a decision (approve/reject) for an approval.",
-)
-async def submit_approval_decision(
-    approval_id: str,
-    decision: ApprovalDecision,
-) -> Approval:
-    """Submit an approval decision.
-
-    This implements the approval workflow where approvers can
-    approve or reject contract changes in sequence.
-    """
-    if approval_id not in _approval_to_chain:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail={
-                "code": "APPROVAL_NOT_FOUND",
-                "message": f"Approval not found: {approval_id}",
-            },
-        )
-
-    chain_key = _approval_to_chain[approval_id]
-    chain = _approval_chains[chain_key]
-
-    # Find the approval
-    approval = None
-    for a in chain.approvals:
-        if a.id == approval_id:
-            approval = a
-            break
-
-    if not approval:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail={
-                "code": "APPROVAL_NOT_FOUND",
-                "message": f"Approval not found: {approval_id}",
-            },
-        )
-
-    # Check if approval is pending
-    if approval.status != ApprovalStatus.PENDING:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail={
-                "code": "ALREADY_DECIDED",
-                "message": f"Approval already has status: {approval.status}",
-            },
-        )
-
-    # Check if it's this approver's turn (sequential approval)
-    current = chain.current_approval
-    if current and current.id != approval_id:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail={
-                "code": "NOT_YOUR_TURN",
-                "message": "It is not your turn to approve. Wait for previous approvers.",
-            },
-        )
-
-    # Update approval
-    now = datetime.now(timezone.utc)
-    approval.decision_at = now
-    approval.comment = decision.comment
-
-    if decision.decision == ApprovalDecisionType.APPROVE:
-        approval.status = ApprovalStatus.APPROVED
-    else:
-        approval.status = ApprovalStatus.REJECTED
-        # Reject the entire chain
-        chain.status = ApprovalStatus.REJECTED
-        chain.completed_at = now
-
-    # Check if chain is complete
-    if chain.is_complete:
-        chain.status = ApprovalStatus.APPROVED
-        chain.completed_at = now
-
-    return approval
-
-
-@router.delete(
-    "/contracts/{contract_id}/versions/{version}/approval-chain",
-    status_code=status.HTTP_204_NO_CONTENT,
-    summary="Cancel approval chain",
-    description="Cancel an approval chain.",
-)
-async def cancel_approval_chain(
-    contract_id: str,
-    version: str,
-) -> None:
-    """Cancel an approval chain."""
-    chain_key = _get_chain_key(contract_id, version)
-
-    if chain_key not in _approval_chains:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail={
-                "code": "CHAIN_NOT_FOUND",
-                "message": f"No approval chain found for {contract_id}@{version}",
-            },
-        )
-
-    chain = _approval_chains[chain_key]
-
-    # Mark as cancelled
-    chain.status = ApprovalStatus.CANCELLED
-    chain.completed_at = datetime.now(timezone.utc)
-
-    # Cancel all pending approvals
-    for approval in chain.approvals:
-        if approval.status == ApprovalStatus.PENDING:
-            approval.status = ApprovalStatus.CANCELLED
+    return _build_approval_response(approval)
 
 
 @router.get(
     "/approvals/pending",
-    response_model=list[Approval],
+    operation_id="listPendingApprovals",
     summary="List pending approvals",
-    description="List all pending approvals for the current user.",
+    response_model=ApprovalRequestList,
 )
 async def list_pending_approvals(
-    user_id: str | None = None,
-    email: str | None = None,
-) -> list[Approval]:
-    """List pending approvals, optionally filtered by user."""
-    pending = []
+    storage: Storage,
+    user: CurrentUser,
+    contract_id: str | None = Query(default=None, description="Filter by contract ID"),
+    my_approvals: bool = Query(
+        default=False,
+        description="Only show approvals where I'm an approver",
+    ),
+) -> ApprovalRequestList:
+    """List pending approval requests.
 
-    for chain in _approval_chains.values():
-        if chain.status != ApprovalStatus.PENDING:
-            continue
+    Optionally filter by contract or to show only your pending approvals.
+    """
+    approver = user.id if my_approvals else None
 
-        current = chain.current_approval
-        if not current:
-            continue
+    approvals = await storage.approvals.list_pending(
+        approver=approver,
+        contract_id=contract_id,
+    )
 
-        # Filter by user if specified
-        if user_id and current.approver.user_id != user_id:
-            continue
-        if email and current.approver.email != email:
-            continue
+    return ApprovalRequestList(
+        items=[_build_approval_response(a) for a in approvals],
+    )
 
-        pending.append(current)
 
-    return pending
+@router.get(
+    "/approvals/{request_id}",
+    operation_id="getApprovalRequest",
+    summary="Get an approval request",
+    response_model=ApprovalRequest,
+    responses={404: {"description": "Approval request not found"}},
+)
+async def get_approval_request(
+    request_id: str,
+    storage: Storage,
+    user: CurrentUser,
+) -> ApprovalRequest:
+    """Get an approval request by ID."""
+    approval = await storage.approvals.get_request(request_id)
+
+    if approval is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={
+                "code": "NOT_FOUND",
+                "message": f"Approval request '{request_id}' not found",
+            },
+        )
+
+    return _build_approval_response(approval)
+
+
+@router.post(
+    "/approvals/{request_id}/approve",
+    operation_id="approve",
+    summary="Approve a request",
+    response_model=ApprovalRequest,
+    responses={
+        404: {"description": "Approval request not found"},
+        400: {"description": "User not authorized to approve"},
+    },
+)
+async def approve(
+    request_id: str,
+    request: ApproveRequest,
+    storage: Storage,
+    service: ContractSvc,
+    user: RequireEditor,
+) -> ApprovalRequest:
+    """Approve an approval request.
+
+    Only users listed in the approvers can approve.
+    When all approvers have approved, the contract status is updated to 'active'.
+    """
+    # Get approval request
+    existing = await storage.approvals.get_request(request_id)
+    if existing is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={
+                "code": "NOT_FOUND",
+                "message": f"Approval request '{request_id}' not found",
+            },
+        )
+
+    # Check user is an approver
+    if user.id not in existing["approvers"]:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={
+                "code": "NOT_AUTHORIZED",
+                "message": "You are not authorized to approve this request",
+            },
+        )
+
+    # Record approval
+    try:
+        approval = await storage.approvals.approve(
+            request_id=request_id,
+            approver=user.id,
+            comments=request.comments,
+        )
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={"code": "NOT_FOUND", "message": str(e)},
+        )
+
+    # If fully approved, activate the contract
+    if approval["status"] == "approved":
+        try:
+            await service.update_status(
+                approval["contract_id"],
+                "active",
+                user,
+            )
+        except ValueError:
+            pass  # Contract may already be active or in different state
+
+    return _build_approval_response(approval)
+
+
+@router.post(
+    "/approvals/{request_id}/reject",
+    operation_id="reject",
+    summary="Reject a request",
+    response_model=ApprovalRequest,
+    responses={
+        404: {"description": "Approval request not found"},
+        400: {"description": "User not authorized to reject"},
+    },
+)
+async def reject(
+    request_id: str,
+    request: RejectRequest,
+    storage: Storage,
+    user: RequireEditor,
+) -> ApprovalRequest:
+    """Reject an approval request.
+
+    Only users listed in the approvers can reject.
+    A single rejection marks the entire request as rejected.
+    """
+    # Get approval request
+    existing = await storage.approvals.get_request(request_id)
+    if existing is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={
+                "code": "NOT_FOUND",
+                "message": f"Approval request '{request_id}' not found",
+            },
+        )
+
+    # Check user is an approver
+    if user.id not in existing["approvers"]:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={
+                "code": "NOT_AUTHORIZED",
+                "message": "You are not authorized to reject this request",
+            },
+        )
+
+    # Record rejection
+    try:
+        approval = await storage.approvals.reject(
+            request_id=request_id,
+            rejector=user.id,
+            reason=request.reason,
+        )
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={"code": "NOT_FOUND", "message": str(e)},
+        )
+
+    return _build_approval_response(approval)

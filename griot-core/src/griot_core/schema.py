@@ -10,12 +10,10 @@ A Schema contains:
 """
 from __future__ import annotations
 
-import copy
 from dataclasses import dataclass, field as dataclass_field
-from typing import Any, Callable, ClassVar, TypeVar, TYPE_CHECKING
+from typing import Any, Callable, ClassVar, TypeVar
 
-from griot_core.privacy_types import Sensitivity, PIIType
-from griot_core.types import DataType
+from griot_core.types import DataType, Sensitivity, PIIType, PrivacyInfo as PI, PrivacyInfo
 from griot_core._utils import (
     extract_base_type,
     is_optional_type,
@@ -130,7 +128,6 @@ class FieldInfo:
             return None
 
         # Import here to avoid circular imports
-        from griot_validate.validation import PrivacyInfo as PI
 
         if isinstance(privacy_data, PI):
             return privacy_data
@@ -393,7 +390,6 @@ class Field:
 
         if is_pii and pii_type is None:
             raise ValueError("'pii_type' must be specified if 'is_pii' is True")
-        from griot_core.privacy_types import PrivacyInfo
         privacy_args = [sensitivity, requires_masking, is_pii, pii_type]
         if any(arg is not None for arg in privacy_args):
             privacy = PrivacyInfo(

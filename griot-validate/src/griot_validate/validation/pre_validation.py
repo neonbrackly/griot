@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from griot_core.validation_types import ValidationError, ErrorType, ErrorSeverity
+from griot_validate.validation.types import ValidationError, ErrorType
+from griot_core.types import ErrorSeverity
 from .adapters.base import DataFrameAdapter
 
 

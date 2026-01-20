@@ -6,7 +6,7 @@ from datetime import datetime
 from typing import Any
 
 from .base import RuleEvaluator
-from griot_core.validation_types import RuleResult
+from griot_validate.validation.types import RuleResult
 from ..adapters.base import DataFrameAdapter
 
 

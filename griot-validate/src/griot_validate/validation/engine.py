@@ -5,15 +5,14 @@ from __future__ import annotations
 import time
 from typing import Any
 
-from griot_core.privacy_types import PrivacyViolation
-from griot_core.validation_types import (
+from griot_validate.validation.types import (
     ValidationMode,
     ValidationResult,
     ValidationError,
     ErrorType,
-    ErrorSeverity,
     RuleResult,
 )
+from griot_core.types import ErrorSeverity, PrivacyViolation
 from .adapters import AdapterRegistry
 from .adapters.base import DataFrameAdapter
 from .rules import RuleEvaluatorRegistry

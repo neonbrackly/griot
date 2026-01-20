@@ -5,7 +5,7 @@
 # Consumers: hub, cli (for push/pull)
 #
 # OpenAPI 3.0 specification for griot-registry REST API
-# Hub agent builds frontend against this spec
+# Updated: 2026-01-20 - Complete specification with all endpoints
 # =============================================================================
 
 openapi: "3.0.3"
@@ -13,8 +13,36 @@ info:
   title: Griot Registry API
   description: |
     Central registry for Griot data contracts. Provides storage, versioning,
-    validation history, and search capabilities.
-  version: "0.1.0"
+    validation, approval workflows, and collaboration features for ODCS-compliant
+    data contracts.
+
+    ## Authentication
+
+    Most write operations require JWT authentication. Obtain a token via:
+    ```
+    GET /api/v1/auth/token?user_id=myuser&roles=editor
+    ```
+
+    Include the token in requests:
+    ```
+    Authorization: Bearer <token>
+    ```
+
+    ## Contract Format (ODCS)
+
+    Contracts use the Open Data Contract Standard (ODCS) format:
+    ```json
+    {
+      "apiVersion": "v1.0.0",
+      "kind": "DataContract",
+      "id": "unique-id",
+      "name": "contract_name",
+      "version": "1.0.0",
+      "status": "draft",
+      "schema": [...]
+    }
+    ```
+  version: "0.2.0"
   contact:
     name: Griot Team
   license:
@@ -25,16 +53,28 @@ servers:
     description: API v1
 
 tags:
+  - name: health
+    description: Service health checks
+  - name: auth
+    description: Authentication and authorization
   - name: contracts
     description: Contract CRUD operations
   - name: versions
     description: Contract versioning
+  - name: schemas
+    description: Schema catalog queries
   - name: validations
-    description: Validation history
+    description: Validation records
+  - name: runs
+    description: Pipeline run tracking
+  - name: issues
+    description: Issue management
+  - name: comments
+    description: Collaboration comments
+  - name: approvals
+    description: Approval workflows
   - name: search
     description: Search contracts
-  - name: health
-    description: Service health
 
 # =============================================================================
 # PATHS
@@ -48,22 +88,110 @@ paths:
       tags: [health]
       summary: Health check
       operationId: healthCheck
+      security: []
       responses:
         '200':
-          description: Service is healthy
+          description: Service health status
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HealthResponse'
 
+  /health/live:
+    get:
+      tags: [health]
+      summary: Liveness probe
+      operationId: livenessCheck
+      security: []
+      responses:
+        '200':
+          description: Service is alive
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "alive"
+
+  /health/ready:
+    get:
+      tags: [health]
+      summary: Readiness probe
+      operationId: readinessCheck
+      security: []
+      responses:
+        '200':
+          description: Service is ready
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [ready, not ready]
+
   # ---------------------------------------------------------------------------
-  # Contracts CRUD
+  # Authentication
+  # ---------------------------------------------------------------------------
+  /auth/token:
+    get:
+      tags: [auth]
+      summary: Get JWT access token
+      operationId: getToken
+      security: []
+      parameters:
+        - name: user_id
+          in: query
+          required: true
+          schema:
+            type: string
+          description: User identifier
+        - name: roles
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+              enum: [viewer, editor, admin]
+          style: form
+          explode: true
+          description: User roles
+      responses:
+        '200':
+          description: Token generated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+
+  /auth/me:
+    get:
+      tags: [auth]
+      summary: Get current user info
+      operationId: getCurrentUser
+      responses:
+        '200':
+          description: Current user information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserInfo'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # ---------------------------------------------------------------------------
+  # Contracts
   # ---------------------------------------------------------------------------
   /contracts:
     get:
       tags: [contracts]
       summary: List all contracts
       operationId: listContracts
+      security: []
       parameters:
         - $ref: '#/components/parameters/limitParam'
         - $ref: '#/components/parameters/offsetParam'
@@ -71,20 +199,23 @@ paths:
           in: query
           schema:
             type: string
-            enum: [draft, active, deprecated]
+            enum: [draft, active, deprecated, retired]
+        - name: schema_name
+          in: query
+          schema:
+            type: string
         - name: owner
           in: query
           schema:
             type: string
-          description: Filter by owner
       responses:
         '200':
           description: List of contracts
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ContractList'
-                
+                $ref: '#/components/schemas/ContractListResponse'
+
     post:
       tags: [contracts]
       summary: Create new contract
@@ -94,72 +225,96 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ContractCreate'
-          application/x-yaml:
-            schema:
-              type: string
-              description: YAML contract definition
+              $ref: '#/components/schemas/ODCSContract'
       responses:
         '201':
           description: Contract created
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Contract'
+                $ref: '#/components/schemas/ODCSContract'
         '400':
           $ref: '#/components/responses/BadRequest'
         '409':
-          description: Contract ID already exists
+          description: Contract already exists
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+
+  /contracts/validate:
+    post:
+      tags: [contracts]
+      summary: Validate contract without storing
+      operationId: validateContract
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ODCSContract'
+      responses:
+        '200':
+          description: Validation result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContractValidationResponse'
 
   /contracts/{contractId}:
     get:
       tags: [contracts]
       summary: Get contract by ID
       operationId: getContract
+      security: []
       parameters:
         - $ref: '#/components/parameters/contractIdParam'
         - name: version
           in: query
           schema:
             type: string
-          description: Specific version (default latest)
+          description: Specific version to retrieve
       responses:
         '200':
           description: Contract details
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Contract'
-            application/x-yaml:
-              schema:
-                type: string
+                $ref: '#/components/schemas/ODCSContract'
         '404':
           $ref: '#/components/responses/NotFound'
-          
+
     put:
       tags: [contracts]
       summary: Update contract (creates new version)
       operationId: updateContract
       parameters:
         - $ref: '#/components/parameters/contractIdParam'
+        - name: allow_breaking
+          in: query
+          schema:
+            type: boolean
+            default: false
+          description: Allow breaking changes
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ContractUpdate'
+              $ref: '#/components/schemas/ContractUpdateRequest'
       responses:
         '200':
           description: Contract updated
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Contract'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '404':
-          $ref: '#/components/responses/NotFound'
-          
+                $ref: '#/components/schemas/ODCSContract'
+        '409':
+          description: Breaking changes detected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BreakingChangesResponse'
+
     delete:
       tags: [contracts]
       summary: Deprecate contract
@@ -172,6 +327,29 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
+  /contracts/{contractId}/status:
+    patch:
+      tags: [contracts]
+      summary: Update contract status
+      operationId: updateContractStatus
+      parameters:
+        - $ref: '#/components/parameters/contractIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StatusUpdateRequest'
+      responses:
+        '200':
+          description: Status updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ODCSContract'
+        '400':
+          description: Invalid status transition
+
   # ---------------------------------------------------------------------------
   # Versions
   # ---------------------------------------------------------------------------
@@ -180,6 +358,7 @@ paths:
       tags: [versions]
       summary: List contract versions
       operationId: listVersions
+      security: []
       parameters:
         - $ref: '#/components/parameters/contractIdParam'
         - $ref: '#/components/parameters/limitParam'
@@ -190,7 +369,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/VersionList'
+                $ref: '#/components/schemas/VersionListResponse'
         '404':
           $ref: '#/components/responses/NotFound'
 
@@ -199,6 +378,7 @@ paths:
       tags: [versions]
       summary: Get specific version
       operationId: getVersion
+      security: []
       parameters:
         - $ref: '#/components/parameters/contractIdParam'
         - name: version
@@ -208,38 +388,99 @@ paths:
             type: string
       responses:
         '200':
-          description: Version details
+          description: Contract at version
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Contract'
+                $ref: '#/components/schemas/ODCSContract'
         '404':
           $ref: '#/components/responses/NotFound'
 
-  /contracts/{contractId}/diff:
+  # ---------------------------------------------------------------------------
+  # Schemas
+  # ---------------------------------------------------------------------------
+  /schemas:
     get:
-      tags: [versions]
-      summary: Diff two versions
-      operationId: diffVersions
+      tags: [schemas]
+      summary: Find schemas across contracts
+      operationId: findSchemas
+      security: []
       parameters:
-        - $ref: '#/components/parameters/contractIdParam'
-        - name: from
+        - name: name
           in: query
-          required: true
           schema:
             type: string
-        - name: to
+          description: Filter by schema name
+        - name: physical_name
           in: query
+          schema:
+            type: string
+          description: Filter by physical table name
+        - name: field_name
+          in: query
+          schema:
+            type: string
+          description: Filter by field name
+        - name: has_pii
+          in: query
+          schema:
+            type: boolean
+          description: Filter by PII flag
+        - $ref: '#/components/parameters/limitParam'
+      responses:
+        '200':
+          description: Schema catalog entries
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SchemaCatalogResponse'
+
+  /schemas/contracts/{schemaName}:
+    get:
+      tags: [schemas]
+      summary: Get contracts containing a schema
+      operationId: getContractsBySchema
+      security: []
+      parameters:
+        - name: schemaName
+          in: path
           required: true
           schema:
             type: string
       responses:
         '200':
-          description: Version diff
+          description: Contract IDs
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ContractDiff'
+                type: object
+                properties:
+                  schema_name:
+                    type: string
+                  contract_ids:
+                    type: array
+                    items:
+                      type: string
+                  count:
+                    type: integer
+
+  /schemas/rebuild:
+    post:
+      tags: [schemas]
+      summary: Rebuild schema catalog
+      operationId: rebuildSchemaCatalog
+      responses:
+        '200':
+          description: Catalog rebuilt
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  schemas_indexed:
+                    type: integer
 
   # ---------------------------------------------------------------------------
   # Validations
@@ -247,15 +488,14 @@ paths:
   /validations:
     post:
       tags: [validations]
-      summary: Report validation result
-      operationId: reportValidation
-      description: Called by griot-validate to report runtime validation results
+      summary: Record a validation result
+      operationId: recordValidation
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ValidationReport'
+              $ref: '#/components/schemas/ValidationRecordRequest'
       responses:
         '201':
           description: Validation recorded
@@ -263,13 +503,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ValidationRecord'
-                
+
     get:
       tags: [validations]
-      summary: List validation history
+      summary: List validation records
       operationId: listValidations
+      security: []
       parameters:
         - name: contract_id
+          in: query
+          schema:
+            type: string
+        - name: schema_name
           in: query
           schema:
             type: string
@@ -291,28 +536,499 @@ paths:
         - $ref: '#/components/parameters/offsetParam'
       responses:
         '200':
-          description: Validation history
+          description: Validation records
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ValidationList'
+                $ref: '#/components/schemas/ValidationListResponse'
 
-  /contracts/{contractId}/validations:
+  /validations/stats/{contractId}:
     get:
       tags: [validations]
-      summary: Get validations for specific contract
-      operationId: getContractValidations
+      summary: Get validation statistics
+      operationId: getValidationStats
+      security: []
       parameters:
         - $ref: '#/components/parameters/contractIdParam'
+        - name: days
+          in: query
+          schema:
+            type: integer
+            default: 30
+            minimum: 1
+            maximum: 365
+      responses:
+        '200':
+          description: Validation statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationStats'
+
+  # ---------------------------------------------------------------------------
+  # Runs
+  # ---------------------------------------------------------------------------
+  /runs:
+    post:
+      tags: [runs]
+      summary: Create a run
+      operationId: createRun
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RunCreateRequest'
+      responses:
+        '201':
+          description: Run created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Run'
+
+    get:
+      tags: [runs]
+      summary: List runs
+      operationId: listRuns
+      security: []
+      parameters:
+        - name: contract_id
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, running, completed, failed]
+        - name: from_date
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: to_date
+          in: query
+          schema:
+            type: string
+            format: date-time
         - $ref: '#/components/parameters/limitParam'
         - $ref: '#/components/parameters/offsetParam'
       responses:
         '200':
-          description: Validation history for contract
+          description: Run list
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ValidationList'
+                $ref: '#/components/schemas/RunListResponse'
+
+  /runs/{runId}:
+    get:
+      tags: [runs]
+      summary: Get a run
+      operationId: getRun
+      security: []
+      parameters:
+        - name: runId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Run details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Run'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    patch:
+      tags: [runs]
+      summary: Update run status
+      operationId: updateRunStatus
+      parameters:
+        - name: runId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RunUpdateRequest'
+      responses:
+        '200':
+          description: Run updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Run'
+
+  # ---------------------------------------------------------------------------
+  # Issues
+  # ---------------------------------------------------------------------------
+  /issues:
+    post:
+      tags: [issues]
+      summary: Create an issue
+      operationId: createIssue
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IssueCreateRequest'
+      responses:
+        '201':
+          description: Issue created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Issue'
+
+    get:
+      tags: [issues]
+      summary: List issues
+      operationId: listIssues
+      security: []
+      parameters:
+        - name: contract_id
+          in: query
+          schema:
+            type: string
+        - name: run_id
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [open, resolved]
+        - name: severity
+          in: query
+          schema:
+            type: string
+            enum: [error, warning, info]
+        - $ref: '#/components/parameters/limitParam'
+        - $ref: '#/components/parameters/offsetParam'
+      responses:
+        '200':
+          description: Issue list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IssueListResponse'
+
+  /issues/{issueId}:
+    get:
+      tags: [issues]
+      summary: Get an issue
+      operationId: getIssue
+      security: []
+      parameters:
+        - name: issueId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Issue details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Issue'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    patch:
+      tags: [issues]
+      summary: Update an issue
+      operationId: updateIssue
+      parameters:
+        - name: issueId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IssueUpdateRequest'
+      responses:
+        '200':
+          description: Issue updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Issue'
+
+  /issues/{issueId}/resolve:
+    post:
+      tags: [issues]
+      summary: Resolve an issue
+      operationId: resolveIssue
+      parameters:
+        - name: issueId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IssueResolveRequest'
+      responses:
+        '200':
+          description: Issue resolved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Issue'
+
+  # ---------------------------------------------------------------------------
+  # Comments
+  # ---------------------------------------------------------------------------
+  /comments:
+    post:
+      tags: [comments]
+      summary: Create a comment
+      operationId: createComment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommentCreateRequest'
+      responses:
+        '201':
+          description: Comment created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comment'
+
+  /comments/{commentId}:
+    get:
+      tags: [comments]
+      summary: Get a comment
+      operationId: getComment
+      security: []
+      parameters:
+        - name: commentId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Comment details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comment'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    patch:
+      tags: [comments]
+      summary: Update a comment
+      operationId: updateComment
+      parameters:
+        - name: commentId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommentUpdateRequest'
+      responses:
+        '200':
+          description: Comment updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comment'
+
+    delete:
+      tags: [comments]
+      summary: Delete a comment
+      operationId: deleteComment
+      parameters:
+        - name: commentId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Comment deleted
+
+  /comments/{commentId}/reactions:
+    post:
+      tags: [comments]
+      summary: Add a reaction
+      operationId: addReaction
+      parameters:
+        - name: commentId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReactionRequest'
+      responses:
+        '200':
+          description: Reaction added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comment'
+
+  /contracts/{contractId}/comments:
+    get:
+      tags: [comments]
+      summary: List comments for a contract
+      operationId: listContractComments
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/contractIdParam'
+        - name: thread_id
+          in: query
+          schema:
+            type: string
+        - $ref: '#/components/parameters/limitParam'
+        - $ref: '#/components/parameters/offsetParam'
+      responses:
+        '200':
+          description: Comment list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommentListResponse'
+
+  # ---------------------------------------------------------------------------
+  # Approvals
+  # ---------------------------------------------------------------------------
+  /approvals:
+    post:
+      tags: [approvals]
+      summary: Create approval request
+      operationId: createApprovalRequest
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApprovalCreateRequest'
+      responses:
+        '201':
+          description: Approval request created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApprovalRequest'
+
+  /approvals/pending:
+    get:
+      tags: [approvals]
+      summary: List pending approvals
+      operationId: listPendingApprovals
+      responses:
+        '200':
+          description: Pending approvals
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ApprovalRequest'
+
+  /approvals/{requestId}:
+    get:
+      tags: [approvals]
+      summary: Get approval request
+      operationId: getApprovalRequest
+      parameters:
+        - name: requestId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Approval details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApprovalRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /approvals/{requestId}/approve:
+    post:
+      tags: [approvals]
+      summary: Approve request
+      operationId: approveRequest
+      parameters:
+        - name: requestId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApprovalDecision'
+      responses:
+        '200':
+          description: Request approved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApprovalRequest'
+
+  /approvals/{requestId}/reject:
+    post:
+      tags: [approvals]
+      summary: Reject request
+      operationId: rejectRequest
+      parameters:
+        - name: requestId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApprovalDecision'
+      responses:
+        '200':
+          description: Request rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApprovalRequest'
 
   # ---------------------------------------------------------------------------
   # Search
@@ -321,36 +1037,68 @@ paths:
     get:
       tags: [search]
       summary: Search contracts
-      operationId: searchContracts
+      operationId: search
+      security: []
       parameters:
-        - name: q
+        - name: query
           in: query
           required: true
           schema:
             type: string
-          description: Search query
-        - name: field
-          in: query
-          schema:
-            type: string
-          description: Search in specific field name
+            minLength: 1
         - $ref: '#/components/parameters/limitParam'
-        - $ref: '#/components/parameters/offsetParam'
       responses:
         '200':
           description: Search results
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SearchResults'
+                $ref: '#/components/schemas/SearchResponse'
+
+  /search/advanced:
+    get:
+      tags: [search]
+      summary: Advanced search
+      operationId: advancedSearch
+      security: []
+      parameters:
+        - name: query
+          in: query
+          schema:
+            type: string
+        - name: name
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: schema_name
+          in: query
+          schema:
+            type: string
+        - name: owner
+          in: query
+          schema:
+            type: string
+        - name: has_pii
+          in: query
+          schema:
+            type: boolean
+        - $ref: '#/components/parameters/limitParam'
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchResponse'
 
 # =============================================================================
 # COMPONENTS
 # =============================================================================
 components:
-  # ---------------------------------------------------------------------------
-  # Parameters
-  # ---------------------------------------------------------------------------
   parameters:
     contractIdParam:
       name: contractId
@@ -358,8 +1106,7 @@ components:
       required: true
       schema:
         type: string
-      description: Contract identifier
-      
+
     limitParam:
       name: limit
       in: query
@@ -368,7 +1115,7 @@ components:
         default: 50
         minimum: 1
         maximum: 100
-        
+
     offsetParam:
       name: offset
       in: query
@@ -377,9 +1124,6 @@ components:
         default: 0
         minimum: 0
 
-  # ---------------------------------------------------------------------------
-  # Responses
-  # ---------------------------------------------------------------------------
   responses:
     BadRequest:
       description: Invalid request
@@ -387,7 +1131,7 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-            
+
     NotFound:
       description: Resource not found
       content:
@@ -395,110 +1139,142 @@ components:
           schema:
             $ref: '#/components/schemas/Error'
 
-  # ---------------------------------------------------------------------------
-  # Schemas
-  # ---------------------------------------------------------------------------
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    ValidationFailed:
+      description: Validation failed
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              code:
+                type: string
+              message:
+                type: string
+              validation:
+                $ref: '#/components/schemas/ContractValidationResponse'
+
   schemas:
-    # Health
+    # Core
+    Error:
+      type: object
+      properties:
+        detail:
+          oneOf:
+            - type: string
+            - type: object
+              properties:
+                code:
+                  type: string
+                message:
+                  type: string
+
     HealthResponse:
       type: object
-      required: [status, version]
       properties:
         status:
           type: string
           enum: [healthy, degraded, unhealthy]
         version:
           type: string
-        timestamp:
-          type: string
-          format: date-time
-
-    # Error
-    Error:
-      type: object
-      required: [code, message]
-      properties:
-        code:
-          type: string
-        message:
-          type: string
-        details:
+        storage:
           type: object
 
-    # Contract
-    Contract:
+    # Auth
+    TokenResponse:
       type: object
-      required: [id, name, version, status, fields]
+      required: [access_token, token_type]
+      properties:
+        access_token:
+          type: string
+        token_type:
+          type: string
+          enum: [bearer]
+
+    UserInfo:
+      type: object
       properties:
         id:
           type: string
-          example: "customer-profile"
-        name:
+        roles:
+          type: array
+          items:
+            type: string
+        auth_method:
           type: string
-          example: "Customer Profile"
-        description:
+
+    # ODCS Contract
+    ODCSContract:
+      type: object
+      required: [apiVersion, kind, id, name, version, status, schema]
+      properties:
+        apiVersion:
+          type: string
+          example: "v1.0.0"
+        kind:
+          type: string
+          enum: [DataContract]
+        id:
+          type: string
+        name:
           type: string
         version:
           type: string
-          example: "1.2.0"
         status:
           type: string
-          enum: [draft, active, deprecated]
-        owner:
+          enum: [draft, active, deprecated, retired]
+        description:
           type: string
-        fields:
+        schema:
           type: array
           items:
-            $ref: '#/components/schemas/FieldDefinition'
-        created_at:
-          type: string
-          format: date-time
-        updated_at:
-          type: string
-          format: date-time
+            $ref: '#/components/schemas/SchemaDefinition'
 
-    ContractCreate:
+    SchemaDefinition:
       type: object
-      required: [id, name, fields]
+      required: [name, id, logicalType]
       properties:
+        name:
+          type: string
         id:
           type: string
-        name:
+        logicalType:
           type: string
         description:
           type: string
-        owner:
-          type: string
-        fields:
+        properties:
           type: array
           items:
-            $ref: '#/components/schemas/FieldDefinition'
+            $ref: '#/components/schemas/SchemaProperty'
 
-    ContractUpdate:
+    SchemaProperty:
       type: object
+      required: [name, logicalType]
       properties:
         name:
           type: string
+        logicalType:
+          type: string
+          enum: [string, integer, number, boolean, timestamp, date, array, object, bytes]
+        required:
+          type: boolean
+          default: false
         description:
           type: string
-        fields:
-          type: array
-          items:
-            $ref: '#/components/schemas/FieldDefinition'
-        change_type:
-          type: string
-          enum: [patch, minor, major]
-          default: minor
-        change_notes:
-          type: string
 
-    ContractList:
+    ContractListResponse:
       type: object
       properties:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/Contract'
+            $ref: '#/components/schemas/ODCSContract'
         total:
           type: integer
         limit:
@@ -506,71 +1282,83 @@ components:
         offset:
           type: integer
 
-    # Field
-    FieldDefinition:
-      type: object
-      required: [name, type, description]
-      properties:
-        name:
-          type: string
-        type:
-          type: string
-          enum: [string, integer, float, boolean, date, datetime, array, object]
-        description:
-          type: string
-        nullable:
-          type: boolean
-          default: false
-        primary_key:
-          type: boolean
-          default: false
-        unique:
-          type: boolean
-          default: false
-        constraints:
-          $ref: '#/components/schemas/FieldConstraints'
-        metadata:
-          $ref: '#/components/schemas/FieldMetadata'
+    ContractUpdateRequest:
+      allOf:
+        - $ref: '#/components/schemas/ODCSContract'
+        - type: object
+          properties:
+            change_type:
+              type: string
+              enum: [patch, minor, major]
+            change_notes:
+              type: string
 
-    FieldConstraints:
+    StatusUpdateRequest:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [draft, active, deprecated, retired]
+
+    ContractValidationResponse:
       type: object
       properties:
-        min_length:
+        is_valid:
+          type: boolean
+        has_errors:
+          type: boolean
+        has_warnings:
+          type: boolean
+        error_count:
           type: integer
-        max_length:
+        warning_count:
           type: integer
-        pattern:
-          type: string
-        format:
-          type: string
-          enum: [email, uri, uuid, date, datetime, ipv4, ipv6, hostname]
-        ge:
-          type: number
-        le:
-          type: number
-        gt:
-          type: number
-        lt:
-          type: number
-        multiple_of:
-          type: number
-        enum:
+        issues:
           type: array
-          items: {}
+          items:
+            $ref: '#/components/schemas/ValidationIssue'
 
-    FieldMetadata:
+    ValidationIssue:
       type: object
       properties:
-        unit:
+        code:
           type: string
-        aggregation:
+        field:
           type: string
-          enum: [sum, avg, count, min, max, none]
-        glossary_term:
+        message:
+          type: string
+        severity:
+          type: string
+          enum: [error, warning]
+        suggestion:
+          type: string
+
+    BreakingChangesResponse:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        breaking_changes:
+          type: array
+          items:
+            type: object
+            properties:
+              change_type:
+                type: string
+              field:
+                type: string
+              description:
+                type: string
+              migration_hint:
+                type: string
+        allow_breaking_hint:
           type: string
 
     # Versions
-    VersionList:
+    VersionListResponse:
       type: object
       properties:
         items:
@@ -583,79 +1371,75 @@ components:
     VersionSummary:
       type: object
       properties:
+        contract_id:
+          type: string
         version:
           type: string
+        change_type:
+          type: string
+        change_notes:
+          type: string
+        is_breaking:
+          type: boolean
         created_at:
           type: string
           format: date-time
         created_by:
           type: string
-        change_type:
-          type: string
-          enum: [patch, minor, major]
-        change_notes:
-          type: string
-        is_breaking:
-          type: boolean
 
-    ContractDiff:
+    # Schema Catalog
+    SchemaCatalogResponse:
       type: object
       properties:
-        from_version:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/SchemaCatalogEntry'
+        total:
+          type: integer
+
+    SchemaCatalogEntry:
+      type: object
+      properties:
+        schema_id:
           type: string
-        to_version:
+        name:
           type: string
-        has_breaking_changes:
-          type: boolean
-        added_fields:
+        physical_name:
+          type: string
+        logical_type:
+          type: string
+        physical_type:
+          type: string
+        description:
+          type: string
+        contract_id:
+          type: string
+        contract_name:
+          type: string
+        contract_version:
+          type: string
+        contract_status:
+          type: string
+        field_names:
           type: array
           items:
             type: string
-        removed_fields:
-          type: array
-          items:
-            type: string
-        type_changes:
-          type: array
-          items:
-            $ref: '#/components/schemas/TypeChange'
-        constraint_changes:
-          type: array
-          items:
-            $ref: '#/components/schemas/ConstraintChange'
-
-    TypeChange:
-      type: object
-      properties:
-        field:
-          type: string
-        from_type:
-          type: string
-        to_type:
-          type: string
-        is_breaking:
-          type: boolean
-
-    ConstraintChange:
-      type: object
-      properties:
-        field:
-          type: string
-        constraint:
-          type: string
-        from_value: {}
-        to_value: {}
-        is_breaking:
+        field_count:
+          type: integer
+        has_pii:
           type: boolean
 
     # Validations
-    ValidationReport:
+    ValidationRecordRequest:
       type: object
       required: [contract_id, passed, row_count]
       properties:
         contract_id:
           type: string
         contract_version:
+          type: string
+        schema_name:
           type: string
         passed:
           type: boolean
@@ -669,7 +1453,6 @@ components:
           type: number
         environment:
           type: string
-          enum: [development, staging, production]
         pipeline_id:
           type: string
         run_id:
@@ -677,31 +1460,18 @@ components:
         sample_errors:
           type: array
           items:
-            $ref: '#/components/schemas/ValidationError'
-          maxItems: 100
-
-    ValidationError:
-      type: object
-      properties:
-        field:
-          type: string
-        row:
-          type: integer
-        value: {}
-        constraint:
-          type: string
-        message:
-          type: string
+            type: object
 
     ValidationRecord:
       type: object
       properties:
         id:
           type: string
-          format: uuid
         contract_id:
           type: string
         contract_version:
+          type: string
+        schema_name:
           type: string
         passed:
           type: boolean
@@ -709,11 +1479,21 @@ components:
           type: integer
         error_count:
           type: integer
+        error_rate:
+          type: number
+        duration_ms:
+          type: number
+        environment:
+          type: string
+        pipeline_id:
+          type: string
+        run_id:
+          type: string
         recorded_at:
           type: string
           format: date-time
 
-    ValidationList:
+    ValidationListResponse:
       type: object
       properties:
         items:
@@ -722,9 +1502,344 @@ components:
             $ref: '#/components/schemas/ValidationRecord'
         total:
           type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+
+    ValidationStats:
+      type: object
+      properties:
+        contract_id:
+          type: string
+        period_days:
+          type: integer
+        total_runs:
+          type: integer
+        passed_runs:
+          type: integer
+        failed_runs:
+          type: integer
+        pass_rate:
+          type: number
+        total_rows:
+          type: integer
+        total_errors:
+          type: integer
+        avg_duration_ms:
+          type: number
+
+    # Runs
+    RunCreateRequest:
+      type: object
+      required: [contract_id]
+      properties:
+        contract_id:
+          type: string
+        contract_version:
+          type: string
+        schema_name:
+          type: string
+        pipeline_id:
+          type: string
+        environment:
+          type: string
+        trigger:
+          type: string
+        metadata:
+          type: object
+
+    RunUpdateRequest:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [pending, running, completed, failed]
+        result:
+          type: object
+
+    Run:
+      type: object
+      properties:
+        id:
+          type: string
+        contract_id:
+          type: string
+        contract_version:
+          type: string
+        schema_name:
+          type: string
+        pipeline_id:
+          type: string
+        environment:
+          type: string
+        trigger:
+          type: string
+        status:
+          type: string
+        result:
+          type: object
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+        created_by:
+          type: string
+
+    RunListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Run'
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+
+    # Issues
+    IssueCreateRequest:
+      type: object
+      required: [contract_id, title]
+      properties:
+        contract_id:
+          type: string
+        run_id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        severity:
+          type: string
+          enum: [error, warning, info]
+          default: warning
+        category:
+          type: string
+        affected_field:
+          type: string
+        affected_schema:
+          type: string
+        metadata:
+          type: object
+
+    IssueUpdateRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        severity:
+          type: string
+        status:
+          type: string
+        assignee:
+          type: string
+
+    IssueResolveRequest:
+      type: object
+      required: [resolution]
+      properties:
+        resolution:
+          type: string
+
+    Issue:
+      type: object
+      properties:
+        id:
+          type: string
+        contract_id:
+          type: string
+        run_id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        severity:
+          type: string
+        category:
+          type: string
+        status:
+          type: string
+        affected_field:
+          type: string
+        affected_schema:
+          type: string
+        assignee:
+          type: string
+        resolution:
+          type: string
+        resolved_by:
+          type: string
+        resolved_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        created_by:
+          type: string
+
+    IssueListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Issue'
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+
+    # Comments
+    CommentCreateRequest:
+      type: object
+      required: [contract_id, content]
+      properties:
+        contract_id:
+          type: string
+        content:
+          type: string
+          minLength: 1
+          maxLength: 5000
+        thread_id:
+          type: string
+        section:
+          type: string
+        field_path:
+          type: string
+
+    CommentUpdateRequest:
+      type: object
+      required: [content]
+      properties:
+        content:
+          type: string
+          minLength: 1
+          maxLength: 5000
+
+    ReactionRequest:
+      type: object
+      required: [reaction]
+      properties:
+        reaction:
+          type: string
+
+    Comment:
+      type: object
+      properties:
+        id:
+          type: string
+        contract_id:
+          type: string
+        content:
+          type: string
+        thread_id:
+          type: string
+        section:
+          type: string
+        field_path:
+          type: string
+        reactions:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        created_by:
+          type: string
+        updated_by:
+          type: string
+
+    CommentListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Comment'
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+
+    # Approvals
+    ApprovalCreateRequest:
+      type: object
+      required: [contract_id, request_type, title]
+      properties:
+        contract_id:
+          type: string
+        request_type:
+          type: string
+          enum: [activation, deprecation, update, deletion]
+        title:
+          type: string
+        description:
+          type: string
+
+    ApprovalDecision:
+      type: object
+      properties:
+        comment:
+          type: string
+
+    ApprovalRequest:
+      type: object
+      properties:
+        id:
+          type: string
+        contract_id:
+          type: string
+        request_type:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [pending, approved, rejected]
+        requested_by:
+          type: string
+        requested_at:
+          type: string
+          format: date-time
+        decided_by:
+          type: string
+        decided_at:
+          type: string
+          format: date-time
+        decision_comment:
+          type: string
 
     # Search
-    SearchResults:
+    SearchResponse:
       type: object
       properties:
         query:
@@ -743,28 +1858,22 @@ components:
           type: string
         contract_name:
           type: string
-        field_name:
+        version:
           type: string
+        status:
+          type: string
+        score:
+          type: number
         match_type:
           type: string
-          enum: [name, description, field]
         snippet:
           type: string
 
-  # ---------------------------------------------------------------------------
-  # Security
-  # ---------------------------------------------------------------------------
   securitySchemes:
-    apiKey:
-      type: apiKey
-      in: header
-      name: X-API-Key
-      
     bearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
 
 security:
-  - apiKey: []
   - bearerAuth: []

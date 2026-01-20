@@ -3,6 +3,8 @@
 Updated for Open Data Contract Standard (ODCS) - T-370.
 """
 
+from __future__ import annotations
+
 from datetime import date, datetime
 from typing import Any, Literal
 from uuid import UUID

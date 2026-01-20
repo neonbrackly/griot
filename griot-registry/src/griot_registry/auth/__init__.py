@@ -1,40 +1,87 @@
-"""Authentication modules for griot-registry."""
+"""Authentication and authorization for griot-registry.
 
-from griot_registry.auth.api_key import ApiKeyAuth, api_key_auth, get_api_key_header
+This module provides:
+
+- JWT token authentication for user sessions
+- API key authentication for service-to-service communication
+- Role-based authorization helpers
+- Unified authentication dependencies for FastAPI routes
+
+Example::
+
+    from griot_registry.auth import CurrentUser, RequireEditor
+
+    @router.post("/contracts")
+    async def create_contract(user: CurrentUser, ...):
+        pass  # user is guaranteed to be authenticated
+
+    @router.put("/contracts/{id}")
+    async def update_contract(user: RequireEditor, ...):
+        pass  # user is guaranteed to have editor or admin role
+"""
+
+from griot_registry.auth.models import (
+    AuthMethod,
+    LoginRequest,
+    RefreshRequest,
+    TokenPayload,
+    TokenResponse,
+    User,
+    UserRole,
+)
+from griot_registry.auth.jwt import (
+    JWTAuth,
+    JWTUser,
+    get_current_user_jwt,
+    get_jwt_auth,
+)
+from griot_registry.auth.api_key import (
+    ApiKeyUser,
+    get_api_key_header,
+    get_current_user_api_key,
+)
+from griot_registry.auth.dependencies import (
+    CurrentUser,
+    OptionalUser,
+    RequireAdmin,
+    RequireEditor,
+    RequireViewer,
+    get_current_user,
+    get_optional_user,
+    require_admin,
+    require_editor,
+    require_role,
+    require_viewer,
+)
 
 __all__ = [
-    "api_key_auth",
+    # Models
+    "AuthMethod",
+    "LoginRequest",
+    "RefreshRequest",
+    "TokenPayload",
+    "TokenResponse",
+    "User",
+    "UserRole",
+    # JWT auth
+    "JWTAuth",
+    "JWTUser",
+    "get_current_user_jwt",
+    "get_jwt_auth",
+    # API key auth
+    "ApiKeyUser",
     "get_api_key_header",
-    "ApiKeyAuth",
+    "get_current_user_api_key",
+    # Unified dependencies
+    "CurrentUser",
+    "OptionalUser",
+    "RequireAdmin",
+    "RequireEditor",
+    "RequireViewer",
+    "get_current_user",
+    "get_optional_user",
+    "require_admin",
+    "require_editor",
+    "require_role",
+    "require_viewer",
 ]
-
-# OAuth exports available when oauth extra is installed
-try:
-    from griot_registry.auth.oauth import (
-        AdminRole,
-        EditorRole,
-        OAuth2Auth,
-        OAuthProvider,
-        OAuthSettings,
-        TokenClaims,
-        ViewerRole,
-        oauth2_auth,
-        require_role,
-        require_scope,
-    )
-
-    __all__.extend([
-        "oauth2_auth",
-        "OAuth2Auth",
-        "OAuthProvider",
-        "OAuthSettings",
-        "TokenClaims",
-        "AdminRole",
-        "EditorRole",
-        "ViewerRole",
-        "require_role",
-        "require_scope",
-    ])
-except ImportError:
-    # OAuth dependencies not installed
-    pass

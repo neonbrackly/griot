@@ -23,10 +23,9 @@ Components:
 from __future__ import annotations
 
 # Core types
-from griot_core.validation_types import (
+from griot_validate.validation.types import (
     ValidationMode,
     ErrorType,
-    ErrorSeverity,
     ValidationError,
     RuleResult,
     ValidationResult,
@@ -52,23 +51,14 @@ from .rules import (
 
 # Privacy framework (for data protection compliance)
 from .privacy import (
-    Sensitivity,
-    PIIType,
-    MaskingStrategy,
-    ComplianceFramework,
-    PrivacyInfo,
-    PrivacyViolation,
     detect_pii,
     detect_pii_in_column,
     evaluate_privacy,
     PrivacyEvaluatorRegistry,
     # Convenience constants
-    PII_EMAIL,
-    PII_PHONE,
-    PII_NATIONAL_ID,
-    PII_CREDIT_CARD,
 )
-
+from griot_core.types import Sensitivity, PIIType, MaskingStrategy, ComplianceFramework, PrivacyInfo, PrivacyViolation, \
+    PII_EMAIL, PII_PHONE, PII_NATIONAL_ID, PII_CREDIT_CARD
 
 __all__ = [
     # Main API
@@ -77,7 +67,6 @@ __all__ = [
     # Types
     "ValidationMode",
     "ErrorType",
-    "ErrorSeverity",
     "ValidationError",
     "RuleResult",
     "ValidationResult",
@@ -94,20 +83,10 @@ __all__ = [
     "RowCountEvaluator",
     "FreshnessEvaluator",
     # Privacy
-    "Sensitivity",
-    "PIIType",
-    "MaskingStrategy",
-    "ComplianceFramework",
-    "PrivacyInfo",
-    "PrivacyViolation",
     "detect_pii",
     "detect_pii_in_column",
     "evaluate_privacy",
     "PrivacyEvaluatorRegistry",
-    "PII_EMAIL",
-    "PII_PHONE",
-    "PII_NATIONAL_ID",
-    "PII_CREDIT_CARD",
 ]
 
 
