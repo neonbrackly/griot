@@ -1,0 +1,1159 @@
+openapi: 3.0.3
+info:
+  title: Griot Registry - Contracts API (Missing Endpoints)
+  description: |
+    This specification documents the API endpoints that are **MISSING** from the griot-registry
+    but are **REQUIRED** for the Contracts Agent tasks (T-CON-001 through T-CON-010).
+
+    ## Existing Endpoints (Already Implemented)
+
+    These endpoints exist and work:
+    - `GET /contracts` - List contracts with pagination
+    - `GET /contracts/{id}` - Get contract detail
+    - `POST /contracts` - Create contract (ODCS format)
+    - `PUT /contracts/{id}` - Update contract (full replace)
+    - `POST /contracts/validate` - Validate contract YAML/JSON
+    - `GET /issues` - List issues
+    - `POST /runs` - Create validation run
+
+    ## Missing Endpoints (Need Implementation)
+
+    The endpoints below are needed for:
+    - **T-CON-002**: Reviewer assignment on contract creation
+    - **T-CON-003**: Contract status workflow (submit, approve, reject)
+    - **T-CON-004**: Quality rules, version history, audit trail
+    - **T-CON-008/009/010**: Schema editing with re-approval workflow
+
+    ## Implementation Priority
+
+    1. HIGH: Status workflow endpoints (submit, approve, reject)
+    2. HIGH: Quality rules endpoints (list, create, update, delete)
+    3. MEDIUM: Version history endpoint
+    4. MEDIUM: Tasks endpoint (for re-approval workflow)
+    5. LOW: Audit trail endpoint
+
+  version: 1.0.0
+  contact:
+    name: Griot Development Team
+
+servers:
+  - url: http://localhost:8000/api/v1
+    description: Local development server
+
+tags:
+  - name: Contract Workflow
+    description: Status transitions and approval workflow
+  - name: Quality Rules
+    description: Contract quality rule management
+  - name: Version History
+    description: Contract version tracking
+  - name: Tasks
+    description: Task management for approvals
+  - name: Audit
+    description: Audit trail and activity logging
+
+paths:
+  # ===========================================================================
+  # CONTRACT WORKFLOW ENDPOINTS (T-CON-003)
+  # ===========================================================================
+
+  /contracts/{contractId}/submit:
+    post:
+      tags:
+        - Contract Workflow
+      summary: Submit contract for review
+      description: |
+        Transitions a contract from `draft` to `pending_review` status.
+
+        **Required for:** T-CON-003 (Contract Status Workflow)
+
+        **Business Rules:**
+        - Only contracts in `draft` status can be submitted
+        - Requires `reviewer_id` to be set on the contract
+        - Only the contract owner can submit
+        - Creates a notification for the assigned reviewer
+      operationId: submitContractForReview
+      parameters:
+        - $ref: '#/components/parameters/contractId'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  description: Optional message for the reviewer
+                  example: "Ready for your review. Key changes in schema section."
+      responses:
+        '200':
+          description: Contract submitted for review
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Contract'
+        '400':
+          description: Contract cannot be submitted (wrong status)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized to submit this contract
+        '404':
+          description: Contract not found
+
+  /contracts/{contractId}/approve:
+    post:
+      tags:
+        - Contract Workflow
+      summary: Approve contract
+      description: |
+        Transitions a contract from `pending_review` to `active` status.
+
+        **Required for:** T-CON-003 (Contract Status Workflow)
+
+        **Business Rules:**
+        - Only contracts in `pending_review` status can be approved
+        - Only the assigned reviewer or admin can approve
+        - Sets `approved_by` and `approved_at` fields
+        - Creates a notification for the contract owner
+      operationId: approveContract
+      parameters:
+        - $ref: '#/components/parameters/contractId'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                comment:
+                  type: string
+                  description: Optional approval comment
+                  example: "Looks good. Schema is well-defined."
+      responses:
+        '200':
+          description: Contract approved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Contract'
+        '400':
+          description: Contract cannot be approved (wrong status)
+        '403':
+          description: Not authorized to approve this contract
+        '404':
+          description: Contract not found
+
+  /contracts/{contractId}/reject:
+    post:
+      tags:
+        - Contract Workflow
+      summary: Reject contract / Request changes
+      description: |
+        Transitions a contract from `pending_review` back to `draft` status with feedback.
+
+        **Required for:** T-CON-003 (Contract Status Workflow)
+
+        **Business Rules:**
+        - Only contracts in `pending_review` status can be rejected
+        - Only the assigned reviewer or admin can reject
+        - Requires feedback explaining what needs to change
+        - Creates a notification for the contract owner
+        - Stores feedback in `review_feedback` field
+      operationId: rejectContract
+      parameters:
+        - $ref: '#/components/parameters/contractId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - feedback
+              properties:
+                feedback:
+                  type: string
+                  description: Explanation of required changes
+                  example: "Missing PII classification on email field. Please add privacy metadata."
+      responses:
+        '200':
+          description: Contract rejected with feedback
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Contract'
+        '400':
+          description: Contract cannot be rejected (wrong status) or missing feedback
+        '403':
+          description: Not authorized to reject this contract
+        '404':
+          description: Contract not found
+
+  /contracts/{contractId}/deprecate:
+    post:
+      tags:
+        - Contract Workflow
+      summary: Deprecate an active contract
+      description: |
+        Transitions a contract from `active` to `deprecated` status.
+
+        **Required for:** T-CON-003 (Contract Status Workflow)
+
+        **Business Rules:**
+        - Only contracts in `active` status can be deprecated
+        - Only the contract owner or admin can deprecate
+        - Requires a reason for deprecation
+        - Contract remains readable but cannot be used for new data products
+      operationId: deprecateContract
+      parameters:
+        - $ref: '#/components/parameters/contractId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - reason
+              properties:
+                reason:
+                  type: string
+                  description: Reason for deprecation
+                  example: "Replaced by v2 contract with updated schema."
+                replacement_contract_id:
+                  type: string
+                  description: Optional ID of replacement contract
+                  example: "customer-analytics-v2"
+      responses:
+        '200':
+          description: Contract deprecated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Contract'
+        '400':
+          description: Contract cannot be deprecated (wrong status)
+        '403':
+          description: Not authorized to deprecate this contract
+        '404':
+          description: Contract not found
+
+  # ===========================================================================
+  # CONTRACT REVIEWER ASSIGNMENT (T-CON-002)
+  # ===========================================================================
+
+  /contracts/{contractId}/reviewer:
+    put:
+      tags:
+        - Contract Workflow
+      summary: Assign or change reviewer
+      description: |
+        Assigns a reviewer (user or team) to a contract.
+
+        **Required for:** T-CON-002 (Add Reviewer Field to Wizard)
+
+        **Business Rules:**
+        - Can assign reviewer to `draft` or `pending_review` contracts
+        - Reviewer can be a user ID or team ID
+        - When reviewer is a team, any team member can approve
+        - Changing reviewer on `pending_review` notifies both old and new reviewer
+      operationId: assignContractReviewer
+      parameters:
+        - $ref: '#/components/parameters/contractId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - reviewer_type
+                - reviewer_id
+              properties:
+                reviewer_type:
+                  type: string
+                  enum: [user, team]
+                  description: Type of reviewer assignment
+                reviewer_id:
+                  type: string
+                  description: User ID or Team ID of the reviewer
+                  example: "user-123"
+      responses:
+        '200':
+          description: Reviewer assigned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Contract'
+        '400':
+          description: Invalid reviewer type or ID
+        '403':
+          description: Not authorized to assign reviewer
+        '404':
+          description: Contract or reviewer not found
+
+  # ===========================================================================
+  # QUALITY RULES ENDPOINTS (T-CON-004, T-CON-005)
+  # ===========================================================================
+
+  /contracts/{contractId}/quality-rules:
+    get:
+      tags:
+        - Quality Rules
+      summary: List quality rules for a contract
+      description: |
+        Returns all quality rules defined for a contract, optionally filtered by table or field.
+
+        **Required for:** T-CON-004 (Enhance Contract Detail Page), T-CON-005 (Quality Rules at Schema Level)
+
+        **Note:** Currently the adapter sets `qualityRules: []`. This endpoint should return
+        the actual quality rules stored with the contract.
+      operationId: listContractQualityRules
+      parameters:
+        - $ref: '#/components/parameters/contractId'
+        - name: table
+          in: query
+          description: Filter rules by table name
+          schema:
+            type: string
+        - name: field
+          in: query
+          description: Filter rules by field name
+          schema:
+            type: string
+        - name: type
+          in: query
+          description: Filter by rule type
+          schema:
+            type: string
+            enum: [completeness, uniqueness, validity, freshness, custom]
+      responses:
+        '200':
+          description: List of quality rules
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/QualityRule'
+                  total:
+                    type: integer
+        '404':
+          description: Contract not found
+
+    post:
+      tags:
+        - Quality Rules
+      summary: Add quality rule to contract
+      description: |
+        Adds a new quality rule to a contract.
+
+        **Required for:** T-CON-005 (Quality Rules at Schema Level)
+
+        **Business Rules:**
+        - Can add rules to contracts in `draft` or `pending_review` status
+        - Adding rules to `active` contract triggers re-approval (like schema change)
+        - Rule must reference valid table/field in contract schema
+      operationId: addContractQualityRule
+      parameters:
+        - $ref: '#/components/parameters/contractId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QualityRuleCreate'
+      responses:
+        '201':
+          description: Quality rule created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QualityRule'
+        '400':
+          description: Invalid rule definition or references invalid schema element
+        '403':
+          description: Not authorized to modify this contract
+        '404':
+          description: Contract not found
+
+  /contracts/{contractId}/quality-rules/{ruleId}:
+    get:
+      tags:
+        - Quality Rules
+      summary: Get quality rule details
+      operationId: getContractQualityRule
+      parameters:
+        - $ref: '#/components/parameters/contractId'
+        - $ref: '#/components/parameters/ruleId'
+      responses:
+        '200':
+          description: Quality rule details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QualityRule'
+        '404':
+          description: Contract or rule not found
+
+    put:
+      tags:
+        - Quality Rules
+      summary: Update quality rule
+      operationId: updateContractQualityRule
+      parameters:
+        - $ref: '#/components/parameters/contractId'
+        - $ref: '#/components/parameters/ruleId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QualityRuleUpdate'
+      responses:
+        '200':
+          description: Quality rule updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QualityRule'
+        '400':
+          description: Invalid rule definition
+        '403':
+          description: Not authorized to modify this contract
+        '404':
+          description: Contract or rule not found
+
+    delete:
+      tags:
+        - Quality Rules
+      summary: Delete quality rule
+      operationId: deleteContractQualityRule
+      parameters:
+        - $ref: '#/components/parameters/contractId'
+        - $ref: '#/components/parameters/ruleId'
+      responses:
+        '204':
+          description: Quality rule deleted
+        '403':
+          description: Not authorized to modify this contract
+        '404':
+          description: Contract or rule not found
+
+  # ===========================================================================
+  # VERSION HISTORY ENDPOINTS (T-CON-004)
+  # ===========================================================================
+
+  /contracts/{contractId}/versions:
+    get:
+      tags:
+        - Version History
+      summary: Get contract version history
+      description: |
+        Returns the version history of a contract, showing all changes over time.
+
+        **Required for:** T-CON-004 (Enhance Contract Detail Page)
+
+        Each version entry includes:
+        - Version number
+        - Change type (patch, minor, major)
+        - Change notes
+        - Who made the change
+        - When the change was made
+      operationId: getContractVersionHistory
+      parameters:
+        - $ref: '#/components/parameters/contractId'
+        - name: limit
+          in: query
+          description: Maximum number of versions to return
+          schema:
+            type: integer
+            default: 10
+        - name: offset
+          in: query
+          description: Offset for pagination
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: Version history
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ContractVersion'
+                  total:
+                    type: integer
+        '404':
+          description: Contract not found
+
+  /contracts/{contractId}/versions/{version}:
+    get:
+      tags:
+        - Version History
+      summary: Get specific version of contract
+      description: |
+        Returns the contract as it was at a specific version.
+        Useful for comparing changes or reverting.
+      operationId: getContractVersion
+      parameters:
+        - $ref: '#/components/parameters/contractId'
+        - name: version
+          in: path
+          required: true
+          description: Version number (e.g., "1.0.0", "1.1.0")
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Contract at specified version
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Contract'
+        '404':
+          description: Contract or version not found
+
+  /contracts/{contractId}/diff:
+    get:
+      tags:
+        - Version History
+      summary: Compare two versions of a contract
+      description: |
+        Returns a diff between two versions of a contract.
+
+        **Required for:** T-CON-009 (Schema Change Re-approval Workflow)
+
+        Used to show reviewers what changed when a schema is modified.
+      operationId: diffContractVersions
+      parameters:
+        - $ref: '#/components/parameters/contractId'
+        - name: from_version
+          in: query
+          required: true
+          description: Base version for comparison
+          schema:
+            type: string
+        - name: to_version
+          in: query
+          required: true
+          description: Target version for comparison
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Version diff
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContractDiff'
+        '404':
+          description: Contract or versions not found
+
+  # ===========================================================================
+  # TASKS ENDPOINTS (T-CON-009)
+  # ===========================================================================
+
+  /tasks:
+    get:
+      tags:
+        - Tasks
+      summary: List tasks for current user
+      description: |
+        Returns tasks assigned to the current user or their teams.
+
+        **Required for:** T-CON-009 (Schema Change Re-approval Workflow)
+
+        Task types include:
+        - `contract_review` - New contract needs review
+        - `contract_reapproval` - Active contract schema changed, needs re-approval
+        - `issue_assignment` - Issue assigned to user
+      operationId: listTasks
+      parameters:
+        - name: type
+          in: query
+          description: Filter by task type
+          schema:
+            type: string
+            enum: [contract_review, contract_reapproval, issue_assignment]
+        - name: status
+          in: query
+          description: Filter by task status
+          schema:
+            type: string
+            enum: [pending, completed, dismissed]
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: List of tasks
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Task'
+                  total:
+                    type: integer
+
+    post:
+      tags:
+        - Tasks
+      summary: Create a task
+      description: |
+        Creates a new task. Used internally when:
+        - Contract is submitted for review
+        - Active contract schema is changed (re-approval needed)
+        - Issue is assigned to someone
+
+        **Required for:** T-CON-009 (Schema Change Re-approval Workflow)
+      operationId: createTask
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskCreate'
+      responses:
+        '201':
+          description: Task created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '400':
+          description: Invalid task data
+
+  /tasks/{taskId}:
+    get:
+      tags:
+        - Tasks
+      summary: Get task details
+      operationId: getTask
+      parameters:
+        - $ref: '#/components/parameters/taskId'
+      responses:
+        '200':
+          description: Task details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '404':
+          description: Task not found
+
+    patch:
+      tags:
+        - Tasks
+      summary: Update task status
+      description: Mark task as completed or dismissed
+      operationId: updateTask
+      parameters:
+        - $ref: '#/components/parameters/taskId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  enum: [completed, dismissed]
+      responses:
+        '200':
+          description: Task updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '404':
+          description: Task not found
+
+  # ===========================================================================
+  # AUDIT TRAIL ENDPOINTS (T-CON-004)
+  # ===========================================================================
+
+  /contracts/{contractId}/audit:
+    get:
+      tags:
+        - Audit
+      summary: Get contract audit trail
+      description: |
+        Returns the audit trail for a contract, showing all actions taken.
+
+        **Required for:** T-CON-004 (Enhance Contract Detail Page)
+
+        Events include:
+        - created, updated, submitted, approved, rejected, deprecated
+        - schema_changed, quality_rule_added, reviewer_assigned
+      operationId: getContractAuditTrail
+      parameters:
+        - $ref: '#/components/parameters/contractId'
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: Audit trail
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AuditEvent'
+                  total:
+                    type: integer
+        '404':
+          description: Contract not found
+
+components:
+  parameters:
+    contractId:
+      name: contractId
+      in: path
+      required: true
+      description: Contract ID
+      schema:
+        type: string
+    ruleId:
+      name: ruleId
+      in: path
+      required: true
+      description: Quality rule ID
+      schema:
+        type: string
+    taskId:
+      name: taskId
+      in: path
+      required: true
+      description: Task ID
+      schema:
+        type: string
+
+  schemas:
+    # =========================================================================
+    # CONTRACT SCHEMAS (Extensions to existing)
+    # =========================================================================
+
+    Contract:
+      type: object
+      description: |
+        Extended contract schema with reviewer and approval fields.
+        These fields should be added to the existing contract response.
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        version:
+          type: string
+        status:
+          type: string
+          enum: [draft, proposed, pending_review, active, deprecated, retired]
+        description:
+          type: string
+        schema:
+          type: array
+          items:
+            type: object
+        # NEW FIELDS NEEDED
+        reviewer_type:
+          type: string
+          enum: [user, team]
+          description: Type of reviewer (user or team)
+        reviewer_id:
+          type: string
+          description: ID of assigned reviewer
+        reviewer_name:
+          type: string
+          description: Display name of reviewer (populated from user/team)
+        approved_by:
+          type: string
+          description: User ID who approved the contract
+        approved_at:
+          type: string
+          format: date-time
+          description: When the contract was approved
+        review_feedback:
+          type: string
+          description: Feedback from reviewer (when rejected)
+        deprecation_reason:
+          type: string
+          description: Reason for deprecation
+        replacement_contract_id:
+          type: string
+          description: ID of replacement contract (if deprecated)
+        owner:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        created_by:
+          type: string
+          description: User ID who created the contract
+        updated_by:
+          type: string
+          description: User ID who last updated the contract
+
+    # =========================================================================
+    # QUALITY RULE SCHEMAS
+    # =========================================================================
+
+    QualityRule:
+      type: object
+      properties:
+        id:
+          type: string
+        contract_id:
+          type: string
+        name:
+          type: string
+          description: Human-readable rule name
+          example: "Email completeness check"
+        type:
+          type: string
+          enum: [completeness, uniqueness, validity, freshness, custom]
+        description:
+          type: string
+        table:
+          type: string
+          description: Table this rule applies to (null for contract-level)
+        field:
+          type: string
+          description: Field this rule applies to (null for table-level)
+        threshold:
+          type: number
+          description: Threshold value (e.g., 99.5 for 99.5% completeness)
+          example: 99.5
+        operator:
+          type: string
+          enum: ['>=', '<=', '=', '>', '<']
+          description: Comparison operator for threshold
+        expression:
+          type: string
+          description: Custom SQL expression (for custom rules)
+        severity:
+          type: string
+          enum: [critical, warning, info]
+          default: warning
+        enabled:
+          type: boolean
+          default: true
+        last_run_result:
+          type: object
+          description: Result from most recent validation run
+          properties:
+            passed:
+              type: boolean
+            actual_value:
+              type: number
+            run_id:
+              type: string
+            run_at:
+              type: string
+              format: date-time
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    QualityRuleCreate:
+      type: object
+      required:
+        - name
+        - type
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+          enum: [completeness, uniqueness, validity, freshness, custom]
+        description:
+          type: string
+        table:
+          type: string
+        field:
+          type: string
+        threshold:
+          type: number
+        operator:
+          type: string
+          enum: ['>=', '<=', '=', '>', '<']
+        expression:
+          type: string
+        severity:
+          type: string
+          enum: [critical, warning, info]
+        enabled:
+          type: boolean
+
+    QualityRuleUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        threshold:
+          type: number
+        operator:
+          type: string
+        expression:
+          type: string
+        severity:
+          type: string
+        enabled:
+          type: boolean
+
+    # =========================================================================
+    # VERSION HISTORY SCHEMAS
+    # =========================================================================
+
+    ContractVersion:
+      type: object
+      properties:
+        version:
+          type: string
+          example: "1.2.0"
+        change_type:
+          type: string
+          enum: [patch, minor, major]
+        change_notes:
+          type: string
+          description: Description of what changed
+        changed_by:
+          type: string
+          description: User ID who made the change
+        changed_by_name:
+          type: string
+          description: Display name of user
+        changed_at:
+          type: string
+          format: date-time
+        schema_changed:
+          type: boolean
+          description: Whether schema was modified in this version
+
+    ContractDiff:
+      type: object
+      properties:
+        from_version:
+          type: string
+        to_version:
+          type: string
+        changes:
+          type: array
+          items:
+            type: object
+            properties:
+              path:
+                type: string
+                description: JSON path to changed element
+                example: "schema[0].properties[2]"
+              change_type:
+                type: string
+                enum: [added, removed, modified]
+              old_value:
+                type: object
+                description: Previous value (null for added)
+              new_value:
+                type: object
+                description: New value (null for removed)
+        summary:
+          type: object
+          properties:
+            tables_added:
+              type: integer
+            tables_removed:
+              type: integer
+            fields_added:
+              type: integer
+            fields_removed:
+              type: integer
+            fields_modified:
+              type: integer
+            quality_rules_changed:
+              type: boolean
+
+    # =========================================================================
+    # TASK SCHEMAS
+    # =========================================================================
+
+    Task:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+          enum: [contract_review, contract_reapproval, issue_assignment]
+        status:
+          type: string
+          enum: [pending, completed, dismissed]
+        title:
+          type: string
+          example: "Review contract: Customer Analytics"
+        description:
+          type: string
+        priority:
+          type: string
+          enum: [low, normal, high, urgent]
+        assigned_to_type:
+          type: string
+          enum: [user, team]
+        assigned_to_id:
+          type: string
+        # Reference to related entity
+        contract_id:
+          type: string
+        issue_id:
+          type: string
+        # For re-approval tasks
+        schema_diff_summary:
+          type: string
+          description: Summary of schema changes (for contract_reapproval)
+        change_reason:
+          type: string
+          description: Reason provided for the change
+        # Metadata
+        created_by:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+        due_at:
+          type: string
+          format: date-time
+
+    TaskCreate:
+      type: object
+      required:
+        - type
+        - title
+        - assigned_to_type
+        - assigned_to_id
+      properties:
+        type:
+          type: string
+          enum: [contract_review, contract_reapproval, issue_assignment]
+        title:
+          type: string
+        description:
+          type: string
+        priority:
+          type: string
+          enum: [low, normal, high, urgent]
+        assigned_to_type:
+          type: string
+          enum: [user, team]
+        assigned_to_id:
+          type: string
+        contract_id:
+          type: string
+        issue_id:
+          type: string
+        schema_diff_summary:
+          type: string
+        change_reason:
+          type: string
+        due_at:
+          type: string
+          format: date-time
+
+    # =========================================================================
+    # AUDIT SCHEMAS
+    # =========================================================================
+
+    AuditEvent:
+      type: object
+      properties:
+        id:
+          type: string
+        contract_id:
+          type: string
+        event_type:
+          type: string
+          enum:
+            - created
+            - updated
+            - submitted
+            - approved
+            - rejected
+            - deprecated
+            - schema_changed
+            - quality_rule_added
+            - quality_rule_removed
+            - reviewer_assigned
+        description:
+          type: string
+          example: "Contract submitted for review"
+        actor_id:
+          type: string
+          description: User ID who performed the action
+        actor_name:
+          type: string
+        changes:
+          type: object
+          description: What changed (for update events)
+        created_at:
+          type: string
+          format: date-time
+
+    # =========================================================================
+    # ERROR SCHEMA
+    # =========================================================================
+
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+          example: "INVALID_STATUS_TRANSITION"
+        message:
+          type: string
+          example: "Cannot submit contract: contract must be in draft status"
+        details:
+          type: object
+          additionalProperties: true

@@ -1,0 +1,15 @@
+# Core
+You are the core agent for the Griot project.
+
+## Your Role
+You implement griot-core — the foundation that ALL other components depend on. All business logic lives here. We want to do a refactor of the current implementation of the griot-core, especially in regards to griot-core/contracts.py and griot-core/types.py and other necessary files
+
+## Your Scope
+You own: griot-core/src/griot_core/*
+
+Your main role is to:
+1. Read specs/*.yaml  for your interface contract and other interface contracts
+2. Please read agents/AGENTS.md agents/status/COORDINATION.md and agents/CLAUDE.md for additional information.
+3. Explore the griot-core module extensively to discover what has been done
+4. Read the agents/example_contract.yaml to understand where we want to go. - This example yaml is the open data standard contract that every single contract should follow. Not all fields are mandatory, the only ones that are mandatory are: 'apiVersion', 'kind', 'id', 'version', 'status', 'schema', 'customProperties'. Ideally we should refactor griot-core to reflect this. It should be easy to now load/lint a contract given there is a standard to expect, and I expect this to easen things codewise.  
+ 

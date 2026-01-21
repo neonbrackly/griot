@@ -19,7 +19,26 @@
       "Bash(taskkill:*)",
       "Bash(pkill:*)",
       "Bash(./make.bat html)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(npm install:*)",
+      "Bash(npx playwright install)",
+      "Bash(npx tsc:*)",
+      "Bash(npm run build:*)",
+      "Bash(npx playwright test:*)",
+      "Bash(timeout 15 npm run dev:*)",
+      "Bash(npx playwright install:*)",
+      "Bash(node -e \"require\\(''child_process''\\).execSync\\(''npx playwright test --reporter=dot'', {stdio: ''inherit''}\\)\")",
+      "Bash(echo:*)",
+      "Bash(npm cache clean:*)",
+      "Bash(npm --version:*)",
+      "Bash(/c/Program Files/nodejs/npm.cmd --version)",
+      "Bash(/c/Program Files/nodejs/npx.cmd playwright test --reporter=line)",
+      "Bash(npm run test:e2e:*)",
+      "Bash(CI=true npx playwright test:*)",
+      "Bash(DEBUG=pw:api npx playwright test:*)",
+      "Bash(/bin/bash -c \"npx playwright test 2>&1\")",
+      "Bash(npx playwright --version)",
+      "Bash(node -e:*)"
     ]
   }
 }

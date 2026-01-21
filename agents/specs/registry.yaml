@@ -5,7 +5,7 @@
 # Consumers: hub, cli (for push/pull)
 #
 # OpenAPI 3.0 specification for griot-registry REST API
-# Updated: 2026-01-20 - Complete specification with all endpoints
+# Updated: 2026-01-22 - All endpoints tested and verified
 # =============================================================================
 
 openapi: "3.0.3"
@@ -951,15 +951,25 @@ paths:
       tags: [approvals]
       summary: List pending approvals
       operationId: listPendingApprovals
+      parameters:
+        - name: contract_id
+          in: query
+          schema:
+            type: string
+          description: Filter by contract ID
+        - name: my_approvals
+          in: query
+          schema:
+            type: boolean
+            default: false
+          description: Only show approvals where I'm an approver
       responses:
         '200':
           description: Pending approvals
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/ApprovalRequest'
+                $ref: '#/components/schemas/ApprovalRequestList'
 
   /approvals/{requestId}:
     get:
@@ -986,6 +996,7 @@ paths:
     post:
       tags: [approvals]
       summary: Approve request
+      description: Only users listed in the approvers can approve. When all approvers have approved, the contract status is updated to 'active'.
       operationId: approveRequest
       parameters:
         - name: requestId
@@ -997,7 +1008,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ApprovalDecision'
+              $ref: '#/components/schemas/ApproveDecision'
       responses:
         '200':
           description: Request approved
@@ -1005,11 +1016,16 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ApprovalRequest'
+        '400':
+          description: User not authorized to approve
+        '404':
+          $ref: '#/components/responses/NotFound'
 
   /approvals/{requestId}/reject:
     post:
       tags: [approvals]
       summary: Reject request
+      description: Only users listed in the approvers can reject. A single rejection marks the entire request as rejected.
       operationId: rejectRequest
       parameters:
         - name: requestId
@@ -1018,10 +1034,11 @@ paths:
           schema:
             type: string
       requestBody:
+        required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ApprovalDecision'
+              $ref: '#/components/schemas/RejectDecision'
       responses:
         '200':
           description: Request rejected
@@ -1029,6 +1046,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ApprovalRequest'
+        '400':
+          description: User not authorized to reject
+        '404':
+          $ref: '#/components/responses/NotFound'
 
   # ---------------------------------------------------------------------------
   # Search
@@ -1791,23 +1812,56 @@ components:
     # Approvals
     ApprovalCreateRequest:
       type: object
-      required: [contract_id, request_type, title]
+      required: [contract_id, approvers]
       properties:
         contract_id:
           type: string
-        request_type:
+        approvers:
+          type: array
+          items:
+            type: string
+          minItems: 1
+          description: List of user IDs who need to approve
+        notes:
           type: string
-          enum: [activation, deprecation, update, deletion]
-        title:
-          type: string
-        description:
-          type: string
+          description: Notes about the approval request
 
-    ApprovalDecision:
+    ApproveDecision:
       type: object
       properties:
-        comment:
+        comments:
           type: string
+
+    RejectDecision:
+      type: object
+      required: [reason]
+      properties:
+        reason:
+          type: string
+          minLength: 1
+          description: Reason for rejection
+
+    ApprovalEntry:
+      type: object
+      properties:
+        approver:
+          type: string
+        comments:
+          type: string
+        approved_at:
+          type: string
+          format: date-time
+
+    RejectionEntry:
+      type: object
+      properties:
+        rejector:
+          type: string
+        reason:
+          type: string
+        rejected_at:
+          type: string
+          format: date-time
 
     ApprovalRequest:
       type: object
@@ -1816,27 +1870,42 @@ components:
           type: string
         contract_id:
           type: string
-        request_type:
+        requested_by:
           type: string
-        title:
-          type: string
-        description:
+        approvers:
+          type: array
+          items:
+            type: string
+        notes:
           type: string
         status:
           type: string
           enum: [pending, approved, rejected]
-        requested_by:
-          type: string
-        requested_at:
+        approvals:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApprovalEntry'
+        rejections:
+          type: array
+          items:
+            $ref: '#/components/schemas/RejectionEntry'
+        created_at:
           type: string
           format: date-time
-        decided_by:
-          type: string
-        decided_at:
+        updated_at:
           type: string
           format: date-time
-        decision_comment:
+        completed_at:
           type: string
+          format: date-time
+
+    ApprovalRequestList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApprovalRequest'
 
     # Search
     SearchResponse:

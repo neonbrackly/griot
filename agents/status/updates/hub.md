@@ -229,3 +229,99 @@ Field patterns automatically detected and flagged as PII:
 - Smart defaults follow "secure by default" principles
 - All new components designed for reusability and composability
 - Wizard UIs provide guided configuration experience
+
+---
+
+## Session: 2026-01-20 (API Integration & Authentication)
+
+### Tasks Completed
+- **Authentication Implementation**: Login page, AuthProvider, JWT token management
+- **API Integration**: Refactored hub to consume real registry API endpoints
+- **Endpoint Mapping**: Documented available vs missing endpoints
+
+### Files Created
+- `griot-hubv2/.env.local` - Environment configuration for API URL
+- `griot-hubv2/src/types/auth.ts` - Authentication types
+- `griot-hubv2/src/components/providers/AuthProvider.tsx` - Auth context with login/logout
+- `griot-hubv2/src/lib/api/adapters.ts` - API response transformers
+- `griot-hubv2/src/lib/api/dashboard-service.ts` - Dashboard metrics computation
+- `griot-hubv2/src/app/login/page.tsx` - Login page
+
+### Files Modified
+- `griot-hubv2/src/components/providers/index.tsx` - Added AuthProvider
+- `griot-hubv2/src/components/providers/MSWProvider.tsx` - Made mocking conditional
+- `griot-hubv2/src/components/layout/TopNav.tsx` - Integrated auth user and logout
+- `griot-hubv2/src/components/layout/PageShell.tsx` - Removed hardcoded user
+- `griot-hubv2/src/lib/api/client.ts` - Added auth token to requests
+- `griot-hubv2/src/app/page.tsx` - Dashboard uses real API via dashboard-service
+- `griot-hubv2/src/app/studio/contracts/page.tsx` - Uses real contracts API
+- `griot-hubv2/src/app/studio/contracts/[contractId]/page.tsx` - Uses real API
+- `griot-hubv2/src/app/studio/issues/page.tsx` - Uses real issues API
+
+### Registry Endpoints Working
+| Endpoint | Status |
+|----------|--------|
+| GET /contracts | Working |
+| GET /contracts/:id | Working |
+| POST /contracts | Working |
+| PUT /contracts/:id | Working |
+| GET /issues | Working |
+| PATCH /issues/:id | Working |
+| GET /runs | Working |
+| POST /runs | Working |
+| GET /validations | Working |
+| GET /schemas | Working |
+| POST /auth/token | Working |
+| GET /auth/me | Working |
+
+### Missing Endpoints Requested from Registry Agent
+
+**Assets Management:**
+- GET /assets - List data assets
+- GET /assets/:id - Get single asset
+- POST /assets - Create asset
+- PATCH /assets/:id - Update asset
+- POST /assets/:id/sync - Sync asset schema from connection
+
+**Connections Management:**
+- GET /connections - List database connections
+- GET /connections/:id - Get connection
+- POST /connections - Create connection
+- POST /connections/:id/test - Test connection
+- GET /connections/:id/browse - Browse database structure
+
+**Teams Management:**
+- GET /teams - List teams
+- GET /teams/:id - Get team
+- POST /teams - Create team
+- PATCH /teams/:id - Update team
+- GET /teams/:id/members - List team members
+
+**Users Management:**
+- GET /users - List users
+- GET /users/:id - Get user
+- PATCH /users/:id - Update user
+- POST /users/invite - Invite new user
+
+**Notifications:**
+- GET /notifications - List notifications
+- PATCH /notifications/:id/read - Mark as read
+- POST /notifications/read-all - Mark all read
+
+**Tasks:**
+- GET /tasks/my - Get pending tasks for current user
+- POST /tasks/authorize/:id/approve - Approve authorization
+- POST /tasks/authorize/:id/reject - Reject authorization
+
+### Configuration
+```bash
+# .env.local
+NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
+NEXT_PUBLIC_USE_MOCKS=false
+```
+
+### Notes
+- Hub now connects to real registry API at localhost:8000
+- MSW mocking can be re-enabled by setting NEXT_PUBLIC_USE_MOCKS=true
+- Dashboard metrics computed from contracts/issues/validations endpoints
+- Full endpoint specifications in this file for registry agent reference

@@ -34,3 +34,4 @@ griot-core/html-docs/*
 
 # Docker volumes
 data/
+/node_modules/

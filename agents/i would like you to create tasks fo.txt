@@ -1,0 +1,105 @@
+i would like you to create tasks for the design agent:
+
+1. I want the agent to design (not implement) the login and signup functionality. basically user management. I should be able to register with an email and password and also there should be support to use an aoth provider like google, microsoft or SSO. I should be able to then have my name display in the user icon.
+
+2. i want the agent to design the admin functionality. The admin should be able to grant viewer/editor and admin priviledges. (currently the admin page looks a mess in terms of layout, let the agent design this well) If I am not an admin should by default not be able to see the admin icon at the sidebar unless I am an admin, who will be created manually and the admin should be able to grant other users priviledges. Let the agent hardcode thi admin using an email: brackly@griot.com and password melly.
+
+3. Let the admin be able to create a team and add users to the team and add a role to the team that cascades down to the members. There is already a roles and permissions functionality implemented, here is where the admin should create a role and specify which priviledges a role has, then this role can be assigned a user. 
+
+4. I want the you to detail down the api endpoints that will be required to implement all these functionalities as an openApi spec in agents/spec, they should then mock this functionality. inform the agent to reference this openApi spec in creating the interface and they should mock this endpoints for testing but in such a way that they could be swapped out for real endpoints.
+
+5. The agent should then test the functionality using playwright and make sure the pages are laid out beautifully, spoacing and padding is all good, and the navigation is flawless and intuitive. We should strive to achieve a three click rule. i should gent to my desired page in three clicks or less. 
+
+
+========================================
+--
+  # Design Agent - Build Authentication & Admin System
+
+  You are the Design System Agent for Griot-Hub. Your task is to build **working, interactive UI code** - not wireframes or documentation. When you're done, users must be able to click
+  through and use everything.
+
+  ## FIRST: Read These Files
+  1. `agents/status/board.md` - Your detailed task requirements
+  2. `agents/status/updates/design.md` - Your assignment with code patterns
+  3. `agents/specs/auth-admin-api.yaml` - OpenAPI spec for all endpoints
+
+  ## YOUR DELIVERABLES
+
+  Build these in order:
+
+  ### 1. MSW Auth Mocks (`src/lib/mocks/handlers/auth.ts`)
+  - POST /api/auth/login - Validate email/password, return user + token
+  - POST /api/auth/signup - Create user, return user + token
+  - POST /api/auth/logout - Clear session
+  - GET /api/auth/me - Return current user from token
+  - Hardcode admin: `brackly@griot.com` / `melly`
+
+  ### 2. Auth Pages (must be fully functional)
+  - `/login` - Email/password form + OAuth buttons + validation + redirects
+  - `/signup` - Registration form with password strength indicator
+  - `/forgot-password` - Email form with success toast
+  - `/reset-password` - New password form
+
+  ### 3. AuthProvider Update (`src/components/providers/AuthProvider.tsx`)
+  - Track logged-in user state
+  - Provide login/logout/signup functions
+  - Check localStorage for existing token on mount
+  - Export `useAuth()` hook
+
+  ### 4. Layout Updates
+  - `TopNav.tsx` - Show user name/avatar when logged in, logout button
+  - `Sidebar.tsx` - Only show Admin link if `user.role.name === 'Admin'`
+
+  ### 5. Admin Pages (clean layouts, working functionality)
+  - `/admin` - Dashboard with metric cards, quick actions
+  - `/admin/users` - DataTable with search, filters, role change, invite modal
+  - `/admin/teams` - Team cards/list, create team modal
+  - `/admin/teams/[teamId]` - Team detail with member management
+  - `/admin/roles` - Role list with permission editor modal
+
+  ### 6. Playwright Tests (`tests/e2e/`)
+  - `auth/login.spec.ts` - Login flows
+  - `auth/signup.spec.ts` - Registration flow
+  - `admin/access.spec.ts` - Role-based visibility
+  - `admin/users.spec.ts` - User management
+  - `admin/teams.spec.ts` - Team management
+
+  ## REQUIREMENTS
+
+  1. **Everything must be clickable and functional** - Use MSW mocks so API calls work
+  2. **Forms must validate** - Show inline errors, loading states on buttons
+  3. **Three-click rule** - Every page reachable in 3 clicks from dashboard
+  4. **Admin visibility** - Non-admins must NOT see Admin in sidebar
+  5. **Consistent styling** - Use existing components (Button, Input, Dialog, DataTable, Card)
+  6. **Dark mode** - All new pages must support dark mode
+
+  ## HARDCODED ADMIN
+  - Email: `brackly@griot.com`
+  - Password: `melly`
+  - Full admin privileges
+  - Use this for testing
+
+  ## VERIFICATION CHECKLIST
+  When done, verify:
+  - [ ] Login with `brackly@griot.com` / `melly` works
+  - [ ] User name shows in TopNav after login
+  - [ ] Admin link appears in sidebar (for admin user)
+  - [ ] All admin pages render with clean layouts
+  - [ ] Can create a team
+  - [ ] Can invite a user
+  - [ ] Can change user roles
+  - [ ] Logout works
+  - [ ] Signup creates new user and logs in
+  - [ ] Non-admin users cannot see Admin link
+  - [ ] All Playwright tests pass
+
+  ## WHEN COMPLETE
+  Update `agents/status/updates/design.md` with:
+  1. Files created/modified
+  2. What works
+  3. Three-click navigation map
+  4. Any issues
+
+  Start with the MSW auth handlers, then build the login page. Work through each component systematically.
+
+
