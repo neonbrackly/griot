@@ -268,6 +268,7 @@ export interface Contract extends BaseEntity {
   assetId?: string // Optional - proposed contracts may not have an asset
   asset?: DataAsset
   ownerTeamId: string
+  ownerTeamName?: string // Team name for display
   tags: string[]
   odcsVersion: string
   schema: ContractSchema
@@ -276,6 +277,10 @@ export interface Contract extends BaseEntity {
   lastRunAt?: string
   lastRunStatus?: 'passed' | 'failed' | 'warning'
   issueCount?: number
+  // Reviewer fields
+  reviewerId?: string
+  reviewerType?: 'user' | 'team'
+  reviewerName?: string
 }
 
 export interface ContractSchema {

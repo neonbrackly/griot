@@ -14,7 +14,20 @@ import { FormField } from '@/components/forms/FormField'
 import { TagInput } from '@/components/forms/TagInput'
 import { api, queryKeys } from '@/lib/api/client'
 import type { ContractFormData } from '@/app/studio/contracts/new/wizard/page'
-import type { Team, User } from '@/types'
+
+// Simplified types for the dropdown - just need id and name/email
+interface SimpleUser {
+  id: string
+  name?: string
+  email?: string
+  username?: string
+}
+
+interface SimpleTeam {
+  id: string
+  name: string
+  description?: string
+}
 
 interface Props {
   formData: ContractFormData
@@ -27,28 +40,38 @@ export function Step6Tags({ formData, updateFormData, onNext, onBack }: Props) {
   const [errors, setErrors] = useState<Record<string, string>>({})
 
   // Fetch teams for owner and reviewer dropdowns
-  const { data: teams } = useQuery({
+  const { data: teams, isLoading: teamsLoading, error: teamsError } = useQuery({
     queryKey: queryKeys.teams.list({}),
     queryFn: async () => {
-      const response = await api.get<{ data: Team[] } | Team[]>('/teams')
+      const response = await api.get<{ data?: SimpleTeam[]; items?: SimpleTeam[] } | SimpleTeam[]>('/teams')
+      console.log('Teams API response:', response)
+      // Handle different API response formats
       if (Array.isArray(response)) {
         return response
       }
-      return response.data || []
+      // Try 'items' first (common in paginated APIs), then 'data'
+      return response.items || response.data || []
     },
   })
 
   // Fetch users for reviewer dropdown
-  const { data: users } = useQuery({
+  const { data: users, isLoading: usersLoading, error: usersError } = useQuery({
     queryKey: queryKeys.users.all,
     queryFn: async () => {
-      const response = await api.get<{ data: User[] } | User[]>('/users')
+      const response = await api.get<{ data?: SimpleUser[]; items?: SimpleUser[] } | SimpleUser[]>('/users')
+      console.log('Users API response:', response)
+      // Handle different API response formats
       if (Array.isArray(response)) {
         return response
       }
-      return response.data || []
+      // Try 'items' first (common in paginated APIs), then 'data'
+      return response.items || response.data || []
     },
   })
+
+  // Debug logging
+  console.log('Teams:', teams, 'Loading:', teamsLoading, 'Error:', teamsError)
+  console.log('Users:', users, 'Loading:', usersLoading, 'Error:', usersError)
 
   const handleReviewerTypeChange = (type: 'user' | 'team' | '') => {
     if (type === '') {
@@ -78,13 +101,13 @@ export function Step6Tags({ formData, updateFormData, onNext, onBack }: Props) {
     }
 
     if (formData.reviewerType === 'user') {
-      const user = users?.find((u) => u.id === id)
+      const user = users?.find((u: SimpleUser) => u.id === id)
       updateFormData({
         reviewerId: id,
-        reviewerName: user?.name || user?.email || id,
+        reviewerName: user?.name || user?.email || user?.username || id,
       })
     } else if (formData.reviewerType === 'team') {
-      const team = teams?.find((t) => t.id === id)
+      const team = teams?.find((t: SimpleTeam) => t.id === id)
       updateFormData({
         reviewerId: id,
         reviewerName: team?.name || id,
@@ -132,12 +155,17 @@ export function Step6Tags({ formData, updateFormData, onNext, onBack }: Props) {
             <SelectValue placeholder="Select owner team (optional)" />
           </SelectTrigger>
           <SelectContent>
-            {teams?.map((team) => (
+            {teamsLoading && (
+              <div className="px-2 py-1.5 text-sm text-text-tertiary">
+                Loading teams...
+              </div>
+            )}
+            {!teamsLoading && teams?.map((team: SimpleTeam) => (
               <SelectItem key={team.id} value={team.id}>
                 {team.name}
               </SelectItem>
             ))}
-            {(!teams || teams.length === 0) && (
+            {!teamsLoading && (!teams || teams.length === 0) && (
               <div className="px-2 py-1.5 text-sm text-text-tertiary">
                 No teams available
               </div>
@@ -190,25 +218,35 @@ export function Step6Tags({ formData, updateFormData, onNext, onBack }: Props) {
                 {formData.reviewerType === 'user' &&
                   users &&
                   users.length > 0 &&
-                  users.map((user) => (
+                  users.map((user: SimpleUser) => (
                     <SelectItem key={user.id} value={user.id}>
-                      {user.name || user.email}
+                      {user.name || user.email || user.username || user.id}
                     </SelectItem>
                   ))}
                 {formData.reviewerType === 'team' &&
                   teams &&
                   teams.length > 0 &&
-                  teams.map((team) => (
+                  teams.map((team: SimpleTeam) => (
                     <SelectItem key={team.id} value={team.id}>
                       {team.name}
                     </SelectItem>
                   ))}
-                {formData.reviewerType === 'user' && (!users || users.length === 0) && (
+                {formData.reviewerType === 'user' && usersLoading && (
+                  <div className="px-2 py-1.5 text-sm text-text-tertiary">
+                    Loading users...
+                  </div>
+                )}
+                {formData.reviewerType === 'user' && !usersLoading && (!users || users.length === 0) && (
                   <div className="px-2 py-1.5 text-sm text-text-tertiary">
                     No users available
                   </div>
                 )}
-                {formData.reviewerType === 'team' && (!teams || teams.length === 0) && (
+                {formData.reviewerType === 'team' && teamsLoading && (
+                  <div className="px-2 py-1.5 text-sm text-text-tertiary">
+                    Loading teams...
+                  </div>
+                )}
+                {formData.reviewerType === 'team' && !teamsLoading && (!teams || teams.length === 0) && (
                   <div className="px-2 py-1.5 text-sm text-text-tertiary">
                     No teams available
                   </div>

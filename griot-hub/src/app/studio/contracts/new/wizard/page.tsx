@@ -37,6 +37,17 @@ import { Step5SLA } from '@/components/contracts/wizard/Step5SLA'
 import { Step6Tags } from '@/components/contracts/wizard/Step6Tags'
 import { Step7Review } from '@/components/contracts/wizard/Step7Review'
 
+// Selected schema info for display purposes
+export interface SelectedSchemaInfo {
+  id: string
+  name: string
+  physicalName?: string
+  description?: string
+  domain?: string
+  fieldCount: number
+  hasPii?: boolean
+}
+
 export interface ContractFormData {
   // Basic Info (Step 1)
   name?: string
@@ -44,18 +55,15 @@ export interface ContractFormData {
   domain?: string
   status?: 'draft' | 'proposed'
 
-  // Reviewer (Step 1)
+  // Reviewer (moved to Step 6)
   reviewerType?: 'user' | 'team'
   reviewerId?: string
   reviewerName?: string
 
-  // Schema Selection (Step 2) - Schema is selected from Data Assets
-  assetId?: string // The schema ID from Data Assets
-  isProposed?: boolean // Legacy - kept for backwards compatibility
-  selectedSchemaName?: string // Display name of selected schema
-  selectedAssetName?: string // Name of the Data Asset the schema comes from
+  // Schema Selection (Step 2) - Multiple schemas can be selected from Data Assets
+  selectedSchemas?: SelectedSchemaInfo[] // Array of selected schemas with metadata
 
-  // Schema (Step 3) - Read-only, populated from selected schema
+  // Schema (Step 3) - Read-only, populated from selected schemas
   tables?: any[]
 
   // Quality (Step 4)
@@ -75,7 +83,7 @@ export interface ContractFormData {
 
 const wizardSteps = [
   { id: 'basic', label: 'Basic Info', description: 'Contract name and details' },
-  { id: 'schema-select', label: 'Select Schema', description: 'Choose schema from Data Assets' },
+  { id: 'schema-select', label: 'Select Schemas', description: 'Choose one or more schemas from Data Assets' },
   { id: 'schema-review', label: 'Schema Review', description: 'Review schema structure' },
   { id: 'quality', label: 'Quality Rules', description: 'Add validation rules' },
   { id: 'sla', label: 'SLA', description: 'Service level agreement' },
@@ -143,17 +151,13 @@ export default function ContractWizardPage() {
       id: contractId,
       name: data.name,
       version: '1.0.0',
-      status: data.status || 'draft',
+      status: 'draft', // Always start as draft - use submit endpoint for review
       description: data.description
         ? { logicalType: 'string', value: data.description }
         : { logicalType: 'string' },
       schema,
-      // Optional fields
-      ...(data.ownerTeamId && { owner: data.ownerTeamId }),
-      ...(data.reviewerId && {
-        reviewer_id: data.reviewerId,
-        reviewer_type: data.reviewerType
-      }),
+      // ODCS fields
+      ...(data.domain && { domain: data.domain }),
       ...(data.tags && data.tags.length > 0 && { tags: data.tags }),
       ...(data.sla && {
         sla: {
@@ -172,6 +176,14 @@ export default function ContractWizardPage() {
           expression: rule.expression,
         })),
       }),
+      // Team ownership - uses ODCS team section format
+      ...(data.ownerTeamId && {
+        team: {
+          name: data.ownerTeamId, // Will be resolved by backend
+        },
+      }),
+      // Note: reviewer_id and reviewer_type are NOT part of ODCS schema
+      // They are assigned via POST /contracts/{id}/reviewer after creation
     }
   }, [])
 
@@ -217,31 +229,29 @@ export default function ContractWizardPage() {
     mutationFn: async (data: ContractFormData) => {
       const odcsContract = transformToODCSContract(data)
       const response = await api.post<Contract>('/contracts', odcsContract)
+
+      // After creating contract, assign reviewer if specified
+      // The reviewer fields are not part of ODCS schema, so we use the dedicated endpoint
+      if (data.reviewerId && data.reviewerType) {
+        try {
+          await api.post(`/contracts/${response.id}/reviewer`, {
+            reviewerType: data.reviewerType,
+            reviewerId: data.reviewerId,
+          })
+        } catch (reviewerError) {
+          console.error('Failed to assign reviewer:', reviewerError)
+          // Don't fail contract creation if reviewer assignment fails
+        }
+      }
+
       return { contract: response, formData: data }
     },
     onSuccess: async ({ contract, formData: data }) => {
-      // If contract is created as "proposed", send notification to reviewer
-      if (data.status === 'proposed' && data.reviewerId) {
-        try {
-          await api.post('/notifications', {
-            type: 'contract_review_request',
-            title: 'Contract Review Requested',
-            message: `You have been assigned to review the contract "${data.name}"`,
-            recipientType: data.reviewerType,
-            recipientId: data.reviewerId,
-            metadata: {
-              contractId: contract.id,
-              contractName: data.name,
-              requestedBy: 'current_user', // TODO: Get from auth context
-            },
-          })
-        } catch (notifyError) {
-          // Don't fail the contract creation if notification fails
-          console.error('Failed to send reviewer notification:', notifyError)
-        }
+      // Show appropriate success message
+      if (data.reviewerId) {
         toast.success(
-          'Contract submitted for review',
-          `${data.reviewerName || 'Reviewer'} has been notified`
+          'Contract created',
+          `Contract created with ${data.reviewerName || 'reviewer'} assigned. Submit for review when ready.`
         )
       } else {
         toast.success('Contract created', 'Your data contract has been created as a draft')

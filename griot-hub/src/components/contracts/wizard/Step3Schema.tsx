@@ -1,8 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { ChevronDown, ChevronRight, Key, Shield, Lock, ExternalLink } from 'lucide-react'
-import { Button, Input, Badge } from '@/components/ui'
+import { ChevronDown, ChevronRight, Key, Shield, Lock, ExternalLink, Database } from 'lucide-react'
+import { Button, Badge } from '@/components/ui'
 import type { ContractFormData } from '@/app/studio/contracts/new/wizard/page'
 
 interface Props {
@@ -63,6 +63,9 @@ export function Step3Schema({ formData, updateFormData, onNext, onBack }: Props)
     })),
   }))
 
+  // Get selected schemas info
+  const selectedSchemas = formData.selectedSchemas || []
+
   // Track which tables are expanded
   const [expandedTables, setExpandedTables] = useState<Set<string>>(
     new Set(tables.map((t) => t.id))
@@ -80,13 +83,13 @@ export function Step3Schema({ formData, updateFormData, onNext, onBack }: Props)
     })
   }
 
-  const totalFields = tables.reduce((sum, t) => sum + t.fields.length, 0)
+  const totalFields = tables.reduce((sum, t) => sum + (t.fields?.length || 0), 0)
   const totalPrimaryKeys = tables.reduce(
-    (sum, t) => sum + t.fields.filter((f) => f.primaryKey).length,
+    (sum, t) => sum + (t.fields?.filter((f) => f.primaryKey)?.length || 0),
     0
   )
   const totalPiiFields = tables.reduce(
-    (sum, t) => sum + t.fields.filter((f) => f.piiClassification).length,
+    (sum, t) => sum + (t.fields?.filter((f) => f.piiClassification)?.length || 0),
     0
   )
 
@@ -103,15 +106,15 @@ export function Step3Schema({ formData, updateFormData, onNext, onBack }: Props)
 
         <div className="p-8 text-center border border-border-default rounded-lg bg-bg-secondary">
           <Lock className="h-8 w-8 mx-auto text-text-tertiary mb-3" />
-          <p className="text-text-secondary mb-2">No schema selected</p>
+          <p className="text-text-secondary mb-2">No schemas selected</p>
           <p className="text-sm text-text-tertiary">
-            Please go back and select a schema from your Data Assets.
+            Please go back and select one or more schemas from your Data Assets.
           </p>
         </div>
 
         <div className="flex justify-between">
           <Button variant="secondary" onClick={onBack}>
-            Back: Select Schema
+            Back: Select Schemas
           </Button>
           <Button disabled>Next: Quality Rules</Button>
         </div>
@@ -124,7 +127,7 @@ export function Step3Schema({ formData, updateFormData, onNext, onBack }: Props)
       <div>
         <h2 className="text-lg font-semibold text-text-primary mb-2">Schema Review</h2>
         <p className="text-sm text-text-secondary">
-          Review the schema structure from the selected Data Asset. This schema is read-only.
+          Review the schema structure from the selected Data Assets. These schemas are read-only.
         </p>
       </div>
 
@@ -132,10 +135,16 @@ export function Step3Schema({ formData, updateFormData, onNext, onBack }: Props)
       <div className="flex items-center gap-3 p-3 bg-bg-secondary border border-border-default rounded-lg">
         <Lock className="h-4 w-4 text-text-tertiary" />
         <span className="text-sm text-text-secondary">
-          Schema is inherited from Data Asset:{' '}
-          <strong className="text-text-primary">
-            {(formData as any).selectedAssetName || 'Unknown'}
-          </strong>
+          {selectedSchemas.length === 1 ? (
+            <>
+              Schema inherited from:{' '}
+              <strong className="text-text-primary">{selectedSchemas[0].name}</strong>
+            </>
+          ) : (
+            <>
+              <strong className="text-text-primary">{selectedSchemas.length} schemas</strong> selected from Data Assets
+            </>
+          )}
         </span>
         <a
           href="/studio/assets"
@@ -187,6 +196,8 @@ export function Step3Schema({ formData, updateFormData, onNext, onBack }: Props)
                 )}
               </button>
 
+              <Database className="h-4 w-4 text-text-tertiary" />
+
               <div className="flex-1">
                 <div className="flex items-center gap-2">
                   <span className="font-medium text-text-primary">{table.name}</span>
@@ -200,14 +211,14 @@ export function Step3Schema({ formData, updateFormData, onNext, onBack }: Props)
               </div>
 
               <Badge variant="secondary" size="sm">
-                {table.fields.length} fields
+                {table.fields?.length || 0} fields
               </Badge>
             </div>
 
             {/* Table Fields (Read-Only) */}
             {expandedTables.has(table.id) && (
               <div className="p-4">
-                {table.fields.length === 0 ? (
+                {!table.fields || table.fields.length === 0 ? (
                   <p className="text-sm text-text-tertiary text-center py-4">
                     No fields defined in this table.
                   </p>
@@ -241,7 +252,7 @@ export function Step3Schema({ formData, updateFormData, onNext, onBack }: Props)
                         </div>
 
                         <div className="col-span-3">
-                          <span className="text-sm text-text-tertiary">
+                          <span className="text-sm text-text-tertiary truncate block">
                             {field.description || '-'}
                           </span>
                         </div>

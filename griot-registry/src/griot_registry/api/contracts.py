@@ -992,22 +992,22 @@ async def deprecate_contract_with_reason(
 
     # Update contract
     now = _utc_now()
-    updated = await storage.contracts.update_status(
+    await storage.contracts.update_status(
         contract_id,
         "deprecated",
         updated_by=user.id,
     )
 
-    # Add deprecation fields
-    await storage.contracts.update(
+    # Add deprecation metadata (doesn't create a new version)
+    await storage.contracts.update_metadata(
         contract_id,
-        Contract.from_dict({
-            **updated.to_dict(),
+        {
             "deprecated_by": user.id,
             "deprecated_at": now.isoformat(),
             "deprecation_reason": body.reason,
             "replacement_contract_id": body.replacement_contract_id,
-        }),
+        },
+        updated_by=user.id,
     )
 
     result = await service.get_contract(contract_id)
@@ -1093,15 +1093,15 @@ async def assign_reviewer(
             },
         )
 
-    # Update contract
-    await storage.contracts.update(
+    # Update contract metadata (doesn't create a new version)
+    await storage.contracts.update_metadata(
         contract_id,
-        Contract.from_dict({
-            **contract_dict,
+        {
             "reviewer_type": body.reviewer_type,
             "reviewer_id": body.reviewer_id,
             "reviewer_name": reviewer_name,
-        }),
+        },
+        updated_by=user.id,
     )
 
     result = await service.get_contract(contract_id)

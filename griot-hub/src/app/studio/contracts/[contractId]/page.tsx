@@ -22,6 +22,7 @@ import {
   User,
   Shield,
   History,
+  UserPlus,
 } from 'lucide-react'
 import Link from 'next/link'
 
@@ -31,6 +32,7 @@ import { Button, Badge } from '@/components/ui'
 import { BackLink } from '@/components/navigation/Breadcrumbs'
 import { EmptyState, Skeleton } from '@/components/feedback'
 import { ReviewDialog, ConfirmDialog } from '@/components/contracts/ReviewDialog'
+import { AssignReviewerDialog } from '@/components/contracts/AssignReviewerDialog'
 import { PIISummaryCard, extractPIIFields } from '@/components/contracts/PIISummaryCard'
 import { QualityRulesCard } from '@/components/contracts/QualityRulesCard'
 import { api, queryKeys, ApiError } from '@/lib/api/client'
@@ -51,6 +53,7 @@ export default function ContractDetailPage() {
   const [showApproveDialog, setShowApproveDialog] = useState(false)
   const [showRejectDialog, setShowRejectDialog] = useState(false)
   const [showDeprecateDialog, setShowDeprecateDialog] = useState(false)
+  const [showAssignReviewerDialog, setShowAssignReviewerDialog] = useState(false)
 
   // Fetch contract data
   const { data: contract, isLoading, error } = useQuery({
@@ -61,76 +64,130 @@ export default function ContractDetailPage() {
     },
   })
 
-  // Status change mutation - uses PATCH /contracts/{id}/status
-  const statusMutation = useMutation({
-    mutationFn: async ({
-      status,
-      feedback,
-    }: {
-      status: ContractStatus
-      feedback?: string
-    }) => {
-      // Map UI status to Registry API status values
-      // Registry supports: draft, active, deprecated, retired
-      // UI uses: draft, proposed, pending_review, active, deprecated
-      let apiStatus = status
-      if (status === 'pending_review') {
-        // For now, pending_review maps to keeping current status but triggering review workflow
-        // The registry might not have this status - we'll handle via metadata
-        apiStatus = 'draft' // Keep as draft but with review_requested flag
+  // Fetch owner team details if we have an ownerTeamId
+  const { data: ownerTeam } = useQuery({
+    queryKey: ['teams', contract?.ownerTeamId],
+    queryFn: async () => {
+      if (!contract?.ownerTeamId) return null
+      try {
+        const response = await api.get<{ id: string; name: string; description?: string }>(`/teams/${contract.ownerTeamId}`)
+        return response
+      } catch {
+        return null
       }
-      if (status === 'proposed') {
-        apiStatus = 'draft'
-      }
-
-      const payload: Record<string, unknown> = { status: apiStatus }
-      if (feedback) {
-        payload.review_feedback = feedback
-      }
-      // If submitting for review, add metadata
-      if (status === 'pending_review') {
-        payload.review_requested = true
-        payload.review_notes = feedback
-      }
-
-      return api.patch<RegistryContractResponse>(`/contracts/${contractId}/status`, payload)
     },
-    onSuccess: async (_, { status }) => {
-      const messages: Record<ContractStatus, { title: string; desc: string }> = {
-        pending_review: { title: 'Submitted for Review', desc: 'Contract has been submitted for review' },
-        active: { title: 'Contract Approved', desc: 'Contract is now active' },
-        draft: { title: 'Changes Requested', desc: 'Contract has been sent back to draft' },
-        deprecated: { title: 'Contract Deprecated', desc: 'Contract has been deprecated' },
-        proposed: { title: 'Status Updated', desc: 'Contract status has been updated' },
-      }
+    enabled: !!contract?.ownerTeamId,
+  })
 
-      // Send notification to reviewer when submitting for review
-      if (status === 'pending_review' && contract?.reviewer_id) {
-        try {
-          await api.post('/notifications', {
-            type: 'contract_review_request',
-            title: 'Contract Review Requested',
-            message: `You have been assigned to review the contract "${contract.name}"`,
-            recipientType: contract.reviewer_type || 'user',
-            recipientId: contract.reviewer_id,
-            metadata: {
-              contractId: contract.id,
-              contractName: contract.name,
-            },
-          })
-        } catch (notifyError) {
-          console.error('Failed to send reviewer notification:', notifyError)
+  // Fetch reviewer details if we have a reviewerId
+  const { data: reviewerDetails } = useQuery({
+    queryKey: ['reviewer', contract?.reviewerId, contract?.reviewerType],
+    queryFn: async () => {
+      if (!contract?.reviewerId || !contract?.reviewerType) return null
+      try {
+        if (contract.reviewerType === 'team') {
+          const response = await api.get<{ id: string; name: string }>(`/teams/${contract.reviewerId}`)
+          return { name: response.name, type: 'team' as const }
+        } else {
+          const response = await api.get<{ id: string; name?: string; email?: string; username?: string }>(`/users/${contract.reviewerId}`)
+          return { name: response.name || response.email || response.username || contract.reviewerId, type: 'user' as const }
         }
+      } catch {
+        return null
       }
+    },
+    enabled: !!contract?.reviewerId && !!contract?.reviewerType,
+  })
 
-      const msg = messages[status] || { title: 'Status Updated', desc: 'Contract status has been updated' }
-      toast.success(msg.title, msg.desc)
+  // Submit for review mutation - POST /contracts/{id}/submit
+  const submitForReviewMutation = useMutation({
+    mutationFn: async (message?: string) => {
+      // Always include message field - use empty string if not provided
+      return api.post<RegistryContractResponse>(`/contracts/${contractId}/submit`, {
+        message: message || '',
+      })
+    },
+    onSuccess: () => {
+      toast.success('Submitted for Review', 'Contract has been submitted for review')
+      queryClient.invalidateQueries({ queryKey: queryKeys.contracts.detail(contractId) })
+      queryClient.invalidateQueries({ queryKey: queryKeys.contracts.all })
+    },
+    onError: (error: Error) => {
+      const msg = error instanceof ApiError ? error.message : 'Please try again'
+      toast.error('Failed to submit for review', msg)
+    },
+  })
+
+  // Approve contract mutation - POST /contracts/{id}/approve
+  const approveMutation = useMutation({
+    mutationFn: async (comment?: string) => {
+      // Always include comment field - use empty string if not provided
+      return api.post<RegistryContractResponse>(`/contracts/${contractId}/approve`, {
+        comment: comment || '',
+      })
+    },
+    onSuccess: () => {
+      toast.success('Contract Approved', 'Contract is now active')
       queryClient.invalidateQueries({ queryKey: queryKeys.contracts.detail(contractId) })
       queryClient.invalidateQueries({ queryKey: queryKeys.contracts.all })
     },
     onError: (error: Error) => {
       const message = error instanceof ApiError ? error.message : 'Please try again'
-      toast.error('Failed to update status', message)
+      toast.error('Failed to approve contract', message)
+    },
+  })
+
+  // Reject contract mutation - POST /contracts/{id}/reject
+  const rejectMutation = useMutation({
+    mutationFn: async (feedback: string) => {
+      return api.post<RegistryContractResponse>(`/contracts/${contractId}/reject`, {
+        feedback,
+      })
+    },
+    onSuccess: () => {
+      toast.success('Changes Requested', 'Contract has been sent back to draft')
+      queryClient.invalidateQueries({ queryKey: queryKeys.contracts.detail(contractId) })
+      queryClient.invalidateQueries({ queryKey: queryKeys.contracts.all })
+    },
+    onError: (error: Error) => {
+      const message = error instanceof ApiError ? error.message : 'Please try again'
+      toast.error('Failed to reject contract', message)
+    },
+  })
+
+  // Deprecate contract mutation - POST /contracts/{id}/deprecate
+  const deprecateMutation = useMutation({
+    mutationFn: async (reason: string) => {
+      return api.post<RegistryContractResponse>(`/contracts/${contractId}/deprecate`, {
+        reason,
+      })
+    },
+    onSuccess: () => {
+      toast.success('Contract Deprecated', 'Contract has been deprecated')
+      queryClient.invalidateQueries({ queryKey: queryKeys.contracts.detail(contractId) })
+      queryClient.invalidateQueries({ queryKey: queryKeys.contracts.all })
+    },
+    onError: (error: Error) => {
+      const message = error instanceof ApiError ? error.message : 'Please try again'
+      toast.error('Failed to deprecate contract', message)
+    },
+  })
+
+  // Assign reviewer mutation - POST /contracts/{id}/reviewer
+  const assignReviewerMutation = useMutation({
+    mutationFn: async (data: { reviewerType: 'user' | 'team'; reviewerId: string }) => {
+      return api.post<RegistryContractResponse>(`/contracts/${contractId}/reviewer`, {
+        reviewer_type: data.reviewerType,
+        reviewer_id: data.reviewerId,
+      })
+    },
+    onSuccess: () => {
+      toast.success('Reviewer Assigned', 'A reviewer has been assigned to this contract')
+      queryClient.invalidateQueries({ queryKey: queryKeys.contracts.detail(contractId) })
+    },
+    onError: (error: Error) => {
+      const message = error instanceof ApiError ? error.message : 'Please try again'
+      toast.error('Failed to assign reviewer', message)
     },
   })
 
@@ -152,32 +209,57 @@ export default function ContractDetailPage() {
 
   // Handle submit for review
   const handleSubmitForReview = (notes: string) => {
-    statusMutation.mutate({ status: 'pending_review', feedback: notes || undefined })
+    submitForReviewMutation.mutate(notes || undefined)
     setShowSubmitDialog(false)
   }
 
   // Handle approve
   const handleApprove = () => {
-    statusMutation.mutate({ status: 'active' })
+    approveMutation.mutate(undefined)
     setShowApproveDialog(false)
   }
 
   // Handle request changes
   const handleRequestChanges = (feedback: string) => {
-    statusMutation.mutate({ status: 'draft', feedback })
+    rejectMutation.mutate(feedback)
     setShowRejectDialog(false)
   }
 
   // Handle deprecate
   const handleDeprecate = (reason: string) => {
-    statusMutation.mutate({ status: 'deprecated', feedback: reason })
+    deprecateMutation.mutate(reason)
     setShowDeprecateDialog(false)
   }
+
+  // Handle assign reviewer
+  const handleAssignReviewer = (data: { reviewerType: 'user' | 'team'; reviewerId: string; reviewerName: string }) => {
+    assignReviewerMutation.mutate({
+      reviewerType: data.reviewerType,
+      reviewerId: data.reviewerId,
+    })
+    setShowAssignReviewerDialog(false)
+  }
+
+  // Handle submit for review click - checks if reviewer is assigned first
+  const handleSubmitClick = () => {
+    if (!contract?.reviewerId) {
+      // No reviewer assigned - show assign reviewer dialog
+      toast.error('Reviewer Required', 'Please assign a reviewer before submitting for review')
+      setShowAssignReviewerDialog(true)
+    } else {
+      // Reviewer assigned - show submit dialog
+      setShowSubmitDialog(true)
+    }
+  }
+
+  // Combined isPending for UI state
+  const isStatusChangePending = submitForReviewMutation.isPending || approveMutation.isPending || rejectMutation.isPending || deprecateMutation.isPending || assignReviewerMutation.isPending
 
   // Check if current user can review
   const canReview = user?.role?.name === 'Admin' // TODO: Also check if user is assigned reviewer
   const isOwner = true // TODO: Check if current user is owner
   const canEdit = contract?.status === 'draft' || contract?.status === 'proposed'
+  const hasReviewer = !!contract?.reviewerId
 
   if (isLoading) {
     return (
@@ -249,8 +331,8 @@ export default function ContractDetailPage() {
               <Button
                 variant="primary"
                 size="sm"
-                onClick={() => setShowSubmitDialog(true)}
-                disabled={statusMutation.isPending}
+                onClick={handleSubmitClick}
+                disabled={isStatusChangePending}
               >
                 <Send className="h-4 w-4" />
                 Submit for Review
@@ -264,7 +346,7 @@ export default function ContractDetailPage() {
                   variant="primary"
                   size="sm"
                   onClick={() => setShowApproveDialog(true)}
-                  disabled={statusMutation.isPending}
+                  disabled={isStatusChangePending}
                 >
                   <Check className="h-4 w-4" />
                   Approve
@@ -273,7 +355,7 @@ export default function ContractDetailPage() {
                   variant="destructive"
                   size="sm"
                   onClick={() => setShowRejectDialog(true)}
-                  disabled={statusMutation.isPending}
+                  disabled={isStatusChangePending}
                 >
                   <X className="h-4 w-4" />
                   Request Changes
@@ -287,7 +369,7 @@ export default function ContractDetailPage() {
                 variant="destructive"
                 size="sm"
                 onClick={() => setShowDeprecateDialog(true)}
-                disabled={statusMutation.isPending}
+                disabled={isStatusChangePending}
               >
                 <Archive className="h-4 w-4" />
                 Deprecate
@@ -451,46 +533,63 @@ export default function ContractDetailPage() {
           <Card className="p-6">
             <h3 className="text-sm font-semibold text-text-secondary mb-4">Ownership & Governance</h3>
             <div className="space-y-3">
+              {/* Owner Team */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 text-sm text-text-tertiary">
                   <Users className="h-4 w-4" />
                   <span>Owner Team</span>
                 </div>
                 <span className="text-sm font-medium text-text-primary">
-                  {contract.ownerTeamId || 'Not assigned'}
+                  {ownerTeam?.name || contract.ownerTeamName || contract.ownerTeamId || 'Not assigned'}
                 </span>
               </div>
-              {(contract as unknown as { owner?: string }).owner && (
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-sm text-text-tertiary">
-                    <User className="h-4 w-4" />
-                    <span>Owner</span>
-                  </div>
-                  <span className="text-sm font-medium text-text-primary">
-                    {(contract as unknown as { owner?: string }).owner}
-                  </span>
+
+              {/* Reviewer */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-sm text-text-tertiary">
+                  <Eye className="h-4 w-4" />
+                  <span>Reviewer</span>
                 </div>
-              )}
-              {(contract as unknown as { reviewer_id?: string; reviewerName?: string }).reviewer_id && (
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-sm text-text-tertiary">
-                    <Eye className="h-4 w-4" />
-                    <span>Reviewer</span>
+                {contract.reviewerId ? (
+                  <div className="flex items-center gap-2">
+                    {(reviewerDetails?.type || contract.reviewerType) === 'team' ? (
+                      <Users className="h-3 w-3 text-text-tertiary" />
+                    ) : (
+                      <User className="h-3 w-3 text-text-tertiary" />
+                    )}
+                    <span className="text-sm font-medium text-text-primary">
+                      {reviewerDetails?.name || contract.reviewerName || contract.reviewerId}
+                    </span>
                   </div>
-                  <span className="text-sm font-medium text-text-primary">
-                    {(contract as unknown as { reviewerName?: string }).reviewerName || 'Assigned'}
-                  </span>
-                </div>
-              )}
-              {(contract as unknown as { approved_by?: string }).approved_by && (
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-sm text-text-tertiary">
-                    <CheckCircle className="h-4 w-4" />
-                    <span>Approved By</span>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-text-tertiary">Not assigned</span>
+                    {contract.status === 'draft' && (
+                      <Button
+                        variant="ghost"
+                        size="xs"
+                        onClick={() => setShowAssignReviewerDialog(true)}
+                      >
+                        <UserPlus className="h-3 w-3 mr-1" />
+                        Assign
+                      </Button>
+                    )}
                   </div>
-                  <span className="text-sm font-medium text-text-primary">
-                    {(contract as unknown as { approved_by?: string }).approved_by}
-                  </span>
+                )}
+              </div>
+
+              {/* Show "Change Reviewer" button if reviewer is assigned and contract is draft */}
+              {contract.reviewerId && contract.status === 'draft' && (
+                <div className="pt-2 border-t border-border-subtle">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full justify-center"
+                    onClick={() => setShowAssignReviewerDialog(true)}
+                  >
+                    <UserPlus className="h-4 w-4 mr-2" />
+                    Change Reviewer
+                  </Button>
                 </div>
               )}
             </div>
@@ -637,7 +736,7 @@ export default function ContractDetailPage() {
         isOpen={showSubmitDialog}
         onClose={() => setShowSubmitDialog(false)}
         onSubmit={handleSubmitForReview}
-        isSubmitting={statusMutation.isPending}
+        isSubmitting={isStatusChangePending}
         type="submit_for_review"
       />
 
@@ -645,17 +744,18 @@ export default function ContractDetailPage() {
         isOpen={showApproveDialog}
         onClose={() => setShowApproveDialog(false)}
         onConfirm={handleApprove}
-        isSubmitting={statusMutation.isPending}
+        isSubmitting={isStatusChangePending}
         title="Approve Contract"
         description="This contract will be marked as active and can be used in production. Are you sure you want to approve it?"
         confirmLabel="Approve"
+        icon={CheckCircle}
       />
 
       <ReviewDialog
         isOpen={showRejectDialog}
         onClose={() => setShowRejectDialog(false)}
         onSubmit={handleRequestChanges}
-        isSubmitting={statusMutation.isPending}
+        isSubmitting={isStatusChangePending}
         type="request_changes"
       />
 
@@ -663,8 +763,17 @@ export default function ContractDetailPage() {
         isOpen={showDeprecateDialog}
         onClose={() => setShowDeprecateDialog(false)}
         onSubmit={handleDeprecate}
-        isSubmitting={statusMutation.isPending}
+        isSubmitting={isStatusChangePending}
         type="deprecate"
+      />
+
+      <AssignReviewerDialog
+        isOpen={showAssignReviewerDialog}
+        onClose={() => setShowAssignReviewerDialog(false)}
+        onAssign={handleAssignReviewer}
+        isSubmitting={assignReviewerMutation.isPending}
+        currentReviewerId={contract?.reviewerId}
+        currentReviewerType={contract?.reviewerType}
       />
     </PageContainer>
   )

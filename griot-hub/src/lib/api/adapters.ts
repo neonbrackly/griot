@@ -30,6 +30,18 @@ export interface RegistryContractResponse {
   owner?: string
   created_at?: string
   updated_at?: string
+  // Reviewer fields (assigned via POST /contracts/{id}/reviewer)
+  reviewer_id?: string
+  reviewer_type?: 'user' | 'team'
+  reviewer_name?: string
+  // Team ownership
+  team?: {
+    name?: string
+    id?: string
+  }
+  // Domain and tags
+  domain?: string
+  tags?: string[]
 }
 
 export interface RegistrySchemaDefinition {
@@ -252,9 +264,10 @@ export function adaptContract(contract: RegistryContractResponse): Contract {
     version: contract.version,
     status: mapContractStatus(contract.status),
     description,
-    domain: 'default', // Registry API doesn't have domain field
-    ownerTeamId: contract.owner || 'default-team',
-    tags: [],
+    domain: contract.domain || 'default',
+    ownerTeamId: contract.team?.id || contract.owner || '',
+    ownerTeamName: contract.team?.name,
+    tags: contract.tags || [],
     odcsVersion: contract.apiVersion,
     schema: { tables },
     qualityRules: [],
@@ -264,6 +277,10 @@ export function adaptContract(contract: RegistryContractResponse): Contract {
     },
     createdAt: contract.created_at || new Date().toISOString(),
     updatedAt: contract.updated_at || new Date().toISOString(),
+    // Reviewer fields
+    reviewerId: contract.reviewer_id,
+    reviewerType: contract.reviewer_type,
+    reviewerName: contract.reviewer_name,
   }
 }
 

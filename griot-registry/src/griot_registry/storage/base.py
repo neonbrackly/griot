@@ -92,6 +92,19 @@ class ContractRepository(BaseRepository[Contract]):
         ...
 
     @abstractmethod
+    async def update_metadata(
+        self,
+        contract_id: str,
+        metadata: dict[str, Any],
+        updated_by: str | None = None,
+    ) -> Contract:
+        """Update contract metadata without creating a new version.
+
+        Use for non-content changes like reviewer assignment, tags, etc.
+        """
+        ...
+
+    @abstractmethod
     async def search(
         self,
         query: str,

@@ -275,6 +275,40 @@ class MongoContractRepository(ContractRepository):
 
         return load_contract_from_dict(result)
 
+    async def update_metadata(
+        self,
+        contract_id: str,
+        metadata: dict[str, Any],
+        updated_by: str | None = None,
+    ) -> Contract:
+        """Update contract metadata without creating a new version.
+
+        Use for non-content changes like reviewer assignment, tags, etc.
+        """
+        now = _utc_now()
+
+        # Build the $set document with flattened metadata fields
+        set_doc: dict[str, Any] = {
+            "_meta.updated_at": now,
+            "_meta.updated_by": updated_by,
+        }
+        for key, value in metadata.items():
+            set_doc[key] = value
+
+        result = await self._contracts.find_one_and_update(
+            {"id": contract_id},
+            {"$set": set_doc},
+            return_document=True,
+        )
+
+        if not result:
+            raise ValueError(f"Contract '{contract_id}' not found")
+
+        result.pop("_id", None)
+        result.pop("_meta", None)
+
+        return load_contract_from_dict(result)
+
     async def search(
         self,
         query: str,
