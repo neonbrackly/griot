@@ -22,6 +22,24 @@ import {
 } from '@/components/ui/DropdownMenu'
 import type { Notification, NotificationType } from '@/types'
 
+// Registry notification response format (from RES-registry-009)
+interface RegistryNotificationResponse {
+  items: Notification[]
+  pagination: {
+    total: number
+    unread_count?: number
+    unreadCount?: number
+    limit: number
+    offset: number
+  }
+}
+
+// Legacy mock response format
+interface LegacyNotificationResponse {
+  data: Notification[]
+  unreadCount: number
+}
+
 function formatRelativeTime(dateString: string): string {
   const date = new Date(dateString)
   const now = new Date()
@@ -64,12 +82,21 @@ export function NotificationDropdown() {
 
   const { data } = useQuery({
     queryKey: queryKeys.notifications.list(),
-    queryFn: () =>
-      api.get<{ data: Notification[]; unreadCount: number }>('/notifications?limit=10'),
+    queryFn: async () => {
+      const response = await api.get<RegistryNotificationResponse | LegacyNotificationResponse>(
+        '/notifications?limit=10'
+      )
+      // Handle both registry format (items) and legacy format (data)
+      const items = 'items' in response ? response.items : response.data
+      const unreadCount = 'pagination' in response
+        ? (response.pagination.unreadCount ?? response.pagination.unread_count ?? 0)
+        : response.unreadCount
+      return { items, unreadCount }
+    },
     refetchInterval: 30000, // Poll every 30 seconds
   })
 
-  const notifications = data?.data || []
+  const notifications = data?.items || []
   const unreadCount = data?.unreadCount || 0
 
   const markAsReadMutation = useMutation({

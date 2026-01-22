@@ -61,7 +61,7 @@ export default function ContractDetailPage() {
     },
   })
 
-  // Status change mutation
+  // Status change mutation - uses PATCH /contracts/{id}/status
   const statusMutation = useMutation({
     mutationFn: async ({
       status,
@@ -70,13 +70,32 @@ export default function ContractDetailPage() {
       status: ContractStatus
       feedback?: string
     }) => {
-      const payload: Record<string, unknown> = { status }
+      // Map UI status to Registry API status values
+      // Registry supports: draft, active, deprecated, retired
+      // UI uses: draft, proposed, pending_review, active, deprecated
+      let apiStatus = status
+      if (status === 'pending_review') {
+        // For now, pending_review maps to keeping current status but triggering review workflow
+        // The registry might not have this status - we'll handle via metadata
+        apiStatus = 'draft' // Keep as draft but with review_requested flag
+      }
+      if (status === 'proposed') {
+        apiStatus = 'draft'
+      }
+
+      const payload: Record<string, unknown> = { status: apiStatus }
       if (feedback) {
         payload.review_feedback = feedback
       }
-      return api.put<RegistryContractResponse>(`/contracts/${contractId}`, payload)
+      // If submitting for review, add metadata
+      if (status === 'pending_review') {
+        payload.review_requested = true
+        payload.review_notes = feedback
+      }
+
+      return api.patch<RegistryContractResponse>(`/contracts/${contractId}/status`, payload)
     },
-    onSuccess: (_, { status }) => {
+    onSuccess: async (_, { status }) => {
       const messages: Record<ContractStatus, { title: string; desc: string }> = {
         pending_review: { title: 'Submitted for Review', desc: 'Contract has been submitted for review' },
         active: { title: 'Contract Approved', desc: 'Contract is now active' },
@@ -84,6 +103,26 @@ export default function ContractDetailPage() {
         deprecated: { title: 'Contract Deprecated', desc: 'Contract has been deprecated' },
         proposed: { title: 'Status Updated', desc: 'Contract status has been updated' },
       }
+
+      // Send notification to reviewer when submitting for review
+      if (status === 'pending_review' && contract?.reviewer_id) {
+        try {
+          await api.post('/notifications', {
+            type: 'contract_review_request',
+            title: 'Contract Review Requested',
+            message: `You have been assigned to review the contract "${contract.name}"`,
+            recipientType: contract.reviewer_type || 'user',
+            recipientId: contract.reviewer_id,
+            metadata: {
+              contractId: contract.id,
+              contractName: contract.name,
+            },
+          })
+        } catch (notifyError) {
+          console.error('Failed to send reviewer notification:', notifyError)
+        }
+      }
+
       const msg = messages[status] || { title: 'Status Updated', desc: 'Contract status has been updated' }
       toast.success(msg.title, msg.desc)
       queryClient.invalidateQueries({ queryKey: queryKeys.contracts.detail(contractId) })

@@ -1,9 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { Plus, Trash2, ChevronDown, ChevronRight, GripVertical, Key, Shield } from 'lucide-react'
+import { ChevronDown, ChevronRight, Key, Shield, Lock, ExternalLink } from 'lucide-react'
 import { Button, Input, Badge } from '@/components/ui'
-import { FormField } from '@/components/forms/FormField'
 import type { ContractFormData } from '@/app/studio/contracts/new/wizard/page'
 
 interface Props {
@@ -31,142 +30,120 @@ interface SchemaTable {
   physicalName?: string
   description?: string
   fields: SchemaField[]
-  isExpanded: boolean
 }
 
-const FIELD_TYPES = [
-  'string',
-  'integer',
-  'number',
-  'boolean',
-  'date',
-  'datetime',
-  'timestamp',
-  'array',
-  'object',
-  'binary',
-  'uuid',
-]
-
-const PII_TYPES = [
-  { value: '', label: 'None' },
-  { value: 'email', label: 'Email' },
-  { value: 'name', label: 'Name' },
-  { value: 'phone', label: 'Phone' },
-  { value: 'address', label: 'Address' },
-  { value: 'ssn', label: 'SSN' },
-  { value: 'financial', label: 'Financial' },
-  { value: 'health', label: 'Health' },
-  { value: 'other', label: 'Other PII' },
-]
-
-const generateId = () => Math.random().toString(36).substring(2, 9)
+const PII_LABELS: Record<string, string> = {
+  email: 'Email',
+  name: 'Name',
+  phone: 'Phone',
+  address: 'Address',
+  ssn: 'SSN',
+  financial: 'Financial',
+  health: 'Health',
+  other: 'Other PII',
+}
 
 export function Step3Schema({ formData, updateFormData, onNext, onBack }: Props) {
-  // Initialize tables from formData or empty
-  const [tables, setTables] = useState<SchemaTable[]>(() => {
-    if (formData.tables && formData.tables.length > 0) {
-      return formData.tables.map((t: any) => ({
-        ...t,
-        isExpanded: true,
-        fields: t.fields?.map((f: any) => ({ ...f, id: f.id || generateId() })) || [],
-      }))
-    }
-    return []
-  })
+  // Get tables from formData (populated by Step2 schema selection)
+  const tables: SchemaTable[] = (formData.tables || []).map((t: any, idx: number) => ({
+    id: t.id || `table-${idx}`,
+    name: t.name || '',
+    physicalName: t.physicalName,
+    description: t.description,
+    fields: (t.fields || []).map((f: any, fidx: number) => ({
+      id: f.id || `field-${idx}-${fidx}`,
+      name: f.name || '',
+      logicalType: f.logicalType || 'string',
+      physicalType: f.physicalType,
+      description: f.description,
+      required: f.required || false,
+      unique: f.unique || false,
+      primaryKey: f.primaryKey || false,
+      piiClassification: f.piiClassification,
+    })),
+  }))
 
-  const syncToFormData = (newTables: SchemaTable[]) => {
-    const cleanedTables = newTables.map(({ isExpanded, ...table }) => ({
-      ...table,
-      fields: table.fields.map(({ id, ...field }) => field),
-    }))
-    updateFormData({ tables: cleanedTables })
-  }
-
-  const addTable = () => {
-    const newTable: SchemaTable = {
-      id: generateId(),
-      name: '',
-      description: '',
-      fields: [],
-      isExpanded: true,
-    }
-    const newTables = [...tables, newTable]
-    setTables(newTables)
-    syncToFormData(newTables)
-  }
-
-  const removeTable = (tableId: string) => {
-    const newTables = tables.filter((t) => t.id !== tableId)
-    setTables(newTables)
-    syncToFormData(newTables)
-  }
-
-  const updateTable = (tableId: string, updates: Partial<SchemaTable>) => {
-    const newTables = tables.map((t) =>
-      t.id === tableId ? { ...t, ...updates } : t
-    )
-    setTables(newTables)
-    syncToFormData(newTables)
-  }
+  // Track which tables are expanded
+  const [expandedTables, setExpandedTables] = useState<Set<string>>(
+    new Set(tables.map((t) => t.id))
+  )
 
   const toggleTableExpand = (tableId: string) => {
-    setTables(tables.map((t) =>
-      t.id === tableId ? { ...t, isExpanded: !t.isExpanded } : t
-    ))
-  }
-
-  const addField = (tableId: string) => {
-    const newField: SchemaField = {
-      id: generateId(),
-      name: '',
-      logicalType: 'string',
-      required: false,
-      unique: false,
-      primaryKey: false,
-    }
-    const newTables = tables.map((t) =>
-      t.id === tableId ? { ...t, fields: [...t.fields, newField] } : t
-    )
-    setTables(newTables)
-    syncToFormData(newTables)
-  }
-
-  const removeField = (tableId: string, fieldId: string) => {
-    const newTables = tables.map((t) =>
-      t.id === tableId
-        ? { ...t, fields: t.fields.filter((f) => f.id !== fieldId) }
-        : t
-    )
-    setTables(newTables)
-    syncToFormData(newTables)
-  }
-
-  const updateField = (tableId: string, fieldId: string, updates: Partial<SchemaField>) => {
-    const newTables = tables.map((t) =>
-      t.id === tableId
-        ? {
-            ...t,
-            fields: t.fields.map((f) =>
-              f.id === fieldId ? { ...f, ...updates } : f
-            ),
-          }
-        : t
-    )
-    setTables(newTables)
-    syncToFormData(newTables)
+    setExpandedTables((prev) => {
+      const next = new Set(prev)
+      if (next.has(tableId)) {
+        next.delete(tableId)
+      } else {
+        next.add(tableId)
+      }
+      return next
+    })
   }
 
   const totalFields = tables.reduce((sum, t) => sum + t.fields.length, 0)
-  const hasValidSchema = tables.length > 0 && tables.every((t) => t.name && t.fields.length > 0)
+  const totalPrimaryKeys = tables.reduce(
+    (sum, t) => sum + t.fields.filter((f) => f.primaryKey).length,
+    0
+  )
+  const totalPiiFields = tables.reduce(
+    (sum, t) => sum + t.fields.filter((f) => f.piiClassification).length,
+    0
+  )
+
+  // No tables means no schema selected
+  if (tables.length === 0) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-lg font-semibold text-text-primary mb-2">Schema Review</h2>
+          <p className="text-sm text-text-secondary">
+            Review the schema structure for this contract.
+          </p>
+        </div>
+
+        <div className="p-8 text-center border border-border-default rounded-lg bg-bg-secondary">
+          <Lock className="h-8 w-8 mx-auto text-text-tertiary mb-3" />
+          <p className="text-text-secondary mb-2">No schema selected</p>
+          <p className="text-sm text-text-tertiary">
+            Please go back and select a schema from your Data Assets.
+          </p>
+        </div>
+
+        <div className="flex justify-between">
+          <Button variant="secondary" onClick={onBack}>
+            Back: Select Schema
+          </Button>
+          <Button disabled>Next: Quality Rules</Button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-semibold text-text-primary mb-2">Schema Definition</h2>
+        <h2 className="text-lg font-semibold text-text-primary mb-2">Schema Review</h2>
         <p className="text-sm text-text-secondary">
-          Define the tables and fields for this contract. Each table should have at least one field.
+          Review the schema structure from the selected Data Asset. This schema is read-only.
         </p>
+      </div>
+
+      {/* Read-only Notice */}
+      <div className="flex items-center gap-3 p-3 bg-bg-secondary border border-border-default rounded-lg">
+        <Lock className="h-4 w-4 text-text-tertiary" />
+        <span className="text-sm text-text-secondary">
+          Schema is inherited from Data Asset:{' '}
+          <strong className="text-text-primary">
+            {(formData as any).selectedAssetName || 'Unknown'}
+          </strong>
+        </span>
+        <a
+          href="/studio/assets"
+          className="ml-auto text-sm text-primary-text hover:underline flex items-center gap-1"
+        >
+          Edit in Data Assets
+          <ExternalLink className="h-3 w-3" />
+        </a>
       </div>
 
       {/* Summary Stats */}
@@ -180,20 +157,16 @@ export function Step3Schema({ formData, updateFormData, onNext, onBack }: Props)
           <p className="text-xs text-text-tertiary">Fields</p>
         </div>
         <div className="text-center">
-          <p className="text-2xl font-semibold text-text-primary">
-            {tables.reduce((sum, t) => sum + t.fields.filter(f => f.primaryKey).length, 0)}
-          </p>
+          <p className="text-2xl font-semibold text-text-primary">{totalPrimaryKeys}</p>
           <p className="text-xs text-text-tertiary">Primary Keys</p>
         </div>
         <div className="text-center">
-          <p className="text-2xl font-semibold text-text-primary">
-            {tables.reduce((sum, t) => sum + t.fields.filter(f => f.piiClassification).length, 0)}
-          </p>
+          <p className="text-2xl font-semibold text-text-primary">{totalPiiFields}</p>
           <p className="text-xs text-text-tertiary">PII Fields</p>
         </div>
       </div>
 
-      {/* Tables */}
+      {/* Tables (Read-Only) */}
       <div className="space-y-4">
         {tables.map((table) => (
           <div
@@ -207,46 +180,36 @@ export function Step3Schema({ formData, updateFormData, onNext, onBack }: Props)
                 onClick={() => toggleTableExpand(table.id)}
                 className="p-1 hover:bg-bg-primary rounded"
               >
-                {table.isExpanded ? (
+                {expandedTables.has(table.id) ? (
                   <ChevronDown className="h-4 w-4 text-text-secondary" />
                 ) : (
                   <ChevronRight className="h-4 w-4 text-text-secondary" />
                 )}
               </button>
 
-              <div className="flex-1 grid grid-cols-2 gap-4">
-                <Input
-                  placeholder="Table name"
-                  value={table.name}
-                  onChange={(e) => updateTable(table.id, { name: e.target.value })}
-                />
-                <Input
-                  placeholder="Description (optional)"
-                  value={table.description || ''}
-                  onChange={(e) => updateTable(table.id, { description: e.target.value })}
-                />
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <span className="font-medium text-text-primary">{table.name}</span>
+                  {table.physicalName && (
+                    <span className="text-xs text-text-tertiary">({table.physicalName})</span>
+                  )}
+                </div>
+                {table.description && (
+                  <p className="text-xs text-text-tertiary mt-0.5">{table.description}</p>
+                )}
               </div>
 
               <Badge variant="secondary" size="sm">
                 {table.fields.length} fields
               </Badge>
-
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => removeTable(table.id)}
-                className="text-error-text hover:bg-error-bg"
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
             </div>
 
-            {/* Table Fields */}
-            {table.isExpanded && (
-              <div className="p-4 space-y-3">
+            {/* Table Fields (Read-Only) */}
+            {expandedTables.has(table.id) && (
+              <div className="p-4">
                 {table.fields.length === 0 ? (
                   <p className="text-sm text-text-tertiary text-center py-4">
-                    No fields defined. Add at least one field to this table.
+                    No fields defined in this table.
                   </p>
                 ) : (
                   <div className="space-y-2">
@@ -256,167 +219,124 @@ export function Step3Schema({ formData, updateFormData, onNext, onBack }: Props)
                       <div className="col-span-2">Type</div>
                       <div className="col-span-3">Description</div>
                       <div className="col-span-2">PII</div>
-                      <div className="col-span-1">Options</div>
-                      <div className="col-span-1"></div>
+                      <div className="col-span-2">Properties</div>
                     </div>
 
-                    {/* Field Rows */}
+                    {/* Field Rows (Read-Only) */}
                     {table.fields.map((field) => (
                       <div
                         key={field.id}
-                        className="grid grid-cols-12 gap-2 items-center p-2 bg-bg-secondary rounded-lg"
+                        className="grid grid-cols-12 gap-2 items-center p-2 bg-bg-secondary/50 rounded-lg"
                       >
                         <div className="col-span-3">
-                          <Input
-                            placeholder="Field name"
-                            value={field.name}
-                            onChange={(e) => updateField(table.id, field.id, { name: e.target.value })}
-                            className="h-8 text-sm"
-                          />
+                          <span className="text-sm text-text-primary font-medium">
+                            {field.name}
+                          </span>
                         </div>
 
                         <div className="col-span-2">
-                          <select
-                            value={field.logicalType}
-                            onChange={(e) => updateField(table.id, field.id, { logicalType: e.target.value })}
-                            className="h-8 w-full rounded-md border border-border-default bg-bg-primary px-2 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-primary-border"
-                          >
-                            {FIELD_TYPES.map((type) => (
-                              <option key={type} value={type}>{type}</option>
-                            ))}
-                          </select>
+                          <Badge variant="secondary" size="xs">
+                            {field.logicalType}
+                          </Badge>
                         </div>
 
                         <div className="col-span-3">
-                          <Input
-                            placeholder="Description"
-                            value={field.description || ''}
-                            onChange={(e) => updateField(table.id, field.id, { description: e.target.value })}
-                            className="h-8 text-sm"
-                          />
+                          <span className="text-sm text-text-tertiary">
+                            {field.description || '-'}
+                          </span>
                         </div>
 
                         <div className="col-span-2">
-                          <select
-                            value={field.piiClassification || ''}
-                            onChange={(e) => updateField(table.id, field.id, { piiClassification: e.target.value || undefined })}
-                            className={`h-8 w-full rounded-md border px-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary-border ${
-                              field.piiClassification
-                                ? 'border-warning-border bg-warning-bg/20 text-warning-text'
-                                : 'border-border-default bg-bg-primary text-text-primary'
-                            }`}
-                          >
-                            {PII_TYPES.map((type) => (
-                              <option key={type.value} value={type.value}>{type.label}</option>
-                            ))}
-                          </select>
+                          {field.piiClassification ? (
+                            <Badge
+                              variant="secondary"
+                              size="xs"
+                              className="bg-warning-bg/20 text-warning-text border border-warning-border"
+                            >
+                              <Shield className="h-3 w-3 mr-1" />
+                              {PII_LABELS[field.piiClassification] || field.piiClassification}
+                            </Badge>
+                          ) : (
+                            <span className="text-xs text-text-tertiary">-</span>
+                          )}
                         </div>
 
-                        <div className="col-span-1 flex gap-1">
-                          <button
-                            type="button"
-                            onClick={() => updateField(table.id, field.id, { primaryKey: !field.primaryKey })}
-                            className={`p-1.5 rounded ${
-                              field.primaryKey
-                                ? 'bg-primary-bg text-primary-text'
-                                : 'bg-bg-primary text-text-tertiary hover:text-text-primary'
-                            }`}
-                            title="Primary Key"
-                          >
-                            <Key className="h-3.5 w-3.5" />
-                          </button>
+                        <div className="col-span-2 flex gap-1">
+                          {field.primaryKey && (
+                            <span
+                              className="p-1.5 rounded bg-primary-bg text-primary-text"
+                              title="Primary Key"
+                            >
+                              <Key className="h-3.5 w-3.5" />
+                            </span>
+                          )}
 
-                          <button
-                            type="button"
-                            onClick={() => updateField(table.id, field.id, { required: !field.required })}
-                            className={`p-1.5 rounded text-xs font-medium ${
-                              field.required
-                                ? 'bg-error-bg text-error-text'
-                                : 'bg-bg-primary text-text-tertiary hover:text-text-primary'
-                            }`}
-                            title="Required"
-                          >
-                            R
-                          </button>
+                          {field.required && (
+                            <span
+                              className="p-1.5 rounded bg-error-bg text-error-text text-xs font-medium"
+                              title="Required"
+                            >
+                              R
+                            </span>
+                          )}
 
-                          <button
-                            type="button"
-                            onClick={() => updateField(table.id, field.id, { unique: !field.unique })}
-                            className={`p-1.5 rounded text-xs font-medium ${
-                              field.unique
-                                ? 'bg-info-bg text-info-text'
-                                : 'bg-bg-primary text-text-tertiary hover:text-text-primary'
-                            }`}
-                            title="Unique"
-                          >
-                            U
-                          </button>
-                        </div>
+                          {field.unique && (
+                            <span
+                              className="p-1.5 rounded bg-info-bg text-info-text text-xs font-medium"
+                              title="Unique"
+                            >
+                              U
+                            </span>
+                          )}
 
-                        <div className="col-span-1 flex justify-end">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => removeField(table.id, field.id)}
-                            className="h-8 w-8 p-0 text-error-text hover:bg-error-bg"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </Button>
+                          {!field.primaryKey && !field.required && !field.unique && (
+                            <span className="text-xs text-text-tertiary">-</span>
+                          )}
                         </div>
                       </div>
                     ))}
                   </div>
                 )}
-
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => addField(table.id)}
-                  className="w-full border border-dashed border-border-default hover:border-primary-border"
-                >
-                  <Plus className="h-4 w-4" />
-                  Add Field
-                </Button>
               </div>
             )}
           </div>
         ))}
       </div>
 
-      {/* Add Table Button */}
-      <Button
-        variant="secondary"
-        onClick={addTable}
-        className="w-full"
-      >
-        <Plus className="h-4 w-4" />
-        Add Table
-      </Button>
-
       {/* Help Text */}
       <div className="p-4 bg-bg-secondary rounded-lg text-sm text-text-secondary">
-        <p className="font-medium mb-2">Field Options:</p>
+        <p className="font-medium mb-2">Field Properties:</p>
         <ul className="space-y-1 text-text-tertiary">
-          <li><Key className="inline h-3 w-3 mr-1" /> <strong>Primary Key</strong> - Identifies unique records</li>
-          <li><span className="inline-flex items-center justify-center h-4 w-4 text-xs font-medium bg-error-bg text-error-text rounded mr-1">R</span> <strong>Required</strong> - Field cannot be null</li>
-          <li><span className="inline-flex items-center justify-center h-4 w-4 text-xs font-medium bg-info-bg text-info-text rounded mr-1">U</span> <strong>Unique</strong> - All values must be distinct</li>
-          <li><Shield className="inline h-3 w-3 mr-1" /> <strong>PII</strong> - Mark fields containing personal data</li>
+          <li>
+            <Key className="inline h-3 w-3 mr-1" /> <strong>Primary Key</strong> - Identifies
+            unique records
+          </li>
+          <li>
+            <span className="inline-flex items-center justify-center h-4 w-4 text-xs font-medium bg-error-bg text-error-text rounded mr-1">
+              R
+            </span>{' '}
+            <strong>Required</strong> - Field cannot be null
+          </li>
+          <li>
+            <span className="inline-flex items-center justify-center h-4 w-4 text-xs font-medium bg-info-bg text-info-text rounded mr-1">
+              U
+            </span>{' '}
+            <strong>Unique</strong> - All values must be distinct
+          </li>
+          <li>
+            <Shield className="inline h-3 w-3 mr-1" /> <strong>PII</strong> - Contains personal
+            data
+          </li>
         </ul>
       </div>
 
       {/* Navigation */}
       <div className="flex justify-between">
-        <Button variant="secondary" onClick={onBack}>Back</Button>
-        <Button onClick={onNext} disabled={!hasValidSchema}>
-          Next: Quality Rules
+        <Button variant="secondary" onClick={onBack}>
+          Back
         </Button>
+        <Button onClick={onNext}>Next: Quality Rules</Button>
       </div>
-
-      {!hasValidSchema && tables.length > 0 && (
-        <p className="text-sm text-warning-text text-center">
-          Each table must have a name and at least one field to continue.
-        </p>
-      )}
     </div>
   )
 }

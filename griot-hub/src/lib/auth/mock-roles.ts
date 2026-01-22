@@ -56,8 +56,15 @@ function getPermissionsByIds(ids: string[]): Permission[] {
   return allPermissions.filter((p) => ids.includes(p.id))
 }
 
-// Mock roles storage
-const rolesDb = new Map<string, Role>()
+// Use global to survive hot reloads in development
+declare global {
+  // eslint-disable-next-line no-var
+  var __rolesDb: Map<string, Role> | undefined
+}
+
+// Mock roles storage - persist across hot reloads
+const rolesDb = globalThis.__rolesDb || new Map<string, Role>()
+globalThis.__rolesDb = rolesDb
 
 // Default roles
 const defaultRoles: Array<Omit<Role, 'permissions'> & { permissionIds: string[] }> = [
@@ -114,15 +121,17 @@ const defaultRoles: Array<Omit<Role, 'permissions'> & { permissionIds: string[] 
   },
 ]
 
-// Initialize roles
-defaultRoles.forEach((roleData) => {
-  const { permissionIds, ...rest } = roleData
-  const role: Role = {
-    ...rest,
-    permissions: getPermissionsByIds(permissionIds),
-  }
-  rolesDb.set(role.id, role)
-})
+// Initialize roles only if Map is empty (survives hot reloads)
+if (rolesDb.size === 0) {
+  defaultRoles.forEach((roleData) => {
+    const { permissionIds, ...rest } = roleData
+    const role: Role = {
+      ...rest,
+      permissions: getPermissionsByIds(permissionIds),
+    }
+    rolesDb.set(role.id, role)
+  })
+}
 
 // Role CRUD operations
 export function getAllRoles(): Role[] {

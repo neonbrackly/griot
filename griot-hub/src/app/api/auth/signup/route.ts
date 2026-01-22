@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import {
-  emailExists,
-  createUser,
-  generateMockToken,
-  storeToken,
-} from '@/lib/auth/mock-data'
+
+const REGISTRY_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1'
+const USE_MOCKS = process.env.NEXT_PUBLIC_USE_MOCKS !== 'false'
 
 interface SignupRequest {
   name: string
@@ -15,7 +12,34 @@ interface SignupRequest {
 }
 
 export async function POST(request: NextRequest) {
+  // If using real API, proxy to registry
+  if (!USE_MOCKS) {
+    try {
+      const body = await request.json()
+
+      const response = await fetch(`${REGISTRY_URL}/auth/signup`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      })
+
+      const data = await response.json()
+      return NextResponse.json(data, { status: response.status })
+    } catch (error) {
+      console.error('[API Proxy] Signup error:', error)
+      return NextResponse.json(
+        { error: { code: 'PROXY_ERROR', message: 'Failed to connect to registry' } },
+        { status: 502 }
+      )
+    }
+  }
+
+  // Mock implementation for development without registry
   try {
+    const { emailExists, createUser, generateMockToken, storeToken } = await import('@/lib/auth/mock-data')
+
     const body: SignupRequest = await request.json()
 
     // Validate required fields

@@ -116,6 +116,7 @@ class ContractService:
         self,
         contract: Contract,
         user: User | None = None,
+        schema_refs: list[dict[str, Any]] | None = None,
     ) -> ContractCreateResult:
         """Create a new contract.
 
@@ -159,6 +160,7 @@ class ContractService:
         created = await self.storage.contracts.create(
             contract,
             created_by=created_by,
+            schema_refs=schema_refs,
         )
 
         # Update schema catalog

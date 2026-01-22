@@ -1,7 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useState } from 'react'
 import { Button, Input } from '@/components/ui'
 import {
   Select,
@@ -11,20 +10,7 @@ import {
   SelectValue,
 } from '@/components/ui/Select'
 import { FormField } from '@/components/forms/FormField'
-import { api, queryKeys } from '@/lib/api/client'
 import type { ContractFormData } from '@/app/studio/contracts/new/wizard/page'
-
-// Simple types for users and teams
-interface SimpleUser {
-  id: string
-  name: string
-  email: string
-}
-
-interface SimpleTeam {
-  id: string
-  name: string
-}
 
 interface Props {
   formData: ContractFormData
@@ -34,85 +20,6 @@ interface Props {
 
 export function Step1BasicInfo({ formData, updateFormData, onNext }: Props) {
   const [errors, setErrors] = useState<Record<string, string>>({})
-
-  // Fetch users for reviewer dropdown
-  const { data: usersData } = useQuery({
-    queryKey: queryKeys.users?.all ?? ['users'],
-    queryFn: async () => {
-      try {
-        const response = await api.get<{ items: SimpleUser[] } | SimpleUser[]>('/users')
-        // Handle both array and object response formats
-        if (Array.isArray(response)) {
-          return response
-        }
-        return response.items || []
-      } catch {
-        // Return empty array if API fails - reviewer is optional
-        return []
-      }
-    },
-    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
-  })
-
-  // Fetch teams for reviewer dropdown
-  const { data: teamsData } = useQuery({
-    queryKey: queryKeys.teams?.all ?? ['teams'],
-    queryFn: async () => {
-      try {
-        const response = await api.get<{ items: SimpleTeam[] } | SimpleTeam[]>('/teams')
-        // Handle both array and object response formats
-        if (Array.isArray(response)) {
-          return response
-        }
-        return response.items || []
-      } catch {
-        // Return empty array if API fails - reviewer is optional
-        return []
-      }
-    },
-    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
-  })
-
-  const users = usersData || []
-  const teams = teamsData || []
-
-  const handleReviewerTypeChange = (type: 'user' | 'team' | '') => {
-    if (type === '') {
-      // Clear reviewer when type is cleared
-      updateFormData({
-        reviewerType: undefined,
-        reviewerId: undefined,
-        reviewerName: undefined,
-      })
-    } else {
-      updateFormData({
-        reviewerType: type,
-        reviewerId: undefined,
-        reviewerName: undefined,
-      })
-    }
-  }
-
-  const handleReviewerChange = (id: string) => {
-    if (!id) {
-      updateFormData({ reviewerId: undefined, reviewerName: undefined })
-      return
-    }
-
-    if (formData.reviewerType === 'user') {
-      const user = users.find((u) => u.id === id)
-      updateFormData({
-        reviewerId: id,
-        reviewerName: user?.name || user?.email || id,
-      })
-    } else if (formData.reviewerType === 'team') {
-      const team = teams.find((t) => t.id === id)
-      updateFormData({
-        reviewerId: id,
-        reviewerName: team?.name || id,
-      })
-    }
-  }
 
   const validate = () => {
     const newErrors: Record<string, string> = {}
@@ -200,93 +107,8 @@ export function Step1BasicInfo({ formData, updateFormData, onNext }: Props) {
         </Select>
       </FormField>
 
-      {/* Reviewer Field */}
-      <FormField
-        name="reviewer"
-        label="Reviewer"
-        description="Optionally assign a user or team to review this contract"
-      >
-        <div className="flex gap-2">
-          <div className="w-32">
-            <Select
-              value={formData.reviewerType || ''}
-              onValueChange={(value) => handleReviewerTypeChange(value as 'user' | 'team' | '')}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="user">User</SelectItem>
-                <SelectItem value="team">Team</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="flex-1">
-            <Select
-              value={formData.reviewerId || ''}
-              onValueChange={handleReviewerChange}
-              disabled={!formData.reviewerType}
-            >
-              <SelectTrigger>
-                <SelectValue
-                  placeholder={
-                    !formData.reviewerType
-                      ? 'Select type first'
-                      : formData.reviewerType === 'user'
-                      ? 'Select user...'
-                      : 'Select team...'
-                  }
-                />
-              </SelectTrigger>
-              <SelectContent>
-                {formData.reviewerType === 'user' &&
-                  users.length > 0 &&
-                  users.map((user) => (
-                    <SelectItem key={user.id} value={user.id}>
-                      {user.name || user.email}
-                    </SelectItem>
-                  ))}
-                {formData.reviewerType === 'team' &&
-                  teams.length > 0 &&
-                  teams.map((team) => (
-                    <SelectItem key={team.id} value={team.id}>
-                      {team.name}
-                    </SelectItem>
-                  ))}
-                {formData.reviewerType === 'user' && users.length === 0 && (
-                  <div className="px-2 py-1.5 text-sm text-text-tertiary">
-                    No users available
-                  </div>
-                )}
-                {formData.reviewerType === 'team' && teams.length === 0 && (
-                  <div className="px-2 py-1.5 text-sm text-text-tertiary">
-                    No teams available
-                  </div>
-                )}
-              </SelectContent>
-            </Select>
-          </div>
-          {formData.reviewerId && (
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() =>
-                updateFormData({
-                  reviewerType: undefined,
-                  reviewerId: undefined,
-                  reviewerName: undefined,
-                })
-              }
-            >
-              Clear
-            </Button>
-          )}
-        </div>
-      </FormField>
-
       <div className="flex justify-end">
-        <Button onClick={handleNext}>Next: Data Asset</Button>
+        <Button onClick={handleNext}>Next: Select Schema</Button>
       </div>
     </div>
   )

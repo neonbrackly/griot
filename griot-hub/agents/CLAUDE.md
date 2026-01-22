@@ -32,7 +32,7 @@
 Only modify files in your owned feature area. Check your prompt file for what you own.
 
 ### Rule 2: Request When Blocked
-Need something from another agent? Create `agents/status/requests/REQ-<3-digit-number>.md`
+Need something from another agent? Create `agents/status/requests/REQ-agent_name-<3-digit-number>.md`
 
 ### Rule 3: Always Read (in order)
 1. `agents/status/board.md` - Current tasks and priorities
@@ -44,7 +44,7 @@ Need something from another agent? Create `agents/status/requests/REQ-<3-digit-n
 ### Rule 4: Always Write (in order)
 1. Your code changes in `src/`
 2. Exit notes in `agents/status/updates/<your-agent>.md`
-3. Requests in `agents/status/requests/REQ-<3-digit-number>.md` (if blocked)
+3. Requests in `agents/status/requests/REQ-agent_name-<3-digit-number>.md` (if blocked)
 4. Responses in `agents/status/responses/RES-<3-digit-number>.md` (to requests for you)
 5. Test docs in `agents/status/tests/<your-agent>-tests.md`
 

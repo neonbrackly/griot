@@ -19,6 +19,47 @@ import { cn } from '@/lib/utils'
 import { useDebounce } from '@/lib/hooks/useDebounce'
 import type { GlobalSearchResults, SearchResult } from '@/types'
 
+// Registry global search response format (from RES-registry-012)
+interface RegistrySearchResponse {
+  query: string
+  results: {
+    contracts?: { items: RegistrySearchItem[]; total: number; has_more?: boolean }
+    issues?: { items: RegistrySearchItem[]; total: number; has_more?: boolean }
+    teams?: { items: RegistrySearchItem[]; total: number; has_more?: boolean }
+    users?: { items: RegistrySearchItem[]; total: number; has_more?: boolean }
+  }
+  quickActions?: Array<{ action: string; href: string; icon?: string }>
+  totalResults?: number
+  total_results?: number
+  searchTimeMs?: number
+  search_time_ms?: number
+}
+
+interface RegistrySearchItem {
+  id: string
+  type: string
+  title: string
+  subtitle?: string
+  description?: string
+  href: string
+  icon?: string
+  status?: string
+  metadata?: Record<string, unknown>
+  score?: number
+  highlights?: Array<{ field: string; snippet: string }>
+}
+
+// Transform registry search item to frontend SearchResult
+function adaptSearchItem(item: RegistrySearchItem): SearchResult {
+  return {
+    id: item.id,
+    type: item.type as SearchResult['type'],
+    name: item.title,
+    href: item.href,
+    domain: item.subtitle || undefined,
+  }
+}
+
 const typeIcons = {
   contract: FileText,
   asset: Database,
@@ -51,7 +92,25 @@ export function GlobalSearch() {
 
   const { data: results, isLoading } = useQuery({
     queryKey: queryKeys.search.global(debouncedSearch),
-    queryFn: () => api.get<GlobalSearchResults>(`/search?q=${encodeURIComponent(debouncedSearch)}`),
+    queryFn: async () => {
+      // Registry uses /search/global endpoint with different response format
+      const response = await api.get<RegistrySearchResponse | GlobalSearchResults>(
+        `/search/global?q=${encodeURIComponent(debouncedSearch)}`
+      )
+
+      // Handle registry response format (has 'results' object with nested items)
+      if ('results' in response && response.results) {
+        return {
+          contracts: response.results.contracts?.items.map(adaptSearchItem) || [],
+          assets: [], // Registry doesn't have assets search yet
+          issues: response.results.issues?.items.map(adaptSearchItem) || [],
+          teams: response.results.teams?.items.map(adaptSearchItem) || [],
+        } as GlobalSearchResults
+      }
+
+      // Legacy format (direct arrays)
+      return response as GlobalSearchResults
+    },
     enabled: debouncedSearch.length >= 2,
   })
 

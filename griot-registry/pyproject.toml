@@ -18,7 +18,7 @@ classifiers = [
 dependencies = [
     "fastapi>=0.109.0",
     "uvicorn[standard]>=0.27.0",
-    "pydantic>=2.5.0",
+    "pydantic[email]>=2.5.0",
     "pydantic-settings>=2.1.0",
     "pyyaml>=6.0",
     "griot-core>=0.1.0",
@@ -26,6 +26,7 @@ dependencies = [
     "motor>=3.3.0",
     # Authentication
     "pyjwt[crypto]>=2.8.0",
+    "bcrypt>=4.1.0",
     # HTTP client
     "httpx>=0.26.0",
 ]

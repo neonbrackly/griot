@@ -102,6 +102,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setState((prev) => ({ ...prev, isLoading: true }))
 
     try {
+      // Use local /api route which proxies to registry when NEXT_PUBLIC_USE_MOCKS=false
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: {
@@ -144,6 +145,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setState((prev) => ({ ...prev, isLoading: true }))
 
     try {
+      // Use local /api route which proxies to registry when NEXT_PUBLIC_USE_MOCKS=false
       const response = await fetch('/api/auth/signup', {
         method: 'POST',
         headers: {
@@ -183,16 +185,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, [router])
 
   const logout = React.useCallback(async () => {
-    // Call logout endpoint (best effort)
+    // Call logout endpoint (best effort) - registry returns 204 No Content
     try {
+      // Use local /api route which proxies to registry when NEXT_PUBLIC_USE_MOCKS=false
       await fetch('/api/auth/logout', {
         method: 'POST',
         headers: state.tokens?.accessToken
           ? { Authorization: `Bearer ${state.tokens.accessToken}` }
           : undefined,
       })
+      // Note: Registry API returns 204 No Content on successful logout
     } catch {
-      // Ignore logout API errors
+      // Ignore logout API errors - still clear local state
     }
 
     clearAuth()
@@ -254,6 +258,10 @@ export function useIsAdmin(): boolean {
 // Hook to check if user has a specific permission
 export function useHasPermission(permission: string): boolean {
   const { user } = useAuth()
-  if (!user?.role?.permissions) return false
+  // If permissions array is not provided (e.g., from /auth/me), fall back to role-based check
+  if (!user?.role?.permissions) {
+    // Admin role has all permissions
+    return user?.role?.name?.toLowerCase() === 'admin'
+  }
   return user.role.permissions.includes('*') || user.role.permissions.includes(permission)
 }

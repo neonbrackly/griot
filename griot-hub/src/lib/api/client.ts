@@ -1,8 +1,9 @@
 // API Client Configuration
 import { QueryClient } from '@tanstack/react-query'
 
-// Base API URL - uses real API or falls back to /api for mocking
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/api'
+// Base API URL - always use local proxy to avoid CORS issues
+// The proxy at /api/v1 forwards requests to the registry server-side
+export const API_BASE_URL = '/api/v1'
 
 // Auth storage key - must match AuthProvider
 const AUTH_STORAGE_KEY = 'griot_auth'
@@ -167,6 +168,16 @@ export const queryKeys = {
       [...queryKeys.assets.lists(), filters] as const,
     details: () => [...queryKeys.assets.all, 'detail'] as const,
     detail: (id: string) => [...queryKeys.assets.details(), id] as const,
+  },
+
+  // Schemas (standalone schema management)
+  schemas: {
+    all: ['schemas'] as const,
+    lists: () => [...queryKeys.schemas.all, 'list'] as const,
+    list: (filters?: Record<string, unknown>) =>
+      [...queryKeys.schemas.lists(), filters] as const,
+    details: () => [...queryKeys.schemas.all, 'detail'] as const,
+    detail: (id: string) => [...queryKeys.schemas.details(), id] as const,
   },
 
   // Connections

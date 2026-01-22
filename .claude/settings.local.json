@@ -38,7 +38,30 @@
       "Bash(DEBUG=pw:api npx playwright test:*)",
       "Bash(/bin/bash -c \"npx playwright test 2>&1\")",
       "Bash(npx playwright --version)",
-      "Bash(node -e:*)"
+      "Bash(node -e:*)",
+      "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1NjhlZTFjNC1lYWU5LTRmNmMtODA3ZC0wZTdlY2IxNjgxZjIiLCJlbWFpbCI6ImJyYWNrbHlAZ3Jpb3QuY29tIiwibmFtZSI6IkJyYWNrbHkgTXVydW5nYSIsInJvbGVzIjpbImFkbWluIl0sImV4cCI6MTc2OTE3NDA4OCwiaWF0IjoxNzY5MDg3Njg4LCJpc3MiOiJncmlvdC1yZWdpc3RyeSIsInR5cGUiOiJhY2Nlc3MifQ.g3UmkyDMr6YIGjwdjHKkHHnezNql4rk3yFOSGOzcbmQ\")",
+      "Bash(__NEW_LINE_fa37ddea5af77077__ echo \"=== TEST 1: Create Schema ===\")",
+      "Bash(__NEW_LINE_00a042fbe5a62b4f__ echo \"=== TEST 1: Create Schema ===\")",
+      "Bash(SCHEMA_ID=\"sch-505f1ca4de00\")",
+      "Bash(__NEW_LINE_87cba98206880be4__ echo \"=== TEST 2: List Schemas ===\")",
+      "Bash(__NEW_LINE_64cf61ed78cbd9f6__ echo \"=== TEST 3: Get Schema by ID ===\")",
+      "Bash(__NEW_LINE_288a3719e14b90bc__ echo \"=== TEST 4: Update Schema ===\")",
+      "Bash(__NEW_LINE_01461f6506a03f80__ echo \"=== TEST 5: Publish Schema \\(draft -> active\\) ===\")",
+      "Bash(__NEW_LINE_e958fed46032ea5c__ echo \"=== TEST 6: Clone Schema ===\")",
+      "Bash(__NEW_LINE_9b2769a3047255a0__ echo \"=== TEST 7: Get Version History ===\")",
+      "Bash(__NEW_LINE_f7a3205c7267be98__ echo \"=== TEST 8: Deprecate Schema ===\")",
+      "Bash(__NEW_LINE_172ce8034aa0c1d3__ echo \"=== TEST 9: Legacy Catalog - Find Schemas ===\")",
+      "Bash(__NEW_LINE_5112b6ab52f2d84a__ echo \"=== TEST 10: Legacy Catalog - Get Contracts by Schema Name ===\")",
+      "Bash(CLONED_SCHEMA_ID=\"sch-c43ca8c95b93\")",
+      "Bash(__NEW_LINE_163b0700633d5f17__ echo \"=== TEST 11: Delete Schema ===\")",
+      "Bash(__NEW_LINE_af3046235bccba6f__ echo \"=== TEST 15: Get Contract with Schema Hydration ===\")",
+      "Bash(netstat:*)",
+      "Bash(xargs:*)",
+      "Bash(timeout:*)",
+      "Bash(for i in 1 2 3 4 5 6 7 8)",
+      "Bash(do echo \"Waiting $i...\")",
+      "Bash(done)",
+      "Bash(.venv/Scripts/pip install:*)"
     ]
   }
 }

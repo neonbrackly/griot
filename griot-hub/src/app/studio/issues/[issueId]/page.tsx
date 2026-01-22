@@ -16,6 +16,7 @@ import {
   ExternalLink,
 } from 'lucide-react'
 import { api, queryKeys } from '@/lib/api/client'
+import { adaptIssue, type RegistryIssueResponse } from '@/lib/api/adapters'
 import { cn } from '@/lib/utils'
 import { PageContainer } from '@/components/layout'
 import { Card } from '@/components/layout/Card'
@@ -176,7 +177,10 @@ export default function IssueDetailPage() {
 
   const { data: issue, isLoading } = useQuery({
     queryKey: queryKeys.issues.detail(issueId),
-    queryFn: () => api.get<Issue>(`/issues/${issueId}`),
+    queryFn: async () => {
+      const response = await api.get<RegistryIssueResponse>(`/issues/${issueId}`)
+      return adaptIssue(response)
+    },
   })
 
   const { data: teamsData } = useQuery({
@@ -186,8 +190,18 @@ export default function IssueDetailPage() {
 
   const teams = teamsData?.data || []
 
+  // Registry API uses camelCase field names: assignedTeam, assignedUser, resolutionNotes
+  interface IssueUpdatePayload {
+    status?: string
+    assignedTeam?: string
+    assignedUser?: string
+    resolution?: string
+    resolutionNotes?: string
+    tags?: string[]
+  }
+
   const updateIssueMutation = useMutation({
-    mutationFn: (updates: Partial<Issue>) =>
+    mutationFn: (updates: IssueUpdatePayload) =>
       api.patch(`/issues/${issueId}`, updates),
     onSuccess: () => {
       toast({
@@ -213,7 +227,8 @@ export default function IssueDetailPage() {
 
   const handleTeamChange = (teamId: string) => {
     setSelectedTeam(teamId)
-    updateIssueMutation.mutate({ assignedTeamId: teamId })
+    // Registry API expects 'assignedTeam' not 'assignedTeamId'
+    updateIssueMutation.mutate({ assignedTeam: teamId })
   }
 
   const breadcrumbs: BreadcrumbItem[] = [

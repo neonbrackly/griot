@@ -50,8 +50,8 @@ const mainNavItems: NavItem[] = [
         icon: FileText,
       },
       {
-        label: 'Data Assets',
-        href: '/studio/assets',
+        label: 'Schemas',
+        href: '/studio/schemas',
         icon: Database,
       },
       {

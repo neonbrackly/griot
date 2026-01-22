@@ -25,6 +25,115 @@ import { SkeletonCard } from '@/components/feedback/Skeleton'
 import { useToast } from '@/lib/hooks/useToast'
 import type { MyTasks, PendingAuthorization, CommentToReview, Draft } from '@/types'
 
+// Registry tasks response format (from RES-registry-013)
+interface RegistryTasksResponse {
+  pendingAuthorizations?: TaskCategory<RegistryAuthorizationTask>
+  pending_authorizations?: TaskCategory<RegistryAuthorizationTask>
+  commentsToReview?: TaskCategory<RegistryCommentTask>
+  comments_to_review?: TaskCategory<RegistryCommentTask>
+  drafts?: TaskCategory<RegistryDraftTask>
+  reapprovalTasks?: TaskCategory<RegistryReapprovalTask>
+  reapproval_tasks?: TaskCategory<RegistryReapprovalTask>
+  summary?: {
+    total_pending?: number
+    totalPending?: number
+    authorizations?: number
+    comments?: number
+    drafts?: number
+    reapprovals?: number
+  }
+}
+
+interface TaskCategory<T> {
+  items: T[]
+  total: number
+}
+
+interface RegistryAuthorizationTask {
+  id: string
+  contractId: string
+  contractName: string
+  contractVersion?: string
+  requesterId: string
+  requesterName: string
+  changeType?: string
+  message?: string
+  requestedAt: string
+}
+
+interface RegistryCommentTask {
+  id: string
+  commentId: string
+  contractId: string
+  contractName: string
+  authorId: string
+  authorName: string
+  authorAvatar?: string
+  contentPreview: string
+  createdAt: string
+}
+
+interface RegistryDraftTask {
+  id: string
+  contractId: string
+  name: string
+  type: 'contract' | 'asset'
+  domain?: string
+  completionPercent?: number
+  lastEditedAt: string
+}
+
+interface RegistryReapprovalTask {
+  id: string
+  contractId: string
+  contractName: string
+  reason: string
+  requiredBy: string
+}
+
+// Transform registry tasks to frontend format
+function adaptTasksResponse(response: RegistryTasksResponse | MyTasks): MyTasks {
+  // If it's already in legacy format, return as-is
+  if ('authorizations' in response && Array.isArray(response.authorizations)) {
+    return response as MyTasks
+  }
+
+  const reg = response as RegistryTasksResponse
+  const authTasks = reg.pendingAuthorizations || reg.pending_authorizations
+  const commentTasks = reg.commentsToReview || reg.comments_to_review
+
+  return {
+    authorizations: authTasks?.items.map((task) => ({
+      id: task.id,
+      contractId: task.contractId,
+      contractName: task.contractName,
+      requestedBy: task.requesterName,
+      requestedAt: task.requestedAt,
+      description: task.message,
+      domain: 'default',
+      priority: 'medium' as const,
+    })) || [],
+    comments: commentTasks?.items.map((task) => ({
+      id: task.id,
+      contractId: task.contractId,
+      contractName: task.contractName,
+      commentBy: task.authorName,
+      commentByAvatar: task.authorAvatar,
+      comment: task.contentPreview,
+      commentAt: task.createdAt,
+      type: 'feedback' as const,
+    })) || [],
+    drafts: reg.drafts?.items.map((task) => ({
+      id: task.id,
+      name: task.name,
+      type: task.type,
+      domain: task.domain,
+      completionPercent: task.completionPercent,
+      updatedAt: task.lastEditedAt,
+    })) || [],
+  }
+}
+
 function formatRelativeTime(dateString: string): string {
   const date = new Date(dateString)
   const now = new Date()
@@ -401,7 +510,11 @@ function DraftsList({
 export default function MyTasksPage() {
   const { data: tasks, isLoading } = useQuery({
     queryKey: queryKeys.tasks.my(),
-    queryFn: () => api.get<MyTasks>('/tasks/my'),
+    queryFn: async () => {
+      // Registry uses /tasks endpoint (not /tasks/my)
+      const response = await api.get<RegistryTasksResponse | MyTasks>('/tasks')
+      return adaptTasksResponse(response)
+    },
   })
 
   const counts = useMemo(

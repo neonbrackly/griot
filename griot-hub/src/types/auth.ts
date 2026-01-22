@@ -4,7 +4,7 @@
 export interface AuthRole {
   id: string
   name: string
-  permissions: string[]
+  permissions?: string[]  // Optional - not included in /auth/me response
   description?: string
   isSystem?: boolean
 }

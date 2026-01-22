@@ -340,6 +340,345 @@ class ApprovalRepository(ABC):
         ...
 
 
+class UserRepository(ABC):
+    """Repository interface for user management."""
+
+    @abstractmethod
+    async def create(self, user: dict[str, Any]) -> dict[str, Any]:
+        """Create a new user."""
+        ...
+
+    @abstractmethod
+    async def get(self, user_id: str) -> dict[str, Any] | None:
+        """Get a user by ID."""
+        ...
+
+    @abstractmethod
+    async def get_by_email(self, email: str) -> dict[str, Any] | None:
+        """Get a user by email."""
+        ...
+
+    @abstractmethod
+    async def update(self, user_id: str, updates: dict[str, Any]) -> dict[str, Any]:
+        """Update a user."""
+        ...
+
+    @abstractmethod
+    async def list(
+        self,
+        search: str | None = None,
+        role_id: str | None = None,
+        team_id: str | None = None,
+        status: str | None = None,
+        limit: int = 20,
+        offset: int = 0,
+    ) -> tuple[list[dict[str, Any]], int]:
+        """List users with filtering."""
+        ...
+
+    @abstractmethod
+    async def increment_failed_login(self, user_id: str) -> int:
+        """Increment failed login counter. Returns new count."""
+        ...
+
+    @abstractmethod
+    async def reset_failed_login(self, user_id: str) -> None:
+        """Reset failed login counter and unlock."""
+        ...
+
+
+class TeamRepository(ABC):
+    """Repository interface for team management."""
+
+    @abstractmethod
+    async def create(self, team: dict[str, Any]) -> dict[str, Any]:
+        """Create a new team."""
+        ...
+
+    @abstractmethod
+    async def get(self, team_id: str) -> dict[str, Any] | None:
+        """Get a team by ID."""
+        ...
+
+    @abstractmethod
+    async def update(self, team_id: str, updates: dict[str, Any]) -> dict[str, Any]:
+        """Update a team."""
+        ...
+
+    @abstractmethod
+    async def delete(self, team_id: str) -> bool:
+        """Delete a team."""
+        ...
+
+    @abstractmethod
+    async def list(
+        self,
+        search: str | None = None,
+        limit: int = 20,
+        offset: int = 0,
+    ) -> tuple[list[dict[str, Any]], int]:
+        """List teams with filtering."""
+        ...
+
+    @abstractmethod
+    async def add_member(
+        self,
+        team_id: str,
+        user_id: str,
+        role_id: str,
+    ) -> dict[str, Any]:
+        """Add a member to a team."""
+        ...
+
+    @abstractmethod
+    async def update_member_role(
+        self,
+        team_id: str,
+        user_id: str,
+        role_id: str,
+    ) -> dict[str, Any]:
+        """Update a member's role in a team."""
+        ...
+
+    @abstractmethod
+    async def remove_member(
+        self,
+        team_id: str,
+        user_id: str,
+    ) -> bool:
+        """Remove a member from a team."""
+        ...
+
+
+class RoleRepository(ABC):
+    """Repository interface for role management."""
+
+    @abstractmethod
+    async def create(self, role: dict[str, Any]) -> dict[str, Any]:
+        """Create a new role."""
+        ...
+
+    @abstractmethod
+    async def get(self, role_id: str) -> dict[str, Any] | None:
+        """Get a role by ID."""
+        ...
+
+    @abstractmethod
+    async def update(self, role_id: str, updates: dict[str, Any]) -> dict[str, Any]:
+        """Update a role."""
+        ...
+
+    @abstractmethod
+    async def delete(self, role_id: str) -> bool:
+        """Delete a role."""
+        ...
+
+    @abstractmethod
+    async def list(self) -> list[dict[str, Any]]:
+        """List all roles."""
+        ...
+
+    @abstractmethod
+    async def seed_system_roles(self) -> None:
+        """Create/update system roles (Admin, Editor, Viewer)."""
+        ...
+
+
+class NotificationRepository(ABC):
+    """Repository interface for notifications."""
+
+    @abstractmethod
+    async def create(self, notification: dict[str, Any]) -> dict[str, Any]:
+        """Create a notification."""
+        ...
+
+    @abstractmethod
+    async def list(
+        self,
+        user_id: str,
+        unread_only: bool = False,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> tuple[list[dict[str, Any]], int, int]:
+        """List notifications for a user. Returns (items, total, unread_count)."""
+        ...
+
+    @abstractmethod
+    async def mark_read(self, notification_id: str) -> dict[str, Any]:
+        """Mark a notification as read."""
+        ...
+
+    @abstractmethod
+    async def mark_all_read(self, user_id: str) -> int:
+        """Mark all notifications as read. Returns count updated."""
+        ...
+
+
+class TaskRepository(ABC):
+    """Repository interface for tasks."""
+
+    @abstractmethod
+    async def create(self, task: dict[str, Any]) -> dict[str, Any]:
+        """Create a task."""
+        ...
+
+    @abstractmethod
+    async def get(self, task_id: str) -> dict[str, Any] | None:
+        """Get a task by ID."""
+        ...
+
+    @abstractmethod
+    async def update(self, task_id: str, updates: dict[str, Any]) -> dict[str, Any]:
+        """Update a task."""
+        ...
+
+    @abstractmethod
+    async def list(
+        self,
+        user_id: str,
+        type: str | None = None,
+        status: str | None = None,
+        limit: int = 10,
+    ) -> tuple[list[dict[str, Any]], int]:
+        """List tasks for a user."""
+        ...
+
+
+class PasswordResetRepository(ABC):
+    """Repository interface for password reset tokens."""
+
+    @abstractmethod
+    async def create(self, token_data: dict[str, Any]) -> dict[str, Any]:
+        """Create a password reset token."""
+        ...
+
+    @abstractmethod
+    async def get_by_token(self, token: str) -> dict[str, Any] | None:
+        """Get token data by token string."""
+        ...
+
+    @abstractmethod
+    async def mark_used(self, token_id: str) -> None:
+        """Mark a token as used."""
+        ...
+
+    @abstractmethod
+    async def cleanup_expired(self) -> int:
+        """Delete expired tokens. Returns count deleted."""
+        ...
+
+
+class SchemaRepository(ABC):
+    """Repository interface for standalone schema management.
+
+    Schemas are first-class entities that can be:
+    - Created manually (source="manual")
+    - Discovered from connections (source="connection")
+    - Referenced by contracts via schemaId + version
+    """
+
+    @abstractmethod
+    async def create(self, schema: dict[str, Any]) -> dict[str, Any]:
+        """Create a new schema."""
+        ...
+
+    @abstractmethod
+    async def get(self, schema_id: str) -> dict[str, Any] | None:
+        """Get a schema by ID (returns current version)."""
+        ...
+
+    @abstractmethod
+    async def get_version(
+        self,
+        schema_id: str,
+        version: str,
+    ) -> dict[str, Any] | None:
+        """Get a specific version of a schema."""
+        ...
+
+    @abstractmethod
+    async def update(
+        self,
+        schema_id: str,
+        updates: dict[str, Any],
+        updated_by: str,
+    ) -> dict[str, Any]:
+        """Update a schema. May create new version for breaking changes."""
+        ...
+
+    @abstractmethod
+    async def delete(self, schema_id: str) -> bool:
+        """Delete a schema. Only allowed if not referenced by contracts."""
+        ...
+
+    @abstractmethod
+    async def list(
+        self,
+        search: str | None = None,
+        domain: str | None = None,
+        source: str | None = None,
+        status: str | None = None,
+        owner_id: str | None = None,
+        owner_team_id: str | None = None,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> tuple[list[dict[str, Any]], int]:
+        """List schemas with filtering."""
+        ...
+
+    @abstractmethod
+    async def exists(self, schema_id: str) -> bool:
+        """Check if a schema exists."""
+        ...
+
+    @abstractmethod
+    async def update_status(
+        self,
+        schema_id: str,
+        new_status: str,
+        updated_by: str,
+    ) -> dict[str, Any]:
+        """Update schema status (publish, deprecate, etc.)."""
+        ...
+
+    @abstractmethod
+    async def list_versions(
+        self,
+        schema_id: str,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> tuple[list[dict[str, Any]], int]:
+        """List version history for a schema."""
+        ...
+
+    @abstractmethod
+    async def create_version(
+        self,
+        schema_id: str,
+        new_version: str,
+        schema_data: dict[str, Any],
+        change_type: str,
+        change_notes: str,
+        created_by: str,
+    ) -> dict[str, Any]:
+        """Create a new version of a schema."""
+        ...
+
+    @abstractmethod
+    async def get_contracts_using_schema(
+        self,
+        schema_id: str,
+        version: str | None = None,
+    ) -> list[dict[str, Any]]:
+        """Get contracts that reference this schema."""
+        ...
+
+    @abstractmethod
+    async def can_delete(self, schema_id: str) -> tuple[bool, list[dict[str, Any]]]:
+        """Check if schema can be deleted. Returns (can_delete, dependent_contracts)."""
+        ...
+
+
 class StorageBackend(ABC):
     """Main storage backend interface that provides access to all repositories.
 
@@ -387,6 +726,48 @@ class StorageBackend(ABC):
     @abstractmethod
     def approvals(self) -> ApprovalRepository:
         """Get the approval repository."""
+        ...
+
+    @property
+    @abstractmethod
+    def users(self) -> UserRepository:
+        """Get the user repository."""
+        ...
+
+    @property
+    @abstractmethod
+    def teams(self) -> TeamRepository:
+        """Get the team repository."""
+        ...
+
+    @property
+    @abstractmethod
+    def roles(self) -> RoleRepository:
+        """Get the role repository."""
+        ...
+
+    @property
+    @abstractmethod
+    def notifications(self) -> NotificationRepository:
+        """Get the notification repository."""
+        ...
+
+    @property
+    @abstractmethod
+    def tasks(self) -> TaskRepository:
+        """Get the task repository."""
+        ...
+
+    @property
+    @abstractmethod
+    def password_resets(self) -> PasswordResetRepository:
+        """Get the password reset repository."""
+        ...
+
+    @property
+    @abstractmethod
+    def schemas(self) -> SchemaRepository:
+        """Get the schema repository for standalone schema management."""
         ...
 
     @abstractmethod

@@ -239,6 +239,117 @@ def mock_storage() -> StorageBackend:
     storage.schema_catalog.get_contracts_by_schema = AsyncMock(return_value=["test-contract"])
     # rebuild_catalog returns the count of schemas indexed
     storage.schema_catalog.rebuild_catalog = AsyncMock(return_value=5)
+    storage.schema_catalog.update_for_contract = AsyncMock()
+
+    # Standalone schemas repository mocks
+    storage.schemas = MagicMock()
+    storage.schemas.create = AsyncMock(return_value={
+        "id": "sch-test123456",
+        "name": "test_schema",
+        "physical_name": "test_table",
+        "logical_type": "object",
+        "physical_type": "table",
+        "description": "Test schema",
+        "domain": "test",
+        "tags": [],
+        "properties": [
+            {"name": "id", "logicalType": "string", "primaryKey": True}
+        ],
+        "version": "1.0.0",
+        "status": "draft",
+        "owner_id": "test-user",
+        "owner_team_id": None,
+        "source": "manual",
+        "connection_id": None,
+        "created_at": now,
+        "created_by": "test-user",
+        "updated_at": now,
+        "updated_by": "test-user",
+    })
+    storage.schemas.get = AsyncMock(return_value={
+        "id": "sch-test123456",
+        "name": "test_schema",
+        "physical_name": "test_table",
+        "logical_type": "object",
+        "physical_type": "table",
+        "description": "Test schema",
+        "properties": [
+            {"name": "id", "logicalType": "string", "primaryKey": True}
+        ],
+        "version": "1.0.0",
+        "status": "draft",
+        "owner_id": "test-user",
+        "created_at": now,
+        "created_by": "test-user",
+        "updated_at": now,
+    })
+    storage.schemas.get_version = AsyncMock(return_value={
+        "id": "sch-test123456",
+        "name": "test_schema",
+        "version": "1.0.0",
+        "status": "active",
+        "properties": [],
+    })
+    storage.schemas.update = AsyncMock(return_value={
+        "id": "sch-test123456",
+        "name": "test_schema",
+        "description": "Updated description",
+        "version": "1.0.0",
+        "status": "draft",
+        "properties": [],
+        "updated_at": now,
+    })
+    storage.schemas.delete = AsyncMock(return_value=True)
+    storage.schemas.list = AsyncMock(return_value=([], 0))
+    storage.schemas.exists = AsyncMock(return_value=True)
+    storage.schemas.update_status = AsyncMock(return_value={
+        "id": "sch-test123456",
+        "name": "test_schema",
+        "version": "1.0.0",
+        "status": "active",
+        "properties": [],
+        "updated_at": now,
+    })
+    storage.schemas.list_versions = AsyncMock(return_value=([
+        {"version": "1.0.0", "change_type": "initial", "change_notes": "Initial", "created_at": now, "created_by": "test-user"}
+    ], 1))
+    storage.schemas.create_version = AsyncMock()
+    storage.schemas.get_contracts_using_schema = AsyncMock(return_value=[])
+    storage.schemas.can_delete = AsyncMock(return_value=(True, []))
+
+    # User repository mocks (for schema ownership checks)
+    storage.users = MagicMock()
+    storage.users.get = AsyncMock(return_value={
+        "id": "test-user",
+        "name": "Test User",
+        "email": "test@example.com",
+        "role_id": "role-admin",
+    })
+    storage.users.get_by_email = AsyncMock(return_value={
+        "id": "test-user",
+        "name": "Test User",
+        "email": "test@example.com",
+        "role_id": "role-admin",
+    })
+
+    # Team repository mocks
+    storage.teams = MagicMock()
+    storage.teams.get = AsyncMock(return_value={
+        "id": "team-001",
+        "name": "Test Team",
+        "members": [{"user_id": "test-user"}]
+    })
+
+    # Notification repository mocks
+    storage.notifications = MagicMock()
+    storage.notifications.create = AsyncMock(return_value={
+        "id": "notif-123",
+        "user_id": "test-user",
+        "type": "schema_pii_changed",
+        "title": "Test notification",
+        "read": False,
+        "created_at": now,
+    })
 
     # Health check
     storage.health_check = AsyncMock(return_value={"status": "healthy"})

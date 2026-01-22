@@ -1104,6 +1104,271 @@ Active contracts have been approved. If the schema changes:
 
 ---
 
+## Phase 3 - Registry API Implementation (ACTIVE)
+
+> **Agent:** registry
+> **Location:** `griot-registry/`
+> **Description:** Backend API service that powers the griot-hub frontend
+
+### Registry Agent Overview
+
+The Registry Agent is responsible for implementing ALL backend APIs that the hub consumes. The hub is a frontend shell that calls registry APIs for all data operations.
+
+---
+
+### Authentication Endpoints (REQ-014 to REQ-019) - HIGH PRIORITY
+
+| Task ID | Endpoint | Status | Request File |
+|---------|----------|--------|--------------|
+| T-REG-001 | POST /auth/login | 📋 Ready | REQ-registry-014 |
+| T-REG-002 | POST /auth/signup | 📋 Ready | REQ-registry-015 |
+| T-REG-003 | POST /auth/logout | 📋 Ready | REQ-registry-016 |
+| T-REG-004 | GET /auth/me | 📋 Ready | REQ-registry-017 |
+| T-REG-005 | POST /auth/forgot-password | 📋 Ready | REQ-registry-018 |
+| T-REG-006 | POST /auth/reset-password | 📋 Ready | REQ-registry-019 |
+| T-REG-007 | OAuth stubs (google, microsoft, sso) | 📋 Ready | Return 501 |
+
+**Requirements:**
+- JWT token generation with configurable expiry (24h default, 30d with rememberMe)
+- bcrypt password hashing (cost factor 12)
+- Account lockout after 5 failed attempts (15 min)
+- Hardcoded admin: `brackly@griot.com` / `melly`
+- Rate limiting: 10 login attempts/min, 5 signups/hour
+
+---
+
+### Users Management Endpoints (auth-admin-api.yaml) - HIGH PRIORITY
+
+| Task ID | Endpoint | Status | Description |
+|---------|----------|--------|-------------|
+| T-REG-008 | GET /users | 📋 Ready | List users with search, pagination, filtering |
+| T-REG-009 | POST /users/invite | 📋 Ready | Invite new user (send email) |
+| T-REG-010 | GET /users/{userId} | 📋 Ready | Get user details with role, team |
+| T-REG-011 | PATCH /users/{userId} | 📋 Ready | Update user profile |
+| T-REG-012 | DELETE /users/{userId} | 📋 Ready | Deactivate user (soft delete) |
+| T-REG-013 | PATCH /users/{userId}/role | 📋 Ready | Change user role (admin only) |
+
+---
+
+### Teams Management Endpoints (auth-admin-api.yaml) - HIGH PRIORITY
+
+| Task ID | Endpoint | Status | Description |
+|---------|----------|--------|-------------|
+| T-REG-014 | GET /teams | 📋 Ready | List teams with search, pagination |
+| T-REG-015 | POST /teams | 📋 Ready | Create team with default role |
+| T-REG-016 | GET /teams/{teamId} | 📋 Ready | Get team with members |
+| T-REG-017 | PATCH /teams/{teamId} | 📋 Ready | Update team details |
+| T-REG-018 | DELETE /teams/{teamId} | 📋 Ready | Delete team |
+| T-REG-019 | POST /teams/{teamId}/members | 📋 Ready | Add member to team |
+| T-REG-020 | PATCH /teams/{teamId}/members/{memberId} | 📋 Ready | Update member role |
+| T-REG-021 | DELETE /teams/{teamId}/members/{memberId} | 📋 Ready | Remove member from team |
+
+---
+
+### Roles & Permissions Endpoints (auth-admin-api.yaml) - MEDIUM PRIORITY
+
+| Task ID | Endpoint | Status | Description |
+|---------|----------|--------|-------------|
+| T-REG-022 | GET /roles | 📋 Ready | List all roles with permissions |
+| T-REG-023 | POST /roles | 📋 Ready | Create custom role (admin only) |
+| T-REG-024 | GET /roles/{roleId} | 📋 Ready | Get role details |
+| T-REG-025 | PATCH /roles/{roleId} | 📋 Ready | Update role (not system roles) |
+| T-REG-026 | DELETE /roles/{roleId} | 📋 Ready | Delete role (if not in use) |
+| T-REG-027 | GET /permissions | 📋 Ready | List all available permissions |
+
+**System Roles (non-deletable):**
+- Admin: Full access
+- Editor: Create/edit contracts, assets
+- Viewer: Read-only access
+
+---
+
+### Contract Workflow Endpoints (REQ-001 to REQ-005) - HIGH PRIORITY
+
+| Task ID | Endpoint | Status | Request File |
+|---------|----------|--------|--------------|
+| T-REG-028 | POST /contracts/{contractId}/submit | 📋 Ready | REQ-registry-001 |
+| T-REG-029 | POST /contracts/{contractId}/approve | 📋 Ready | REQ-registry-002 |
+| T-REG-030 | POST /contracts/{contractId}/reject | 📋 Ready | REQ-registry-003 |
+| T-REG-031 | POST /contracts/{contractId}/deprecate | 📋 Ready | REQ-registry-004 |
+| T-REG-032 | PUT /contracts/{contractId}/reviewer | 📋 Ready | contracts.yaml |
+| T-REG-033 | Extend Contract schema with reviewer fields | 📋 Ready | REQ-registry-005 |
+
+**Status Flow:**
+```
+draft → pending_review → active → deprecated
+              ↓
+          rejected (back to draft)
+```
+
+---
+
+### Quality Rules Endpoints (contracts.yaml) - MEDIUM PRIORITY
+
+| Task ID | Endpoint | Status | Description |
+|---------|----------|--------|-------------|
+| T-REG-034 | GET /contracts/{contractId}/quality-rules | 📋 Ready | List rules by contract |
+| T-REG-035 | POST /contracts/{contractId}/quality-rules | 📋 Ready | Add quality rule |
+| T-REG-036 | GET /contracts/{contractId}/quality-rules/{ruleId} | 📋 Ready | Get rule details |
+| T-REG-037 | PUT /contracts/{contractId}/quality-rules/{ruleId} | 📋 Ready | Update rule |
+| T-REG-038 | DELETE /contracts/{contractId}/quality-rules/{ruleId} | 📋 Ready | Delete rule |
+
+**Rule Types:** completeness, uniqueness, validity, freshness, custom
+
+---
+
+### Version History & Diff Endpoints (contracts.yaml) - MEDIUM PRIORITY
+
+| Task ID | Endpoint | Status | Description |
+|---------|----------|--------|-------------|
+| T-REG-039 | GET /contracts/{contractId}/versions | 📋 Ready | Version history list |
+| T-REG-040 | GET /contracts/{contractId}/versions/{version} | 📋 Ready | Get specific version |
+| T-REG-041 | GET /contracts/{contractId}/diff | 📋 Ready | Compare two versions |
+
+---
+
+### Audit Trail Endpoint (contracts.yaml) - MEDIUM PRIORITY
+
+| Task ID | Endpoint | Status | Description |
+|---------|----------|--------|-------------|
+| T-REG-042 | GET /contracts/{contractId}/audit | 📋 Ready | Get audit trail |
+
+**Event Types:** created, updated, submitted, approved, rejected, deprecated, schema_changed, quality_rule_added, reviewer_assigned
+
+---
+
+### Enhanced Issues Endpoints (REQ-006 to REQ-008) - MEDIUM PRIORITY
+
+| Task ID | Endpoint | Status | Request File |
+|---------|----------|--------|--------------|
+| T-REG-043 | GET /issues (enhanced) | 📋 Ready | REQ-registry-006 |
+| T-REG-044 | GET /issues/{issueId} (detailed) | 📋 Ready | REQ-registry-007 |
+| T-REG-045 | PATCH /issues/{issueId} | 📋 Ready | REQ-registry-008 |
+
+**Filters:** severity, status, category, contract_id, assigned_team/user, date range
+**Categories:** pii_exposure, schema_drift, sla_breach, quality_failure, other
+
+---
+
+### Notifications Endpoints (REQ-009 to REQ-011) - MEDIUM PRIORITY
+
+| Task ID | Endpoint | Status | Request File |
+|---------|----------|--------|--------------|
+| T-REG-046 | GET /notifications | 📋 Ready | REQ-registry-009 |
+| T-REG-047 | PATCH /notifications/{notificationId}/read | 📋 Ready | REQ-registry-010 |
+| T-REG-048 | POST /notifications/read-all | 📋 Ready | REQ-registry-011 |
+
+**Notification Types:** contract_approved, contract_rejected, contract_submitted, issue_detected, issue_assigned, issue_resolved, sla_breach, schema_drift, comment_added, task_assigned
+
+---
+
+### Tasks System Endpoints (REQ-013) - MEDIUM PRIORITY
+
+| Task ID | Endpoint | Status | Request File |
+|---------|----------|--------|--------------|
+| T-REG-049 | GET /tasks | 📋 Ready | REQ-registry-013 |
+| T-REG-050 | POST /tasks | 📋 Ready | contracts.yaml |
+| T-REG-051 | GET /tasks/{taskId} | 📋 Ready | contracts.yaml |
+| T-REG-052 | PATCH /tasks/{taskId} | 📋 Ready | contracts.yaml |
+
+**Task Types:** authorization (pending approvals), comment (need response), draft (incomplete items), reapproval (schema changed)
+
+---
+
+### Global Search Endpoint (REQ-012) - MEDIUM PRIORITY
+
+| Task ID | Endpoint | Status | Request File |
+|---------|----------|--------|--------------|
+| T-REG-053 | GET /search | 📋 Ready | REQ-registry-012 |
+
+**Search Scope:** contracts, assets, issues, teams, users
+**Features:** Grouped results, relevance scoring, highlights, quick actions
+
+---
+
+### Manual Schemas Endpoints (REQ-020) - HIGH PRIORITY
+
+| Task ID | Endpoint | Status | Request File |
+|---------|----------|--------|--------------|
+| T-REG-054 | GET /schemas | 📋 Ready | REQ-registry-020 |
+| T-REG-055 | POST /schemas | 📋 Ready | REQ-registry-020 |
+| T-REG-056 | GET /schemas/{id} | 📋 Ready | REQ-registry-020 |
+| T-REG-057 | PUT /schemas/{id} | 📋 Ready | REQ-registry-020 |
+| T-REG-058 | DELETE /schemas/{id} | 📋 Ready | REQ-registry-020 |
+
+**Purpose:** Enable manual schema creation independent of database connections. Required for contract wizard Step 2.
+
+---
+
+### Integration & Testing Tasks
+
+| Task ID | Task | Status | Dependencies |
+|---------|------|--------|--------------|
+| T-REG-059 | Python client methods for all new endpoints | ⏳ Blocked | All endpoints |
+| T-REG-060 | Unit tests for all new endpoints | ⏳ Blocked | All endpoints |
+| T-REG-061 | Integration tests with hub frontend | ⏳ Blocked | T-REG-060 |
+
+---
+
+### Registry Agent Execution Order
+
+**Phase 3A - Core Authentication (Days 1-2)**
+1. T-REG-001 through T-REG-007 (Auth endpoints)
+
+**Phase 3B - Users, Teams, Roles (Days 3-4)**
+2. T-REG-008 through T-REG-013 (Users)
+3. T-REG-014 through T-REG-021 (Teams)
+4. T-REG-022 through T-REG-027 (Roles & Permissions)
+
+**Phase 3C - Contract Workflow (Days 5-6)**
+5. T-REG-028 through T-REG-033 (Contract Workflow)
+6. T-REG-054 through T-REG-058 (Manual Schemas - needed for contracts)
+
+**Phase 3D - Supporting Features (Days 7-8)**
+7. T-REG-034 through T-REG-038 (Quality Rules)
+8. T-REG-039 through T-REG-042 (Version History, Diff, Audit)
+9. T-REG-043 through T-REG-045 (Enhanced Issues)
+
+**Phase 3E - Platform Features (Days 9-10)**
+10. T-REG-046 through T-REG-048 (Notifications)
+11. T-REG-049 through T-REG-052 (Tasks)
+12. T-REG-053 (Global Search)
+
+**Phase 3F - Testing & Integration (Days 11-12)**
+13. T-REG-059 through T-REG-061 (Client, Tests, Integration)
+
+---
+
+### Notes for Registry Agent
+
+1. **Read First:**
+   - `griot-hub/agents/specs/auth-admin-api.yaml` - Auth & Admin API spec
+   - `griot-hub/agents/specs/contracts.yaml` - Contracts API spec (missing endpoints)
+   - `griot-hub/agents/status/requests/REQ-registry-*` - Detailed request files
+
+2. **API Format:**
+   - Base URL: `/api/v1/`
+   - All responses use consistent envelope: `{ items: [], total: N }` for lists
+   - Error format: `{ error: { code: string, message: string, details?: [] } }`
+   - Authentication: JWT Bearer token
+
+3. **Database:**
+   - MongoDB with motor async driver
+   - Collections: users, teams, roles, permissions, contracts, schemas, issues, notifications, tasks, audit_events
+
+4. **Security:**
+   - bcrypt for password hashing (cost 12)
+   - JWT with configurable expiry
+   - Rate limiting on auth endpoints
+   - RBAC (Role-Based Access Control)
+
+5. **Testing:**
+   - pytest with pytest-asyncio
+   - Mock storage for unit tests
+   - Test auth: `brackly@griot.com` / `melly`
+
+---
+
 ## Next Milestones
 
 ### Milestone 1: Authentication & Admin (Design Agent) - COMPLETED
@@ -1136,3 +1401,31 @@ Active contracts have been approved. If the schema changes:
 - Schema changes on active contracts trigger re-approval workflow
 - Schema is read-only for retired and deprecated contracts
 - All E2E tests pass
+
+### Milestone 3: Registry API Implementation (Registry Agent) - ACTIVE
+
+**Target:** Complete backend API to replace all frontend mocks
+
+**Key Deliverables:**
+1. Authentication system (login, signup, logout, me, password reset)
+2. Users CRUD with role assignment
+3. Teams CRUD with member management
+4. Roles & Permissions system
+5. Contract workflow (submit, approve, reject, deprecate)
+6. Quality rules CRUD
+7. Version history and diff
+8. Issues management (enhanced)
+9. Notifications system
+10. Tasks system (My Tasks)
+11. Global search
+12. Manual schemas CRUD
+
+**Success Criteria:**
+- Hub frontend works entirely with registry APIs (no MSW mocks)
+- All auth flows work end-to-end
+- Admin can manage users, teams, roles
+- Contract workflow is fully functional
+- Issues and notifications work
+- Global search returns relevant results
+- All Python client methods implemented
+- All tests passing

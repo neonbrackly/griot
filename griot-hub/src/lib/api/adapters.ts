@@ -64,22 +64,80 @@ export interface RegistryListResponse<T> {
 
 export interface RegistryIssueResponse {
   id: string
-  contract_id: string
-  run_id: string | null
+  contract_id?: string
+  run_id?: string | null
   title: string
-  description: string
+  description: string | null
   severity: string
-  category: string
+  category: string | null
   status: string
-  affected_field: string | null
-  affected_schema: string | null
-  assignee: string | null
-  resolution: string | null
-  resolved_by: string | null
-  resolved_at: string | null
+  affected_field?: string | null
+  affected_schema?: string | null
+  assignee?: string | null
+  resolution?: string | null
+  resolved_by?: string | null
+  resolved_at?: string | null
   created_at: string
   updated_at: string
-  created_by: string
+  created_by?: string
+  // New fields from registry API (RES-registry-006/007)
+  contract?: {
+    id: string
+    name: string
+    version?: string
+    status?: string
+    ownerTeam?: string
+    ownerTeamName?: string
+  }
+  location?: {
+    table?: string
+    field?: string
+    physicalTable?: string
+    physicalColumn?: string
+  }
+  assignment?: {
+    teamId?: string
+    teamName?: string
+    userId?: string
+    userName?: string
+    assignedAt?: string
+    assignedBy?: string
+  }
+  timeline?: {
+    detectedAt?: string
+    acknowledgedAt?: string
+    inProgressAt?: string
+    resolvedAt?: string
+    resolution?: string
+    resolutionNotes?: string
+    resolvedBy?: string
+  }
+  metadata?: Record<string, unknown>
+  tags?: string[]
+  createdAt?: string
+  updatedAt?: string
+}
+
+// Registry issues list response (with pagination and summary)
+export interface RegistryIssuesListResponse {
+  items: RegistryIssueResponse[]
+  pagination: {
+    page: number
+    limit: number
+    total: number
+    total_pages?: number
+    totalPages?: number
+  }
+  summary?: {
+    critical: number
+    warning: number
+    info: number
+    open: number
+    in_progress?: number
+    inProgress?: number
+    resolved: number
+    ignored: number
+  }
 }
 
 export interface RegistryRunResponse {
@@ -232,8 +290,25 @@ export function adaptContractsList(
 
 /**
  * Transform a registry issue to hub issue format
+ * Handles both list format and detail format (with nested objects)
  */
 export function adaptIssue(issue: RegistryIssueResponse): Issue {
+  // Handle both old format (snake_case fields) and new format (nested objects)
+  const contractId = issue.contract?.id || issue.contract_id || ''
+  const contractName = issue.contract?.name
+  const contractVersion = issue.contract?.version
+
+  // Location can come from nested location object or flat fields
+  const table = issue.location?.table || issue.affected_schema || undefined
+  const field = issue.location?.field || issue.affected_field || undefined
+
+  // Assignment from nested object or flat field
+  const assignedTeamId = issue.assignment?.teamId || issue.assignee || undefined
+
+  // Timeline from nested object or flat fields
+  const detectedAt = issue.timeline?.detectedAt || issue.createdAt || issue.created_at
+  const resolvedAt = issue.timeline?.resolvedAt || issue.resolved_at || undefined
+
   return {
     id: issue.id,
     title: issue.title,
@@ -241,37 +316,45 @@ export function adaptIssue(issue: RegistryIssueResponse): Issue {
     severity: mapIssueSeverity(issue.severity),
     status: mapIssueStatus(issue.status),
     category: (issue.category as Issue['category']) || 'other',
-    contractId: issue.contract_id,
-    contractName: undefined,
-    contractVersion: undefined,
-    field: issue.affected_field || undefined,
-    table: issue.affected_schema || undefined,
-    assignedTeamId: issue.assignee || undefined,
-    detectedAt: issue.created_at,
-    resolvedAt: issue.resolved_at || undefined,
-    createdAt: issue.created_at,
-    updatedAt: issue.updated_at,
+    contractId,
+    contractName,
+    contractVersion,
+    field,
+    table,
+    assignedTeamId,
+    detectedAt,
+    resolvedAt,
+    createdAt: issue.createdAt || issue.created_at,
+    updatedAt: issue.updatedAt || issue.updated_at,
   }
 }
 
 /**
  * Transform registry issues list to hub paginated format
+ * Handles both old format (RegistryListResponse) and new format (RegistryIssuesListResponse)
  */
 export function adaptIssuesList(
-  response: RegistryListResponse<RegistryIssueResponse>,
+  response: RegistryListResponse<RegistryIssueResponse> | RegistryIssuesListResponse,
   page: number = 1,
   pageSize: number = 20
-): PaginatedResponse<Issue> {
+): PaginatedResponse<Issue> & { summary?: RegistryIssuesListResponse['summary'] } {
   const issues = response.items.map(adaptIssue)
+
+  // Handle both old format (top-level total/limit/offset) and new format (nested pagination)
+  const pagination = 'pagination' in response
+    ? response.pagination
+    : { total: response.total, page, limit: pageSize }
 
   return {
     data: issues,
     meta: {
-      total: response.total,
-      page,
-      pageSize,
-      totalPages: Math.ceil(response.total / pageSize),
+      total: pagination.total,
+      page: pagination.page || page,
+      pageSize: pagination.limit || pageSize,
+      totalPages: pagination.totalPages || pagination.total_pages || Math.ceil(pagination.total / (pagination.limit || pageSize)),
     },
+    // Include summary if available (from new API format)
+    summary: 'summary' in response ? response.summary : undefined,
   }
 }
 

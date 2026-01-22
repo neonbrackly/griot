@@ -25,10 +25,17 @@ export interface TeamDetail extends Team {
   members: TeamMember[]
 }
 
-// Mock teams storage
-const teamsDb = new Map<string, TeamDetail>()
+// Use global to survive hot reloads in development
+declare global {
+  // eslint-disable-next-line no-var
+  var __teamsDb: Map<string, TeamDetail> | undefined
+}
 
-// Initialize with default teams
+// Mock teams storage - persist across hot reloads
+const teamsDb = globalThis.__teamsDb || new Map<string, TeamDetail>()
+globalThis.__teamsDb = teamsDb
+
+// Initialize with default teams (only if empty)
 const defaultTeams: TeamDetail[] = [
   {
     id: 'team-001',
@@ -94,10 +101,12 @@ const defaultTeams: TeamDetail[] = [
   },
 ]
 
-// Initialize teams
-defaultTeams.forEach((team) => {
-  teamsDb.set(team.id, team)
-})
+// Initialize teams only if Map is empty (survives hot reloads)
+if (teamsDb.size === 0) {
+  defaultTeams.forEach((team) => {
+    teamsDb.set(team.id, team)
+  })
+}
 
 // Team CRUD operations
 export function getAllTeams(): Team[] {

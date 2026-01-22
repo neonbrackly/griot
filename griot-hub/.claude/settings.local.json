@@ -7,7 +7,13 @@
       "mcp__playwright__browser_install",
       "Bash(npx playwright install:*)",
       "Bash(NODE_OPTIONS=\"--max-old-space-size=4096\" npm run build:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(done)",
+      "Bash(npx playwright test:*)",
+      "Bash(npx playwright:*)",
+      "Bash(node --version:*)",
+      "Bash(echo:*)",
+      "Bash(node node_modules/.bin/playwright test:*)"
     ]
   }
 }

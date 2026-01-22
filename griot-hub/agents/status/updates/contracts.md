@@ -1,7 +1,101 @@
 # Contracts Agent - Status Update
 
 > **Last Updated:** 2026-01-22 by contracts-agent
-> **Status:** COMPLETED - All Phase 2 Tasks Done
+> **Status:** IN PROGRESS - Schema Selection Migration
+
+---
+
+## URGENT: Schema Selection Migration
+
+### What Changed
+
+The contract creation wizard has been **fundamentally changed** to remove inline schema creation. Users must now:
+1. **Create schemas in Data Assets first**
+2. **Select existing schemas** when creating contracts
+
+### Why This Change
+
+- **Single source of truth**: Schemas are now managed centrally in Data Assets
+- **Schema reuse**: Same schema can be used by multiple contracts
+- **Governance**: Centralized control over schema definitions
+- **Consistency**: Prevents duplicate/inconsistent schema definitions
+
+### Files Changed
+
+| File | Change |
+|------|--------|
+| `src/components/contracts/wizard/Step2Asset.tsx` | **Rewritten** - Now a schema selector with searchable dropdown |
+| `src/components/contracts/wizard/Step3Schema.tsx` | **Rewritten** - Now read-only schema display |
+| `src/app/studio/contracts/new/wizard/page.tsx` | Updated ContractFormData interface and step labels |
+
+### Blocking Dependencies
+
+**TWO teams need to implement features for this to work:**
+
+#### 1. Registry Agent (Backend API)
+**Request:** `agents/status/requests/REQ-registry-020.md`
+
+The Registry needs to implement **standalone schema management** - schemas that exist independently of database connections.
+
+**Required Endpoints:**
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/schemas` | GET | List all schemas (manual + connection-derived) |
+| `/schemas` | POST | Create a manual schema |
+| `/schemas/{id}` | GET | Get schema details |
+| `/schemas/{id}` | PUT | Update manual schema |
+| `/schemas/{id}` | DELETE | Delete schema (if not used by contracts) |
+
+**Expected Response from `GET /schemas`:**
+```json
+{
+  "items": [
+    {
+      "id": "schema-001",
+      "name": "Customer Analytics Schema",
+      "source": "manual",
+      "connectionId": null,
+      "domain": "analytics",
+      "tables": [{ "name": "customers", "fields": [...] }],
+      "tableCount": 1,
+      "fieldCount": 5,
+      "createdAt": "2026-01-10T09:00:00Z",
+      "updatedAt": "2026-01-15T14:30:00Z"
+    }
+  ],
+  "total": 47
+}
+```
+
+#### 2. Schema Agent (Frontend UI)
+**Request:** `agents/status/requests/REQ-schema-001.md`
+
+The Schema Agent needs to implement schema management UI in the Data Assets section:
+- Schema list view with search/filter
+- Schema creation form/wizard (table builder, field builder)
+- Schema edit view
+- Schema detail view
+- Schema delete with dependency check
+
+### New Wizard Flow
+
+| Step | Old | New |
+|------|-----|-----|
+| 1 | Basic Info | Basic Info (unchanged) |
+| 2 | Data Asset | **Select Schema** - Searchable dropdown |
+| 3 | Schema | **Schema Review** - Read-only display |
+| 4 | Quality Rules | Quality Rules (unchanged) |
+| 5 | SLA | SLA (unchanged) |
+| 6 | Tags & Owner | Tags & Owner (unchanged) |
+| 7 | Review | Review (unchanged) |
+
+### Testing
+
+Until Schema Agent implements the API:
+- Wizard will show "No schemas available"
+- Contract creation is blocked at Step 2
+
+Schema Agent should add mock data to `src/lib/mocks/handlers/` for testing.
 
 ---
 
@@ -251,9 +345,64 @@ Test credentials:
 
 ---
 
+## Registry API Requests
+
+Created request files for the registry agent (backend API team) documenting needed endpoints:
+
+| Request ID | Endpoint | Purpose |
+|------------|----------|---------|
+| REQ-registry-001 | POST /contracts/{id}/submit | Submit contract for review |
+| REQ-registry-002 | POST /contracts/{id}/approve | Approve contract |
+| REQ-registry-003 | POST /contracts/{id}/reject | Request changes on contract |
+| REQ-registry-004 | POST /contracts/{id}/deprecate | Deprecate active contract |
+| REQ-registry-005 | Extended Contract Schema | Add reviewer/workflow fields |
+| **REQ-registry-020** | **Schema CRUD endpoints** | **Manual schema management (NEW)** |
+
+Request files location: `agents/status/requests/REQ-registry-*.md`
+
+## Schema Agent Requests
+
+| Request ID | Feature | Purpose |
+|------------|---------|---------|
+| **REQ-schema-001** | **Schema Management UI** | **UI for creating/editing schemas in Data Assets (NEW)** |
+
+Request files location: `agents/status/requests/REQ-schema-*.md`
+
+### API Dependencies
+
+**Already Implemented (auth-admin-api.yaml):**
+- GET /users - List users for reviewer dropdown
+- GET /teams - List teams for reviewer dropdown
+
+**Currently Using (registry API):**
+- GET /contracts - List contracts
+- GET /contracts/{id} - Get contract detail
+- POST /contracts - Create contract
+- PUT /contracts/{id} - Update contract (currently used for status changes)
+
+**Needed from Registry (see requests):**
+- POST /contracts/{id}/submit - Dedicated submit endpoint
+- POST /contracts/{id}/approve - Dedicated approve endpoint
+- POST /contracts/{id}/reject - Dedicated reject endpoint
+- POST /contracts/{id}/deprecate - Dedicated deprecate endpoint
+- Extended Contract response with reviewer/workflow fields
+
+---
+
+## OpenAPI Spec Updates
+
+Updated `agents/specs/contracts.yaml`:
+1. Added note that GET /users and GET /teams come from auth-admin-api.yaml
+2. Updated implementation priority list
+3. Removed duplicate User/Team schemas (they exist in auth-admin-api.yaml)
+4. Cleaned up tags to remove unnecessary Users/Teams tags
+
+---
+
 ## Next Steps (If Needed)
 
 1. Run E2E tests to verify all functionality
 2. Consider adding more unit tests for schema-diff utility
 3. Add form validation for quality rules editing
 4. Implement version comparison UI (`/contracts/{id}/diff`)
+5. **Registry team:** Implement endpoints in REQ-001 through REQ-005

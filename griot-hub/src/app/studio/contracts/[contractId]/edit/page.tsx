@@ -65,31 +65,41 @@ export default function ContractEditPage() {
 
   const [formData, setFormData] = useState<EditFormData | null>(null)
   const [errors, setErrors] = useState<Record<string, string>>({})
-  // Store the original ODCS response for the PUT request
-  // Using useRef instead of useState to avoid race condition - refs update synchronously
-  const originalOdcsContractRef = useRef<RegistryContractResponse | null>(null)
   // Store original schema for comparison
   const originalSchemaRef = useRef<{ tables: SchemaTable[] } | null>(null)
   // Re-approval dialog state
   const [showReapprovalDialog, setShowReapprovalDialog] = useState(false)
   const [schemaDiff, setSchemaDiff] = useState<SchemaDiff | null>(null)
-  const [schemaChangeReason, setSchemaChangeReason] = useState<string>('')
 
-  // Fetch contract data - adapt for display
-  const { data: contract, isLoading, error } = useQuery({
-    queryKey: queryKeys.contracts.detail(contractId),
+  // Fetch contract data - return both adapted (for display) and raw (for PUT request)
+  const { data: queryData, isLoading, error } = useQuery({
+    queryKey: [...queryKeys.contracts.detail(contractId), 'edit'],
     queryFn: async () => {
       const response = await api.get<RegistryContractResponse>(`/contracts/${contractId}`)
-      // Store the original ODCS format for PUT request (ref updates synchronously)
-      originalOdcsContractRef.current = response
-      // Return adapted format for display
-      return adaptContract(response)
+      return {
+        adapted: adaptContract(response),
+        raw: response,
+      }
     },
+    // Always fetch fresh data when editing to ensure we have the latest version
+    staleTime: 0,
   })
 
-  // Initialize form data when contract loads
+  // Extract adapted contract for display and raw for mutations
+  const contract = queryData?.adapted
+  const originalOdcsContract = queryData?.raw
+
+  // Track the contract version to detect when we need to reinitialize form
+  const [loadedVersion, setLoadedVersion] = useState<string | null>(null)
+
+  // Initialize form data when contract loads or version changes
   useEffect(() => {
-    if (contract && !formData) {
+    // Only initialize if we have contract data and either:
+    // 1. formData hasn't been initialized yet, OR
+    // 2. The contract version has changed (indicating a fresh fetch after save)
+    const shouldInitialize = contract && (!formData || (loadedVersion && loadedVersion !== contract.version))
+
+    if (shouldInitialize) {
       // Transform contract schema to SchemaTable format
       const tables: SchemaTable[] = (contract.schema?.tables || []).map((table) => ({
         name: table.name,
@@ -126,17 +136,15 @@ export default function ContractEditPage() {
         changeType: 'minor',
         changeNotes: '',
       })
+
+      // Track the version we loaded
+      setLoadedVersion(contract.version)
     }
-  }, [contract, formData])
+  }, [contract, formData, loadedVersion])
 
   // Update contract mutation - use PUT as backend doesn't support PATCH
   const updateMutation = useMutation({
-    mutationFn: async (data: EditFormData) => {
-      const originalOdcsContract = originalOdcsContractRef.current
-      if (!originalOdcsContract) {
-        throw new Error('Original contract data not available')
-      }
-
+    mutationFn: async ({ formData: data, rawContract }: { formData: EditFormData; rawContract: RegistryContractResponse }) => {
       // Transform schema tables to ODCS format
       const odcsSchema = data.schema.tables.map((table, tableIndex) => ({
         name: table.name,
@@ -172,14 +180,14 @@ export default function ContractEditPage() {
         change_type: data.changeType,
         change_notes: data.changeNotes || undefined,
         // Contract data
-        ...originalOdcsContract,
+        ...rawContract,
         name: data.name,
         description: data.description,
         status: data.status,
         tags: data.tags,
         schema: odcsSchema,
         sla: {
-          ...((originalOdcsContract as Record<string, unknown>).sla || {}),
+          ...((rawContract as Record<string, unknown>).sla || {}),
           freshness: data.sla.freshnessHours ? { target: `PT${data.sla.freshnessHours}H` } : undefined,
           availability: { targetPercent: data.sla.availabilityPercent },
           responseTime: data.sla.responseTimeMs ? { target: `${data.sla.responseTimeMs}ms` } : undefined,
@@ -190,7 +198,9 @@ export default function ContractEditPage() {
     },
     onSuccess: () => {
       toast.success('Contract updated', 'Your changes have been saved successfully')
+      // Invalidate both the detail query and the edit query
       queryClient.invalidateQueries({ queryKey: queryKeys.contracts.detail(contractId) })
+      queryClient.invalidateQueries({ queryKey: [...queryKeys.contracts.detail(contractId), 'edit'] })
       queryClient.invalidateQueries({ queryKey: queryKeys.contracts.all })
       router.push(`/studio/contracts/${contractId}`)
     },
@@ -252,7 +262,12 @@ export default function ContractEditPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!validateForm() || !formData) return
+    if (!validateForm() || !formData || !originalOdcsContract) {
+      if (!originalOdcsContract) {
+        toast.error('Error', 'Contract data not available. Please refresh the page.')
+      }
+      return
+    }
 
     // Check if this is an active contract with schema changes
     if (contract?.status === 'active' && originalSchemaRef.current) {
@@ -266,22 +281,23 @@ export default function ContractEditPage() {
     }
 
     // No schema changes or not an active contract - proceed normally
-    updateMutation.mutate(formData)
+    updateMutation.mutate({ formData, rawContract: originalOdcsContract })
   }
 
   // Handle confirmation of schema change re-approval
   const handleReapprovalConfirm = (reason: string) => {
-    if (!formData) return
+    if (!formData || !originalOdcsContract) return
 
-    // Store the reason and proceed with mutation
-    setSchemaChangeReason(reason)
     setShowReapprovalDialog(false)
 
     // Mutate with schema change reason - this will trigger re-approval workflow
     updateMutation.mutate({
-      ...formData,
-      changeType: 'major', // Schema changes on active contracts are always major
-      changeNotes: `Schema change requiring re-approval: ${reason}`,
+      formData: {
+        ...formData,
+        changeType: 'major', // Schema changes on active contracts are always major
+        changeNotes: `Schema change requiring re-approval: ${reason}`,
+      },
+      rawContract: originalOdcsContract,
     })
   }
 

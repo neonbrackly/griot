@@ -18,9 +18,23 @@ info:
 
     ## Authentication
 
-    Most write operations require JWT authentication. Obtain a token via:
+    Most write operations require JWT authentication.
+
+    **Login (recommended):**
     ```
-    GET /api/v1/auth/token?user_id=myuser&roles=editor
+    POST /api/v1/auth/login
+    { "email": "user@example.com", "password": "SecurePass123" }
+    ```
+
+    **Signup:**
+    ```
+    POST /api/v1/auth/signup
+    { "name": "John", "email": "...", "password": "...", "confirmPassword": "...", "acceptTerms": true }
+    ```
+
+    **Legacy token (dev/testing):**
+    ```
+    POST /api/v1/auth/token?user_id=myuser&roles=editor
     ```
 
     Include the token in requests:
@@ -62,7 +76,12 @@ tags:
   - name: versions
     description: Contract versioning
   - name: schemas
-    description: Schema catalog queries
+    description: Schema catalog queries (legacy)
+  - name: standalone-schemas
+    description: |
+      Standalone schema management - CRUD, lifecycle, versioning.
+      Schemas are first-class entities that can be created independently
+      and reused across multiple contracts via schemaRefs.
   - name: validations
     description: Validation records
   - name: runs
@@ -136,11 +155,234 @@ paths:
   # ---------------------------------------------------------------------------
   # Authentication
   # ---------------------------------------------------------------------------
-  /auth/token:
+  /auth/login:
+    post:
+      tags: [auth]
+      summary: User login
+      description: |
+        Authenticate user with email and password.
+
+        **Features:**
+        - Returns JWT token and user data on success
+        - Account locked after 5 failed attempts for 15 minutes
+        - "Remember me" extends token to 30 days (default 24 hours)
+      operationId: login
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthErrorResponse'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthErrorResponse'
+        '423':
+          description: Account locked
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthErrorResponse'
+
+  /auth/signup:
+    post:
+      tags: [auth]
+      summary: User registration
+      description: |
+        Register a new user account.
+
+        **Password requirements:**
+        - Minimum 8 characters
+        - At least 1 uppercase letter
+        - At least 1 lowercase letter
+        - At least 1 number
+
+        New users receive the default "Viewer" role.
+      operationId: signup
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SignupRequest'
+      responses:
+        '201':
+          description: Account created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '409':
+          description: Email already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthErrorResponse'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthErrorResponse'
+
+  /auth/logout:
+    post:
+      tags: [auth]
+      summary: User logout
+      description: |
+        Logout the current user and invalidate the session.
+
+        Note: For stateless JWT, the client should discard the token.
+        Token blacklisting is not implemented in this version.
+      operationId: logout
+      responses:
+        '204':
+          description: Logout successful
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /auth/me:
     get:
       tags: [auth]
-      summary: Get JWT access token
-      operationId: getToken
+      summary: Get current user profile
+      description: |
+        Get the current authenticated user's profile.
+        Returns complete user information including role and team.
+      operationId: getCurrentUser
+      responses:
+        '200':
+          description: Current user information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthUserResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: User not found
+
+  /auth/forgot-password:
+    post:
+      tags: [auth]
+      summary: Request password reset
+      description: |
+        Request a password reset link.
+
+        If the email exists, a reset token is generated.
+        For security, always returns success even if email doesn't exist.
+      operationId: forgotPassword
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ForgotPasswordRequest'
+      responses:
+        '200':
+          description: Reset email sent (if account exists)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "If an account exists with that email, a password reset link has been sent."
+
+  /auth/reset-password:
+    post:
+      tags: [auth]
+      summary: Reset password with token
+      description: |
+        Reset password using a valid reset token.
+
+        Token must not be expired (1 hour validity) and must not have been used before.
+      operationId: resetPassword
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResetPasswordRequest'
+      responses:
+        '200':
+          description: Password reset successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Password has been reset successfully."
+        '400':
+          description: Invalid or expired token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthErrorResponse'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthErrorResponse'
+
+  /auth/refresh:
+    post:
+      tags: [auth]
+      summary: Refresh access token
+      description: Refresh an access token using a refresh token.
+      operationId: refreshToken
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refresh_token]
+              properties:
+                refresh_token:
+                  type: string
+                  description: The refresh token
+      responses:
+        '200':
+          description: Token refreshed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+        '401':
+          description: Invalid or expired refresh token
+
+  /auth/token:
+    post:
+      tags: [auth]
+      summary: Create access token (legacy/dev)
+      description: |
+        Legacy endpoint for creating access tokens directly.
+        Primarily used for development and testing.
+      operationId: createToken
       security: []
       parameters:
         - name: user_id
@@ -149,9 +391,18 @@ paths:
           schema:
             type: string
           description: User identifier
+        - name: email
+          in: query
+          schema:
+            type: string
+          description: User email
+        - name: name
+          in: query
+          schema:
+            type: string
+          description: User name
         - name: roles
           in: query
-          required: false
           schema:
             type: array
             items:
@@ -167,21 +418,53 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/TokenResponse'
+        '400':
+          description: Invalid role specified
 
-  /auth/me:
-    get:
+  /auth/oauth/google:
+    post:
       tags: [auth]
-      summary: Get current user info
-      operationId: getCurrentUser
+      summary: Google OAuth callback
+      description: Google OAuth authentication (not yet implemented).
+      operationId: oauthGoogle
+      security: []
       responses:
-        '200':
-          description: Current user information
+        '501':
+          description: Not implemented
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UserInfo'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+                $ref: '#/components/schemas/AuthErrorResponse'
+
+  /auth/oauth/microsoft:
+    post:
+      tags: [auth]
+      summary: Microsoft OAuth callback
+      description: Microsoft OAuth authentication (not yet implemented).
+      operationId: oauthMicrosoft
+      security: []
+      responses:
+        '501':
+          description: Not implemented
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthErrorResponse'
+
+  /auth/oauth/sso:
+    post:
+      tags: [auth]
+      summary: Enterprise SSO callback
+      description: Enterprise SSO authentication (not yet implemented).
+      operationId: oauthSSO
+      security: []
+      responses:
+        '501':
+          description: Not implemented
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthErrorResponse'
 
   # ---------------------------------------------------------------------------
   # Contracts
@@ -481,6 +764,334 @@ paths:
                     type: string
                   schemas_indexed:
                     type: integer
+
+  # ---------------------------------------------------------------------------
+  # Standalone Schemas - CRUD, Lifecycle, Versioning
+  # ---------------------------------------------------------------------------
+  /schemas:
+    post:
+      tags: [standalone-schemas]
+      summary: Create a new standalone schema
+      description: |
+        Create a new standalone schema definition that can be reused across contracts.
+
+        **Behavior:**
+        - Creates schema in `draft` status (not yet usable in contracts)
+        - Auto-generates unique ID (`sch-xxxxxxxxxxxx`)
+        - Sets initial version to `1.0.0`
+        - Records creator and timestamp for audit trail
+        - Analyzes properties to detect PII fields
+
+        **When to use:**
+        - Defining a new data asset (table, topic, file structure)
+        - From "Data Assets" page when clicking "New Schema"
+      operationId: createStandaloneSchema
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StandaloneSchemaCreateRequest'
+      responses:
+        '201':
+          description: Schema created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandaloneSchema'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          description: Schema with this name already exists
+
+    get:
+      tags: [standalone-schemas]
+      summary: List standalone schemas
+      description: |
+        Retrieve a paginated list of standalone schemas with filtering.
+
+        **When to use:**
+        - Populating schema picker in contract wizard (use `activeOnly=true`)
+        - Displaying all schemas in Data Assets page
+        - Searching for schemas by domain or owner
+      operationId: listStandaloneSchemas
+      security: []
+      parameters:
+        - name: search
+          in: query
+          description: Full-text search on name, description, physical_name
+          schema:
+            type: string
+        - name: domain
+          in: query
+          description: Filter by business domain
+          schema:
+            type: string
+        - name: status
+          in: query
+          description: Filter by lifecycle status
+          schema:
+            type: string
+            enum: [draft, active, deprecated]
+        - name: activeOnly
+          in: query
+          description: Shorthand for status=active (for contract wizard)
+          schema:
+            type: boolean
+            default: false
+        - name: source
+          in: query
+          description: Filter by origin
+          schema:
+            type: string
+            enum: [manual, connection, import]
+        - name: ownerId
+          in: query
+          description: Filter by owner user ID
+          schema:
+            type: string
+        - name: ownerTeamId
+          in: query
+          description: Filter by owner team ID
+          schema:
+            type: string
+        - $ref: '#/components/parameters/limitParam'
+        - $ref: '#/components/parameters/offsetParam'
+      responses:
+        '200':
+          description: List of schemas
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandaloneSchemaListResponse'
+
+  /schemas/{schemaId}:
+    get:
+      tags: [standalone-schemas]
+      summary: Get standalone schema by ID
+      description: |
+        Retrieve full details of a specific standalone schema.
+
+        **Query Parameters:**
+        - `version` - Get a specific historical version (default: current)
+      operationId: getStandaloneSchema
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/schemaIdParam'
+        - name: version
+          in: query
+          description: Specific version to retrieve
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Schema details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandaloneSchema'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      tags: [standalone-schemas]
+      summary: Update standalone schema
+      description: |
+        Modify an existing schema's properties, description, or structure.
+
+        **Behavior:**
+        - Only allowed on `draft` schemas by default
+        - For `active` schemas, detects breaking changes:
+          - Removed properties
+          - Type changes
+          - Required field additions
+        - If breaking changes detected, returns 400 with details
+        - Admin can use `forceBreaking=true` to override
+      operationId: updateStandaloneSchema
+      parameters:
+        - $ref: '#/components/parameters/schemaIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StandaloneSchemaUpdateRequest'
+      responses:
+        '200':
+          description: Schema updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandaloneSchema'
+        '400':
+          description: Breaking changes detected or invalid data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SchemaBreakingChangesError'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags: [standalone-schemas]
+      summary: Delete standalone schema
+      description: |
+        Permanently remove a schema from the system.
+
+        **Behavior:**
+        - Fails if schema is referenced by any contracts
+        - Returns 409 Conflict with list of dependent contracts
+        - Deletes all version history when successful
+      operationId: deleteStandaloneSchema
+      parameters:
+        - $ref: '#/components/parameters/schemaIdParam'
+      responses:
+        '204':
+          description: Schema deleted
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Schema is in use by contracts
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SchemaInUseError'
+
+  /schemas/{schemaId}/publish:
+    post:
+      tags: [standalone-schemas]
+      summary: Publish schema (draft → active)
+      description: |
+        Transition a draft schema to active status, making it available for contracts.
+
+        **Behavior:**
+        - Only works on schemas in `draft` status
+        - Changes status to `active`
+        - Records publish timestamp and user
+        - Schema now appears in contract wizard schema picker
+      operationId: publishSchema
+      parameters:
+        - $ref: '#/components/parameters/schemaIdParam'
+      responses:
+        '200':
+          description: Schema published
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandaloneSchema'
+        '400':
+          description: Schema is not in draft status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /schemas/{schemaId}/deprecate:
+    post:
+      tags: [standalone-schemas]
+      summary: Deprecate schema (active → deprecated)
+      description: |
+        Mark a schema as deprecated, signaling it should not be used for new contracts.
+
+        **Behavior:**
+        - Only works on `active` schemas
+        - Does NOT break existing contracts using this schema
+        - Notifies contracts that depend on this schema
+        - Schema still works but shows deprecation warning
+      operationId: deprecateSchema
+      parameters:
+        - $ref: '#/components/parameters/schemaIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SchemaDeprecateRequest'
+      responses:
+        '200':
+          description: Schema deprecated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandaloneSchema'
+        '400':
+          description: Schema is not in active status
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /schemas/{schemaId}/clone:
+    post:
+      tags: [standalone-schemas]
+      summary: Clone schema to create new version
+      description: |
+        Create a new independent schema based on an existing one.
+
+        **When to use:**
+        - **Making breaking changes** - Clone first instead of modifying active schema
+        - **Creating variations** - Base a new schema on an existing one
+        - **Versioning** - Create v2 while keeping v1 active
+
+        **Recommended workflow for breaking changes:**
+        1. Clone the active schema → creates new draft
+        2. Make breaking changes to the new draft
+        3. Publish the new schema
+        4. Update contracts to reference the new schema
+        5. Deprecate the old schema
+
+        **Response:**
+        - New schema with unique ID
+        - Status set to `draft`
+        - Version incremented (minor bump)
+        - Tracks lineage: `clonedFromSchemaId`, `clonedFromVersion`
+      operationId: cloneSchema
+      parameters:
+        - $ref: '#/components/parameters/schemaIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SchemaCloneRequest'
+      responses:
+        '201':
+          description: Schema cloned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandaloneSchema'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /schemas/{schemaId}/versions:
+    get:
+      tags: [standalone-schemas]
+      summary: Get schema version history
+      description: |
+        Retrieve the complete version history of a schema.
+
+        **Response includes:**
+        - List of all versions with timestamps
+        - Change type (initial, update, clone)
+        - Change notes
+        - Who made each change
+        - Pointer to current version
+      operationId: getSchemaVersionHistory
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/schemaIdParam'
+        - $ref: '#/components/parameters/limitParam'
+        - $ref: '#/components/parameters/offsetParam'
+      responses:
+        '200':
+          description: Version history
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SchemaVersionHistoryResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
 
   # ---------------------------------------------------------------------------
   # Validations
@@ -1128,6 +1739,15 @@ components:
       schema:
         type: string
 
+    schemaIdParam:
+      name: schemaId
+      in: path
+      required: true
+      description: Unique schema identifier (sch-xxxxxxxxxxxx)
+      schema:
+        type: string
+        pattern: '^sch-[a-z0-9]+$'
+
     limitParam:
       name: limit
       in: query
@@ -1208,6 +1828,163 @@ components:
           type: object
 
     # Auth
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+          example: "user@example.com"
+        password:
+          type: string
+          format: password
+          example: "SecurePass123"
+        rememberMe:
+          type: boolean
+          default: false
+          description: Extend token validity to 30 days
+
+    SignupRequest:
+      type: object
+      required: [name, email, password, confirmPassword, acceptTerms]
+      properties:
+        name:
+          type: string
+          minLength: 2
+          maxLength: 100
+          example: "John Doe"
+        email:
+          type: string
+          format: email
+          example: "user@example.com"
+        password:
+          type: string
+          format: password
+          minLength: 8
+          description: "Min 8 chars, 1 uppercase, 1 lowercase, 1 number"
+          example: "SecurePass123"
+        confirmPassword:
+          type: string
+          format: password
+          example: "SecurePass123"
+        acceptTerms:
+          type: boolean
+          description: Must be true to create account
+
+    ForgotPasswordRequest:
+      type: object
+      required: [email]
+      properties:
+        email:
+          type: string
+          format: email
+          example: "user@example.com"
+
+    ResetPasswordRequest:
+      type: object
+      required: [token, password, confirmPassword]
+      properties:
+        token:
+          type: string
+          description: Reset token from email
+        password:
+          type: string
+          format: password
+          minLength: 8
+        confirmPassword:
+          type: string
+          format: password
+
+    AuthResponse:
+      type: object
+      properties:
+        user:
+          $ref: '#/components/schemas/AuthUserResponse'
+        token:
+          type: string
+          description: JWT access token
+        expiresAt:
+          type: string
+          format: date-time
+          description: Token expiration time
+
+    AuthUserResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "user-001"
+        name:
+          type: string
+          example: "John Doe"
+        email:
+          type: string
+          format: email
+          example: "user@example.com"
+        avatar:
+          type: string
+          nullable: true
+          description: Avatar URL
+        role:
+          $ref: '#/components/schemas/RoleRef'
+        team:
+          $ref: '#/components/schemas/TeamRef'
+        status:
+          type: string
+          enum: [active, inactive, pending]
+          example: "active"
+        lastLoginAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+
+    RoleRef:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "role-editor"
+        name:
+          type: string
+          example: "Editor"
+
+    TeamRef:
+      type: object
+      nullable: true
+      properties:
+        id:
+          type: string
+          example: "team-data"
+        name:
+          type: string
+          example: "Data Team"
+
+    AuthErrorResponse:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              example: "INVALID_CREDENTIALS"
+            message:
+              type: string
+              example: "Invalid email or password"
+            details:
+              type: array
+              items:
+                type: object
+                properties:
+                  field:
+                    type: string
+                  message:
+                    type: string
+
     TokenResponse:
       type: object
       required: [access_token, token_type]
@@ -1217,6 +1994,12 @@ components:
         token_type:
           type: string
           enum: [bearer]
+        refresh_token:
+          type: string
+          description: Optional refresh token
+        expires_in:
+          type: integer
+          description: Token validity in seconds
 
     UserInfo:
       type: object
@@ -1937,6 +2720,335 @@ components:
           type: string
         snippet:
           type: string
+
+    # =========================================================================
+    # Standalone Schema Components
+    # =========================================================================
+    StandaloneSchemaCreateRequest:
+      type: object
+      required: [name, logicalType, properties]
+      properties:
+        name:
+          type: string
+          description: Unique schema name (lowercase, no spaces)
+          example: "customers"
+        physicalName:
+          type: string
+          description: Physical name in data system (e.g., table name)
+          example: "dim_customers"
+        logicalType:
+          type: string
+          enum: [object, array, primitive]
+          example: "object"
+        physicalType:
+          type: string
+          description: Physical data type (e.g., table, topic, file)
+          example: "table"
+        description:
+          type: string
+          example: "Customer dimension table for analytics"
+        businessName:
+          type: string
+          description: Business-friendly display name
+          example: "Customers"
+        domain:
+          type: string
+          description: Business domain
+          example: "analytics"
+        tags:
+          type: array
+          items:
+            type: string
+          example: ["finance", "pii"]
+        ownerTeamId:
+          type: string
+          description: Team that owns this schema
+        properties:
+          type: array
+          items:
+            $ref: '#/components/schemas/StandaloneSchemaProperty'
+          minItems: 1
+
+    StandaloneSchemaUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        physicalName:
+          type: string
+        description:
+          type: string
+        businessName:
+          type: string
+        domain:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        properties:
+          type: array
+          items:
+            $ref: '#/components/schemas/StandaloneSchemaProperty'
+        forceBreaking:
+          type: boolean
+          description: Admin-only flag to force update despite breaking changes
+          default: false
+
+    SchemaDeprecateRequest:
+      type: object
+      required: [reason]
+      properties:
+        reason:
+          type: string
+          minLength: 1
+          description: Reason for deprecation
+          example: "Replaced by customers_v2 schema"
+        replacementSchemaId:
+          type: string
+          description: ID of schema that replaces this one
+          example: "sch-newschema789"
+
+    SchemaCloneRequest:
+      type: object
+      required: [changeNotes]
+      properties:
+        changeNotes:
+          type: string
+          minLength: 1
+          description: Notes describing why cloning and what will change
+          example: "Adding GDPR compliance fields"
+
+    StandaloneSchemaProperty:
+      type: object
+      required: [name, logicalType]
+      properties:
+        name:
+          type: string
+          description: Property/column name
+          example: "customer_id"
+        logicalType:
+          type: string
+          description: Logical data type
+          example: "string"
+        physicalType:
+          type: string
+          description: Physical data type
+          example: "VARCHAR(50)"
+        description:
+          type: string
+          example: "Unique customer identifier"
+        primaryKey:
+          type: boolean
+          default: false
+        required:
+          type: boolean
+          default: false
+        nullable:
+          type: boolean
+          default: true
+        unique:
+          type: boolean
+          default: false
+        defaultValue:
+          type: string
+        customProperties:
+          type: object
+          additionalProperties: true
+          description: Custom metadata (e.g., privacy settings)
+          example:
+            privacy:
+              is_pii: true
+              pii_type: "direct_identifier"
+
+    StandaloneSchema:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique schema identifier
+          example: "sch-abc123def456"
+        name:
+          type: string
+          example: "customers"
+        physicalName:
+          type: string
+          example: "dim_customers"
+        logicalType:
+          type: string
+          example: "object"
+        physicalType:
+          type: string
+          example: "table"
+        description:
+          type: string
+        businessName:
+          type: string
+        domain:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        properties:
+          type: array
+          items:
+            $ref: '#/components/schemas/StandaloneSchemaProperty'
+        version:
+          type: string
+          description: Semantic version
+          example: "1.0.0"
+        status:
+          type: string
+          enum: [draft, active, deprecated]
+          example: "draft"
+        ownerId:
+          type: string
+          description: User who owns this schema
+        ownerTeamId:
+          type: string
+          description: Team that owns this schema
+        source:
+          type: string
+          enum: [manual, connection, import]
+        connectionId:
+          type: string
+          description: Database connection ID (if source is connection)
+        propertyCount:
+          type: integer
+        hasPii:
+          type: boolean
+          description: Whether any properties contain PII
+        clonedFromSchemaId:
+          type: string
+          description: ID of schema this was cloned from
+        clonedFromVersion:
+          type: string
+          description: Version of schema this was cloned from
+        createdAt:
+          type: string
+          format: date-time
+        createdBy:
+          type: string
+        updatedAt:
+          type: string
+          format: date-time
+        updatedBy:
+          type: string
+
+    StandaloneSchemaListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/StandaloneSchema'
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+
+    SchemaVersionHistoryResponse:
+      type: object
+      properties:
+        schemaId:
+          type: string
+        currentVersion:
+          type: string
+        versions:
+          type: array
+          items:
+            $ref: '#/components/schemas/SchemaVersionEntry'
+        total:
+          type: integer
+
+    SchemaVersionEntry:
+      type: object
+      properties:
+        version:
+          type: string
+          example: "1.0.0"
+        changeType:
+          type: string
+          enum: [initial, update, clone]
+        changeNotes:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        createdBy:
+          type: string
+        isCurrent:
+          type: boolean
+        clonedFrom:
+          type: object
+          properties:
+            schemaId:
+              type: string
+            version:
+              type: string
+
+    SchemaBreakingChangesError:
+      type: object
+      properties:
+        detail:
+          type: object
+          properties:
+            code:
+              type: string
+              example: "BREAKING_CHANGES_DETECTED"
+            message:
+              type: string
+              example: "Breaking changes detected. Use forceBreaking=true or clone the schema."
+            breakingChanges:
+              type: array
+              items:
+                type: object
+                properties:
+                  type:
+                    type: string
+                    enum: [column_removed, type_changed, nullable_to_required]
+                  column:
+                    type: string
+                  description:
+                    type: string
+            affectedContracts:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  name:
+                    type: string
+            suggestions:
+              type: array
+              items:
+                type: string
+
+    SchemaInUseError:
+      type: object
+      properties:
+        detail:
+          type: object
+          properties:
+            code:
+              type: string
+              example: "SCHEMA_IN_USE"
+            message:
+              type: string
+              example: "Cannot delete schema 'sch-abc123' - it is used by 2 contract(s)"
+            contracts:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  name:
+                    type: string
 
   securitySchemes:
     bearerAuth:

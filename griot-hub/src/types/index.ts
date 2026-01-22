@@ -55,20 +55,160 @@ export interface ConnectionConfig {
   cluster?: string
 }
 
-// Data Asset types
-export type AssetStatus = 'active' | 'draft' | 'deprecated'
+// Schema types (ODCS-compliant standalone schemas)
+export type SchemaStatus = 'draft' | 'active' | 'deprecated'
+export type SchemaSource = 'manual' | 'connection' | 'import'
+export type SchemaLogicalType = 'object' | 'array' | 'primitive'
 
-export interface DataAsset extends BaseEntity {
+export interface Schema extends BaseEntity {
+  name: string
+  physicalName?: string
+  logicalType: SchemaLogicalType
+  physicalType?: string
+  description?: string
+  businessName?: string
+  domain?: string
+  status: SchemaStatus
+  source: SchemaSource
+  connectionId?: string
+  ownerTeamId?: string
+  ownerId?: string
+  tags: string[]
+  properties: SchemaProperty[]
+  quality?: SchemaQualityRule[]
+  hasPii: boolean
+  propertyCount: number
+  version: string
+}
+
+export interface SchemaProperty {
+  id?: string
+  name: string
+  logicalType: string
+  physicalType?: string
+  description?: string
+  businessName?: string
+  primaryKey: boolean
+  required: boolean
+  nullable: boolean
+  unique: boolean
+  partitioned?: boolean
+  partitionKeyPosition?: number
+  criticalDataElement?: boolean
+  defaultValue?: string
+  customProperties?: {
+    constraints?: PropertyConstraint[]
+    semantic?: {
+      logicalType?: string
+      description?: string
+      businessName?: string
+    }
+    privacy?: {
+      is_pii: boolean
+      pii_type?: string
+      sensitivity?: 'public' | 'internal' | 'confidential' | 'restricted'
+    }
+  }
+  quality?: PropertyQualityRule[]
+  relationships?: PropertyRelationship[]
+  tags?: string[]
+}
+
+export interface PropertyConstraint {
+  type: 'minLength' | 'maxLength' | 'min' | 'max' | 'pattern' | 'enum' | 'format'
+  value: string | number | string[]
+  description?: string
+}
+
+export interface PropertyRelationship {
+  to: string
+  type: 'foreignKey' | 'reference'
+  customProperties?: Array<{ property: string; value: string }>
+}
+
+// Quality Rules - Schema Level
+export interface SchemaQualityRule {
+  id: string
   name: string
   description?: string
-  status: AssetStatus
-  domain: string
-  connectionId: string
-  ownerTeamId: string
-  tags: string[]
-  tables: DataTable[]
-  sla: AssetSLA
-  lastSyncedAt?: string
+  type: 'library' | 'custom'
+  engine?: string
+  metric: string
+  mustBe?: number
+  mustBeLessThan?: number
+  mustBeGreaterThan?: number
+  unit?: 'rows' | 'percent'
+  arguments?: Record<string, unknown>
+}
+
+// Quality Rules - Property Level
+export interface PropertyQualityRule {
+  id?: string
+  name: string
+  description?: string
+  type: 'library' | 'custom'
+  metric: string
+  mustBe?: number
+  mustBeLessThan?: number
+  mustBeGreaterThan?: number
+  pattern?: string
+  unit?: 'rows' | 'percent'
+  arguments?: Record<string, unknown>
+}
+
+// Schema Form Data (for manual wizard)
+export interface SchemaFormData {
+  // Basic info
+  name: string
+  physicalName?: string
+  logicalType: SchemaLogicalType
+  physicalType?: string
+  description?: string
+  businessName?: string
+  domain?: string
+  // Schema-level quality rules
+  quality?: SchemaQualityRule[]
+  // Properties
+  properties: SchemaProperty[]
+  // Ownership
+  ownerTeamId?: string
+  tags?: string[]
+}
+
+// Schema Form Data (for connection-based wizard)
+export interface ConnectionSchemaFormData {
+  connectionId?: string
+  connection?: Connection
+  selectedTables?: SelectedTable[]
+  name?: string
+  description?: string
+  domain?: string
+  ownerTeamId?: string
+  tags?: string[]
+}
+
+export interface SelectedTable {
+  id: string
+  schema: string
+  name: string
+  columns: TableColumn[]
+  rowCount?: number
+}
+
+export interface TableColumn {
+  name: string
+  type: string
+  nullable: boolean
+  primaryKey?: boolean
+}
+
+// Legacy type aliases for backward compatibility during migration
+export type AssetStatus = SchemaStatus
+export type DataAsset = Schema
+export type AssetFormData = ConnectionSchemaFormData
+export interface AssetSLA {
+  freshnessHours: number
+  availabilityPercent: number
 }
 
 export interface DataTable {
@@ -88,39 +228,6 @@ export interface DataField {
   isNullable: boolean
   piiType?: 'email' | 'name' | 'phone' | 'address' | 'ssn' | 'other'
   businessName?: string
-}
-
-export interface AssetSLA {
-  freshnessHours: number
-  availabilityPercent: number
-}
-
-// Asset Form Data (for wizard)
-export interface AssetFormData {
-  connectionId?: string
-  connection?: Connection
-  selectedTables?: SelectedTable[]
-  name?: string
-  description?: string
-  domain?: string
-  ownerTeamId?: string
-  tags?: string[]
-  sla?: AssetSLA
-}
-
-export interface SelectedTable {
-  id: string
-  schema: string
-  name: string
-  columns: TableColumn[]
-  rowCount?: number
-}
-
-export interface TableColumn {
-  name: string
-  type: string
-  nullable: boolean
-  primaryKey?: boolean
 }
 
 // Database Browse types (for connection browsing)

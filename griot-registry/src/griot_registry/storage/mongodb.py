@@ -18,11 +18,18 @@ from griot_registry.storage.base import (
     StorageBackend,
     ContractRepository,
     SchemaCatalogRepository,
+    SchemaRepository,
     ValidationRecordRepository,
     RunRepository,
     IssueRepository,
     CommentRepository,
     ApprovalRepository,
+    UserRepository,
+    TeamRepository,
+    RoleRepository,
+    NotificationRepository,
+    TaskRepository,
+    PasswordResetRepository,
 )
 
 
@@ -48,6 +55,7 @@ class MongoContractRepository(ContractRepository):
         self,
         entity: Contract,
         created_by: str | None = None,
+        schema_refs: list[dict[str, Any]] | None = None,
         **kwargs: Any,
     ) -> Contract:
         """Create a new contract."""
@@ -55,6 +63,10 @@ class MongoContractRepository(ContractRepository):
 
         # Convert griot-core Contract to dict (ODCS format with camelCase)
         doc = entity.to_dict()
+
+        # Store schemaRefs if provided (griot-core doesn't support this field)
+        if schema_refs:
+            doc["schemaRefs"] = schema_refs
 
         # Add registry metadata
         doc["_meta"] = {
@@ -1020,6 +1032,803 @@ class MongoApprovalRepository(ApprovalRepository):
         return requests
 
 
+class MongoUserRepository(UserRepository):
+    """MongoDB implementation of UserRepository."""
+
+    def __init__(self, db: AsyncIOMotorDatabase):
+        self._db = db
+        self._users = db.users
+
+    async def create(self, user: dict[str, Any]) -> dict[str, Any]:
+        """Create a new user."""
+        user["_id"] = _generate_id()
+        user["id"] = user["_id"]
+        user["created_at"] = _utc_now()
+        user["updated_at"] = _utc_now()
+        user["failed_login_attempts"] = 0
+        user["locked_until"] = None
+
+        await self._users.insert_one(user)
+        user.pop("_id", None)
+        return user
+
+    async def get(self, user_id: str) -> dict[str, Any] | None:
+        """Get a user by ID."""
+        doc = await self._users.find_one({"id": user_id})
+        if doc:
+            doc.pop("_id", None)
+        return doc
+
+    async def get_by_email(self, email: str) -> dict[str, Any] | None:
+        """Get a user by email (case-insensitive)."""
+        doc = await self._users.find_one({"email": {"$regex": f"^{email}$", "$options": "i"}})
+        if doc:
+            doc.pop("_id", None)
+        return doc
+
+    async def update(self, user_id: str, updates: dict[str, Any]) -> dict[str, Any]:
+        """Update a user."""
+        updates["updated_at"] = _utc_now()
+        doc = await self._users.find_one_and_update(
+            {"id": user_id},
+            {"$set": updates},
+            return_document=True,
+        )
+        if not doc:
+            raise ValueError(f"User '{user_id}' not found")
+        doc.pop("_id", None)
+        return doc
+
+    async def list(
+        self,
+        search: str | None = None,
+        role_id: str | None = None,
+        team_id: str | None = None,
+        status: str | None = None,
+        limit: int = 20,
+        offset: int = 0,
+    ) -> tuple[list[dict[str, Any]], int]:
+        """List users with filtering."""
+        query: dict[str, Any] = {}
+
+        if search:
+            query["$or"] = [
+                {"name": {"$regex": search, "$options": "i"}},
+                {"email": {"$regex": search, "$options": "i"}},
+            ]
+        if role_id:
+            query["role_id"] = role_id
+        if team_id:
+            query["team_id"] = team_id
+        if status:
+            query["status"] = status
+
+        cursor = (
+            self._users.find(query)
+            .skip(offset)
+            .limit(limit)
+            .sort("created_at", -1)
+        )
+
+        users = []
+        async for doc in cursor:
+            doc.pop("_id", None)
+            doc.pop("password_hash", None)  # Never return password hash
+            users.append(doc)
+
+        total = await self._users.count_documents(query)
+        return users, total
+
+    async def increment_failed_login(self, user_id: str) -> int:
+        """Increment failed login counter."""
+        doc = await self._users.find_one_and_update(
+            {"id": user_id},
+            {"$inc": {"failed_login_attempts": 1}},
+            return_document=True,
+        )
+        return doc.get("failed_login_attempts", 0) if doc else 0
+
+    async def reset_failed_login(self, user_id: str) -> None:
+        """Reset failed login counter and unlock."""
+        await self._users.update_one(
+            {"id": user_id},
+            {"$set": {"failed_login_attempts": 0, "locked_until": None}},
+        )
+
+
+class MongoTeamRepository(TeamRepository):
+    """MongoDB implementation of TeamRepository."""
+
+    def __init__(self, db: AsyncIOMotorDatabase):
+        self._db = db
+        self._teams = db.teams
+
+    async def create(self, team: dict[str, Any]) -> dict[str, Any]:
+        """Create a new team."""
+        team["_id"] = _generate_id()
+        team["id"] = team["_id"]
+        team["created_at"] = _utc_now()
+        team["updated_at"] = _utc_now()
+        team["members"] = []
+
+        await self._teams.insert_one(team)
+        team.pop("_id", None)
+        return team
+
+    async def get(self, team_id: str) -> dict[str, Any] | None:
+        """Get a team by ID."""
+        doc = await self._teams.find_one({"id": team_id})
+        if doc:
+            doc.pop("_id", None)
+        return doc
+
+    async def update(self, team_id: str, updates: dict[str, Any]) -> dict[str, Any]:
+        """Update a team."""
+        updates["updated_at"] = _utc_now()
+        doc = await self._teams.find_one_and_update(
+            {"id": team_id},
+            {"$set": updates},
+            return_document=True,
+        )
+        if not doc:
+            raise ValueError(f"Team '{team_id}' not found")
+        doc.pop("_id", None)
+        return doc
+
+    async def delete(self, team_id: str) -> bool:
+        """Delete a team."""
+        result = await self._teams.delete_one({"id": team_id})
+        return result.deleted_count > 0
+
+    async def list(
+        self,
+        search: str | None = None,
+        limit: int = 20,
+        offset: int = 0,
+    ) -> tuple[list[dict[str, Any]], int]:
+        """List teams with filtering."""
+        query: dict[str, Any] = {}
+
+        if search:
+            query["name"] = {"$regex": search, "$options": "i"}
+
+        cursor = (
+            self._teams.find(query)
+            .skip(offset)
+            .limit(limit)
+            .sort("name", 1)
+        )
+
+        teams = []
+        async for doc in cursor:
+            doc.pop("_id", None)
+            teams.append(doc)
+
+        total = await self._teams.count_documents(query)
+        return teams, total
+
+    async def add_member(
+        self,
+        team_id: str,
+        user_id: str,
+        role_id: str,
+    ) -> dict[str, Any]:
+        """Add a member to a team."""
+        member = {
+            "user_id": user_id,
+            "role_id": role_id,
+            "joined_at": _utc_now(),
+        }
+        doc = await self._teams.find_one_and_update(
+            {"id": team_id},
+            {
+                "$push": {"members": member},
+                "$set": {"updated_at": _utc_now()},
+            },
+            return_document=True,
+        )
+        if not doc:
+            raise ValueError(f"Team '{team_id}' not found")
+        doc.pop("_id", None)
+        return doc
+
+    async def update_member_role(
+        self,
+        team_id: str,
+        user_id: str,
+        role_id: str,
+    ) -> dict[str, Any]:
+        """Update a member's role in a team."""
+        doc = await self._teams.find_one_and_update(
+            {"id": team_id, "members.user_id": user_id},
+            {
+                "$set": {
+                    "members.$.role_id": role_id,
+                    "updated_at": _utc_now(),
+                },
+            },
+            return_document=True,
+        )
+        if not doc:
+            raise ValueError(f"Member not found in team '{team_id}'")
+        doc.pop("_id", None)
+        return doc
+
+    async def remove_member(
+        self,
+        team_id: str,
+        user_id: str,
+    ) -> bool:
+        """Remove a member from a team."""
+        result = await self._teams.update_one(
+            {"id": team_id},
+            {
+                "$pull": {"members": {"user_id": user_id}},
+                "$set": {"updated_at": _utc_now()},
+            },
+        )
+        return result.modified_count > 0
+
+
+class MongoRoleRepository(RoleRepository):
+    """MongoDB implementation of RoleRepository."""
+
+    def __init__(self, db: AsyncIOMotorDatabase):
+        self._db = db
+        self._roles = db.roles
+
+    async def create(self, role: dict[str, Any]) -> dict[str, Any]:
+        """Create a new role."""
+        role["_id"] = _generate_id()
+        role["id"] = role["_id"]
+        role["created_at"] = _utc_now()
+        role["updated_at"] = _utc_now()
+        role["is_system"] = role.get("is_system", False)
+
+        await self._roles.insert_one(role)
+        role.pop("_id", None)
+        return role
+
+    async def get(self, role_id: str) -> dict[str, Any] | None:
+        """Get a role by ID."""
+        doc = await self._roles.find_one({"id": role_id})
+        if doc:
+            doc.pop("_id", None)
+        return doc
+
+    async def update(self, role_id: str, updates: dict[str, Any]) -> dict[str, Any]:
+        """Update a role."""
+        # Check if system role
+        existing = await self.get(role_id)
+        if existing and existing.get("is_system"):
+            raise ValueError("Cannot modify system roles")
+
+        updates["updated_at"] = _utc_now()
+        doc = await self._roles.find_one_and_update(
+            {"id": role_id},
+            {"$set": updates},
+            return_document=True,
+        )
+        if not doc:
+            raise ValueError(f"Role '{role_id}' not found")
+        doc.pop("_id", None)
+        return doc
+
+    async def delete(self, role_id: str) -> bool:
+        """Delete a role."""
+        # Check if system role
+        existing = await self.get(role_id)
+        if existing and existing.get("is_system"):
+            raise ValueError("Cannot delete system roles")
+
+        result = await self._roles.delete_one({"id": role_id})
+        return result.deleted_count > 0
+
+    async def list(self) -> list[dict[str, Any]]:
+        """List all roles."""
+        cursor = self._roles.find().sort("name", 1)
+        roles = []
+        async for doc in cursor:
+            doc.pop("_id", None)
+            roles.append(doc)
+        return roles
+
+    async def seed_system_roles(self) -> None:
+        """Create/update system roles (Admin, Editor, Viewer)."""
+        from griot_registry.models.roles import ADMIN_PERMISSIONS, EDITOR_PERMISSIONS, VIEWER_PERMISSIONS
+
+        system_roles = [
+            {
+                "id": "role-admin",
+                "name": "Admin",
+                "description": "Full access to all features",
+                "permissions": ADMIN_PERMISSIONS,
+                "is_system": True,
+            },
+            {
+                "id": "role-editor",
+                "name": "Editor",
+                "description": "Create and edit contracts and assets",
+                "permissions": EDITOR_PERMISSIONS,
+                "is_system": True,
+            },
+            {
+                "id": "role-viewer",
+                "name": "Viewer",
+                "description": "Read-only access",
+                "permissions": VIEWER_PERMISSIONS,
+                "is_system": True,
+            },
+        ]
+
+        now = _utc_now()
+        for role in system_roles:
+            role["created_at"] = now
+            role["updated_at"] = now
+            await self._roles.update_one(
+                {"id": role["id"]},
+                {"$set": role},
+                upsert=True,
+            )
+
+
+class MongoNotificationRepository(NotificationRepository):
+    """MongoDB implementation of NotificationRepository."""
+
+    def __init__(self, db: AsyncIOMotorDatabase):
+        self._db = db
+        self._notifications = db.notifications
+
+    async def create(self, notification: dict[str, Any]) -> dict[str, Any]:
+        """Create a notification."""
+        notification["_id"] = _generate_id()
+        notification["id"] = notification["_id"]
+        notification["created_at"] = _utc_now()
+        notification["read"] = False
+        notification["read_at"] = None
+
+        await self._notifications.insert_one(notification)
+        notification.pop("_id", None)
+        return notification
+
+    async def list(
+        self,
+        user_id: str,
+        unread_only: bool = False,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> tuple[list[dict[str, Any]], int, int]:
+        """List notifications for a user."""
+        query: dict[str, Any] = {"user_id": user_id}
+        if unread_only:
+            query["read"] = False
+
+        cursor = (
+            self._notifications.find(query)
+            .skip(offset)
+            .limit(limit)
+            .sort("created_at", -1)
+        )
+
+        notifications = []
+        async for doc in cursor:
+            doc.pop("_id", None)
+            notifications.append(doc)
+
+        total = await self._notifications.count_documents({"user_id": user_id})
+        unread_count = await self._notifications.count_documents({"user_id": user_id, "read": False})
+
+        return notifications, total, unread_count
+
+    async def mark_read(self, notification_id: str) -> dict[str, Any]:
+        """Mark a notification as read."""
+        doc = await self._notifications.find_one_and_update(
+            {"id": notification_id},
+            {"$set": {"read": True, "read_at": _utc_now()}},
+            return_document=True,
+        )
+        if not doc:
+            raise ValueError(f"Notification '{notification_id}' not found")
+        doc.pop("_id", None)
+        return doc
+
+    async def mark_all_read(self, user_id: str) -> int:
+        """Mark all notifications as read."""
+        result = await self._notifications.update_many(
+            {"user_id": user_id, "read": False},
+            {"$set": {"read": True, "read_at": _utc_now()}},
+        )
+        return result.modified_count
+
+
+class MongoTaskRepository(TaskRepository):
+    """MongoDB implementation of TaskRepository."""
+
+    def __init__(self, db: AsyncIOMotorDatabase):
+        self._db = db
+        self._tasks = db.tasks
+
+    async def create(self, task: dict[str, Any]) -> dict[str, Any]:
+        """Create a task."""
+        task["_id"] = _generate_id()
+        task["id"] = task["_id"]
+        task["created_at"] = _utc_now()
+        task["updated_at"] = _utc_now()
+        task["status"] = task.get("status", "pending")
+
+        await self._tasks.insert_one(task)
+        task.pop("_id", None)
+        return task
+
+    async def get(self, task_id: str) -> dict[str, Any] | None:
+        """Get a task by ID."""
+        doc = await self._tasks.find_one({"id": task_id})
+        if doc:
+            doc.pop("_id", None)
+        return doc
+
+    async def update(self, task_id: str, updates: dict[str, Any]) -> dict[str, Any]:
+        """Update a task."""
+        updates["updated_at"] = _utc_now()
+        if updates.get("status") == "completed":
+            updates["completed_at"] = _utc_now()
+
+        doc = await self._tasks.find_one_and_update(
+            {"id": task_id},
+            {"$set": updates},
+            return_document=True,
+        )
+        if not doc:
+            raise ValueError(f"Task '{task_id}' not found")
+        doc.pop("_id", None)
+        return doc
+
+    async def list(
+        self,
+        user_id: str,
+        type: str | None = None,
+        status: str | None = None,
+        limit: int = 10,
+    ) -> tuple[list[dict[str, Any]], int]:
+        """List tasks for a user."""
+        query: dict[str, Any] = {"user_id": user_id}
+        if type:
+            query["type"] = type
+        if status:
+            query["status"] = status
+
+        cursor = (
+            self._tasks.find(query)
+            .limit(limit)
+            .sort("created_at", -1)
+        )
+
+        tasks = []
+        async for doc in cursor:
+            doc.pop("_id", None)
+            tasks.append(doc)
+
+        total = await self._tasks.count_documents(query)
+        return tasks, total
+
+
+class MongoPasswordResetRepository(PasswordResetRepository):
+    """MongoDB implementation of PasswordResetRepository."""
+
+    def __init__(self, db: AsyncIOMotorDatabase):
+        self._db = db
+        self._tokens = db.password_reset_tokens
+
+    async def create(self, token_data: dict[str, Any]) -> dict[str, Any]:
+        """Create a password reset token."""
+        token_data["_id"] = _generate_id()
+        token_data["id"] = token_data["_id"]
+        token_data["created_at"] = _utc_now()
+        token_data["used"] = False
+
+        await self._tokens.insert_one(token_data)
+        token_data.pop("_id", None)
+        return token_data
+
+    async def get_by_token(self, token: str) -> dict[str, Any] | None:
+        """Get token data by token string."""
+        doc = await self._tokens.find_one({"token": token, "used": False})
+        if doc:
+            doc.pop("_id", None)
+        return doc
+
+    async def mark_used(self, token_id: str) -> None:
+        """Mark a token as used."""
+        await self._tokens.update_one(
+            {"id": token_id},
+            {"$set": {"used": True}},
+        )
+
+    async def cleanup_expired(self) -> int:
+        """Delete expired tokens."""
+        result = await self._tokens.delete_many({
+            "expires_at": {"$lt": _utc_now()},
+        })
+        return result.deleted_count
+
+
+class MongoSchemaRepository(SchemaRepository):
+    """MongoDB implementation of SchemaRepository for standalone schema management."""
+
+    def __init__(self, db: AsyncIOMotorDatabase):
+        self._db = db
+        self._schemas = db.schemas
+        self._schema_versions = db.schema_versions
+        self._contracts = db.contracts
+
+    async def create(self, schema: dict[str, Any]) -> dict[str, Any]:
+        """Create a new schema."""
+        now = _utc_now()
+
+        # Ensure required fields
+        if "id" not in schema:
+            schema["id"] = f"sch-{_generate_id()[:12]}"
+
+        schema["created_at"] = schema.get("created_at", now)
+        schema["updated_at"] = now
+
+        await self._schemas.insert_one(schema)
+
+        # Create initial version record
+        version_record = {
+            "schema_id": schema["id"],
+            "version": schema.get("version", "1.0.0"),
+            "snapshot": {k: v for k, v in schema.items() if not k.startswith("_")},
+            "change_type": "initial",
+            "change_notes": "Initial version",
+            "created_at": now,
+            "created_by": schema.get("created_by"),
+        }
+        await self._schema_versions.insert_one(version_record)
+
+        schema.pop("_id", None)
+        return schema
+
+    async def get(self, schema_id: str) -> dict[str, Any] | None:
+        """Get a schema by ID (returns current version)."""
+        doc = await self._schemas.find_one({"id": schema_id})
+        if doc:
+            doc.pop("_id", None)
+        return doc
+
+    async def get_version(
+        self,
+        schema_id: str,
+        version: str,
+    ) -> dict[str, Any] | None:
+        """Get a specific version of a schema."""
+        version_doc = await self._schema_versions.find_one({
+            "schema_id": schema_id,
+            "version": version,
+        })
+        if not version_doc:
+            return None
+
+        snapshot = version_doc.get("snapshot", {})
+        snapshot.pop("_id", None)
+        return snapshot
+
+    async def update(
+        self,
+        schema_id: str,
+        updates: dict[str, Any],
+        updated_by: str,
+    ) -> dict[str, Any]:
+        """Update a schema."""
+        now = _utc_now()
+        updates["updated_at"] = now
+        updates["updated_by"] = updated_by
+
+        doc = await self._schemas.find_one_and_update(
+            {"id": schema_id},
+            {"$set": updates},
+            return_document=True,
+        )
+
+        if not doc:
+            raise ValueError(f"Schema '{schema_id}' not found")
+
+        doc.pop("_id", None)
+        return doc
+
+    async def delete(self, schema_id: str) -> bool:
+        """Delete a schema."""
+        # Delete the schema
+        result = await self._schemas.delete_one({"id": schema_id})
+
+        # Also delete version history
+        await self._schema_versions.delete_many({"schema_id": schema_id})
+
+        return result.deleted_count > 0
+
+    async def list(
+        self,
+        search: str | None = None,
+        domain: str | None = None,
+        source: str | None = None,
+        status: str | None = None,
+        owner_id: str | None = None,
+        owner_team_id: str | None = None,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> tuple[list[dict[str, Any]], int]:
+        """List schemas with filtering."""
+        query: dict[str, Any] = {}
+
+        if search:
+            query["$or"] = [
+                {"name": {"$regex": search, "$options": "i"}},
+                {"description": {"$regex": search, "$options": "i"}},
+                {"physical_name": {"$regex": search, "$options": "i"}},
+            ]
+        if domain:
+            query["domain"] = domain
+        if source:
+            query["source"] = source
+        if status:
+            query["status"] = status
+        if owner_id:
+            query["owner_id"] = owner_id
+        if owner_team_id:
+            query["owner_team_id"] = owner_team_id
+
+        cursor = (
+            self._schemas.find(query)
+            .skip(offset)
+            .limit(limit)
+            .sort("updated_at", -1)
+        )
+
+        schemas = []
+        async for doc in cursor:
+            doc.pop("_id", None)
+            schemas.append(doc)
+
+        total = await self._schemas.count_documents(query)
+        return schemas, total
+
+    async def exists(self, schema_id: str) -> bool:
+        """Check if a schema exists."""
+        count = await self._schemas.count_documents({"id": schema_id})
+        return count > 0
+
+    async def update_status(
+        self,
+        schema_id: str,
+        new_status: str,
+        updated_by: str,
+    ) -> dict[str, Any]:
+        """Update schema status."""
+        now = _utc_now()
+
+        doc = await self._schemas.find_one_and_update(
+            {"id": schema_id},
+            {
+                "$set": {
+                    "status": new_status,
+                    "updated_at": now,
+                    "updated_by": updated_by,
+                }
+            },
+            return_document=True,
+        )
+
+        if not doc:
+            raise ValueError(f"Schema '{schema_id}' not found")
+
+        doc.pop("_id", None)
+        return doc
+
+    async def list_versions(
+        self,
+        schema_id: str,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> tuple[list[dict[str, Any]], int]:
+        """List version history for a schema."""
+        query = {"schema_id": schema_id}
+
+        cursor = (
+            self._schema_versions.find(query, {"snapshot": 0})  # Exclude full snapshot
+            .skip(offset)
+            .limit(limit)
+            .sort("created_at", -1)
+        )
+
+        versions = []
+        async for doc in cursor:
+            doc.pop("_id", None)
+            versions.append(doc)
+
+        total = await self._schema_versions.count_documents(query)
+        return versions, total
+
+    async def create_version(
+        self,
+        schema_id: str,
+        new_version: str,
+        schema_data: dict[str, Any],
+        change_type: str,
+        change_notes: str,
+        created_by: str,
+    ) -> dict[str, Any]:
+        """Create a new version of a schema."""
+        now = _utc_now()
+
+        version_record = {
+            "schema_id": schema_id,
+            "version": new_version,
+            "snapshot": schema_data,
+            "change_type": change_type,
+            "change_notes": change_notes,
+            "created_at": now,
+            "created_by": created_by,
+        }
+
+        await self._schema_versions.insert_one(version_record)
+
+        # Update the main schema document
+        schema_data["version"] = new_version
+        schema_data["updated_at"] = now
+        schema_data["updated_by"] = created_by
+
+        await self._schemas.update_one(
+            {"id": schema_id},
+            {"$set": schema_data},
+        )
+
+        version_record.pop("_id", None)
+        return version_record
+
+    async def get_contracts_using_schema(
+        self,
+        schema_id: str,
+        version: str | None = None,
+    ) -> list[dict[str, Any]]:
+        """Get contracts that reference this schema."""
+        # Search for contracts with schema refs
+        query: dict[str, Any] = {
+            "$or": [
+                {"schemaRefs.schemaId": schema_id},
+                {"schema_refs.schema_id": schema_id},
+                # Also check embedded schemas (legacy)
+                {"schema.id": schema_id},
+            ]
+        }
+
+        if version:
+            query = {
+                "$or": [
+                    {"schemaRefs": {"$elemMatch": {"schemaId": schema_id, "version": version}}},
+                    {"schema_refs": {"$elemMatch": {"schema_id": schema_id, "version": version}}},
+                ]
+            }
+
+        cursor = self._contracts.find(query, {"id": 1, "name": 1, "version": 1, "status": 1, "_meta.created_by": 1})
+
+        contracts = []
+        async for doc in cursor:
+            contracts.append({
+                "id": doc.get("id"),
+                "name": doc.get("name"),
+                "version": doc.get("version"),
+                "status": doc.get("status"),
+                "owner_id": doc.get("_meta", {}).get("created_by"),
+            })
+
+        return contracts
+
+    async def can_delete(self, schema_id: str) -> tuple[bool, list[dict[str, Any]]]:
+        """Check if schema can be deleted. Returns (can_delete, dependent_contracts)."""
+        contracts = await self.get_contracts_using_schema(schema_id)
+        return len(contracts) == 0, contracts
+
+
 class MongoDBStorage(StorageBackend):
     """MongoDB storage backend implementation.
 
@@ -1039,11 +1848,18 @@ class MongoDBStorage(StorageBackend):
         # Repositories (initialized in initialize())
         self._contracts: MongoContractRepository | None = None
         self._schema_catalog: MongoSchemaCatalogRepository | None = None
+        self._standalone_schemas: MongoSchemaRepository | None = None
         self._validations: MongoValidationRecordRepository | None = None
         self._runs: MongoRunRepository | None = None
         self._issues: MongoIssueRepository | None = None
         self._comments: MongoCommentRepository | None = None
         self._approvals: MongoApprovalRepository | None = None
+        self._users: MongoUserRepository | None = None
+        self._teams: MongoTeamRepository | None = None
+        self._roles: MongoRoleRepository | None = None
+        self._notifications: MongoNotificationRepository | None = None
+        self._tasks: MongoTaskRepository | None = None
+        self._password_resets: MongoPasswordResetRepository | None = None
 
     @property
     def db(self) -> AsyncIOMotorDatabase:
@@ -1093,6 +1909,48 @@ class MongoDBStorage(StorageBackend):
             raise RuntimeError("Storage not initialized")
         return self._approvals
 
+    @property
+    def users(self) -> MongoUserRepository:
+        if self._users is None:
+            raise RuntimeError("Storage not initialized")
+        return self._users
+
+    @property
+    def teams(self) -> MongoTeamRepository:
+        if self._teams is None:
+            raise RuntimeError("Storage not initialized")
+        return self._teams
+
+    @property
+    def roles(self) -> MongoRoleRepository:
+        if self._roles is None:
+            raise RuntimeError("Storage not initialized")
+        return self._roles
+
+    @property
+    def notifications(self) -> MongoNotificationRepository:
+        if self._notifications is None:
+            raise RuntimeError("Storage not initialized")
+        return self._notifications
+
+    @property
+    def tasks(self) -> MongoTaskRepository:
+        if self._tasks is None:
+            raise RuntimeError("Storage not initialized")
+        return self._tasks
+
+    @property
+    def password_resets(self) -> MongoPasswordResetRepository:
+        if self._password_resets is None:
+            raise RuntimeError("Storage not initialized")
+        return self._password_resets
+
+    @property
+    def schemas(self) -> MongoSchemaRepository:
+        if self._standalone_schemas is None:
+            raise RuntimeError("Storage not initialized")
+        return self._standalone_schemas
+
     async def initialize(self) -> None:
         """Initialize MongoDB connection, indexes, and repositories."""
         self._client = AsyncIOMotorClient(self._connection_string)
@@ -1101,14 +1959,27 @@ class MongoDBStorage(StorageBackend):
         # Initialize repositories
         self._contracts = MongoContractRepository(self._db)
         self._schema_catalog = MongoSchemaCatalogRepository(self._db)
+        self._standalone_schemas = MongoSchemaRepository(self._db)
         self._validations = MongoValidationRecordRepository(self._db)
         self._runs = MongoRunRepository(self._db)
         self._issues = MongoIssueRepository(self._db)
         self._comments = MongoCommentRepository(self._db)
         self._approvals = MongoApprovalRepository(self._db)
+        self._users = MongoUserRepository(self._db)
+        self._teams = MongoTeamRepository(self._db)
+        self._roles = MongoRoleRepository(self._db)
+        self._notifications = MongoNotificationRepository(self._db)
+        self._tasks = MongoTaskRepository(self._db)
+        self._password_resets = MongoPasswordResetRepository(self._db)
 
         # Create indexes
         await self._create_indexes()
+
+        # Seed system roles
+        await self._roles.seed_system_roles()
+
+        # Seed admin user if not exists
+        await self._seed_admin_user()
 
     async def _create_indexes(self) -> None:
         """Create all required indexes for optimal performance."""
@@ -1180,6 +2051,111 @@ class MongoDBStorage(StorageBackend):
         await approvals.create_index("contract_id")
         await approvals.create_index("status")
         await approvals.create_index("approvers")
+
+        # Users collection
+        users = self._db.users
+        await users.create_index("id", unique=True)
+        await users.create_index("email", unique=True)
+        await users.create_index("role_id")
+        await users.create_index("team_id")
+        await users.create_index("status")
+
+        # Teams collection
+        teams = self._db.teams
+        await teams.create_index("id", unique=True)
+        await teams.create_index("name")
+
+        # Roles collection
+        roles = self._db.roles
+        await roles.create_index("id", unique=True)
+        await roles.create_index("name", unique=True)
+
+        # Notifications collection
+        notifications = self._db.notifications
+        await notifications.create_index("id", unique=True)
+        await notifications.create_index("user_id")
+        await notifications.create_index([("user_id", 1), ("read", 1)])
+        await notifications.create_index([("created_at", -1)])
+
+        # Tasks collection
+        tasks = self._db.tasks
+        await tasks.create_index("id", unique=True)
+        await tasks.create_index("user_id")
+        await tasks.create_index([("user_id", 1), ("status", 1)])
+
+        # Password reset tokens collection
+        password_resets = self._db.password_reset_tokens
+        await password_resets.create_index("id", unique=True)
+        await password_resets.create_index("token", unique=True)
+        await password_resets.create_index("user_id")
+        await password_resets.create_index("expires_at")
+
+        # Standalone schemas collection
+        schemas = self._db.schemas
+        await schemas.create_index("id", unique=True)
+        await schemas.create_index("name")
+        await schemas.create_index("physical_name")
+        await schemas.create_index("domain")
+        await schemas.create_index("status")
+        await schemas.create_index("source")
+        await schemas.create_index("owner_id")
+        await schemas.create_index("owner_team_id")
+        await schemas.create_index([("updated_at", -1)])
+        # Full-text search for schemas
+        await schemas.create_index([
+            ("name", "text"),
+            ("description", "text"),
+            ("physical_name", "text"),
+            ("business_name", "text"),
+        ])
+
+        # Schema versions collection
+        schema_versions = self._db.schema_versions
+        await schema_versions.create_index([("schema_id", 1), ("version", 1)], unique=True)
+        await schema_versions.create_index([("schema_id", 1), ("created_at", -1)])
+
+        # Add index for contracts with schema refs
+        await contracts.create_index("schemaRefs.schemaId")
+
+    async def _seed_admin_user(self) -> None:
+        """Seed the default admin user (brackly@griot.com / melly)."""
+        import bcrypt
+
+        admin_email = "brackly@griot.com"
+        existing = await self._users.get_by_email(admin_email)
+        if existing:
+            return  # Admin already exists
+
+        # Hash password
+        password_hash = bcrypt.hashpw("melly".encode(), bcrypt.gensalt(12)).decode()
+
+        admin_user = {
+            "name": "Brackly Murunga",
+            "email": admin_email,
+            "password_hash": password_hash,
+            "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=brackly",
+            "role_id": "role-admin",
+            "team_id": "team-001",  # Data Engineering team
+            "status": "active",
+        }
+
+        await self._users.create(admin_user)
+
+        # Also create the Data Engineering team if not exists
+        existing_team = await self._teams.get("team-001")
+        if not existing_team:
+            team = {
+                "id": "team-001",
+                "name": "Data Engineering",
+                "description": "Core data engineering team",
+                "default_role_id": "role-editor",
+            }
+            # Override create to use specific ID
+            team["_id"] = team["id"]
+            team["created_at"] = _utc_now()
+            team["updated_at"] = _utc_now()
+            team["members"] = []
+            await self._db.teams.insert_one(team)
 
     async def close(self) -> None:
         """Close MongoDB connection."""

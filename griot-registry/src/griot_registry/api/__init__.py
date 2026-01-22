@@ -14,6 +14,11 @@ from griot_registry.api import (
     comments,
     approvals,
     search,
+    users,
+    teams,
+    roles,
+    notifications,
+    tasks,
 )
 
 __all__ = [
@@ -27,4 +32,9 @@ __all__ = [
     "comments",
     "approvals",
     "search",
+    "users",
+    "teams",
+    "roles",
+    "notifications",
+    "tasks",
 ]

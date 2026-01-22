@@ -41,6 +41,7 @@ class JWTAuth:
         name: str | None = None,
         roles: list[UserRole] | None = None,
         additional_claims: dict[str, Any] | None = None,
+        expire_minutes: int | None = None,
     ) -> str:
         """Create an access token for a user.
 
@@ -50,12 +51,14 @@ class JWTAuth:
             name: User display name
             roles: User roles
             additional_claims: Extra claims to include in the token
+            expire_minutes: Custom expiry time in minutes (default from settings)
 
         Returns:
             Encoded JWT access token
         """
         now = datetime.now(timezone.utc)
-        expires = now + timedelta(minutes=self.settings.jwt_access_token_expire_minutes)
+        exp_minutes = expire_minutes or self.settings.jwt_access_token_expire_minutes
+        expires = now + timedelta(minutes=exp_minutes)
 
         payload = {
             "sub": user_id,
@@ -105,6 +108,7 @@ class JWTAuth:
         name: str | None = None,
         roles: list[UserRole] | None = None,
         include_refresh: bool = True,
+        expire_minutes: int | None = None,
     ) -> TokenResponse:
         """Create a complete token response with access and optionally refresh tokens.
 
@@ -114,15 +118,19 @@ class JWTAuth:
             name: User display name
             roles: User roles
             include_refresh: Whether to include a refresh token
+            expire_minutes: Custom expiry time in minutes (default from settings)
 
         Returns:
             TokenResponse with access token and optional refresh token
         """
+        exp_minutes = expire_minutes or self.settings.jwt_access_token_expire_minutes
+
         access_token = self.create_access_token(
             user_id=user_id,
             email=email,
             name=name,
             roles=roles,
+            expire_minutes=exp_minutes,
         )
 
         refresh_token = None
@@ -132,7 +140,7 @@ class JWTAuth:
         return TokenResponse(
             access_token=access_token,
             refresh_token=refresh_token,
-            expires_in=self.settings.jwt_access_token_expire_minutes * 60,
+            expires_in=exp_minutes * 60,
         )
 
     def decode_token(self, token: str) -> TokenPayload:

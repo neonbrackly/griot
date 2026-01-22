@@ -49,11 +49,13 @@ export interface ContractFormData {
   reviewerId?: string
   reviewerName?: string
 
-  // Asset (Step 2)
-  assetId?: string
-  isProposed?: boolean
+  // Schema Selection (Step 2) - Schema is selected from Data Assets
+  assetId?: string // The schema ID from Data Assets
+  isProposed?: boolean // Legacy - kept for backwards compatibility
+  selectedSchemaName?: string // Display name of selected schema
+  selectedAssetName?: string // Name of the Data Asset the schema comes from
 
-  // Schema (Step 3)
+  // Schema (Step 3) - Read-only, populated from selected schema
   tables?: any[]
 
   // Quality (Step 4)
@@ -73,11 +75,11 @@ export interface ContractFormData {
 
 const wizardSteps = [
   { id: 'basic', label: 'Basic Info', description: 'Contract name and details' },
-  { id: 'asset', label: 'Data Asset', description: 'Link to existing asset or propose new' },
-  { id: 'schema', label: 'Schema', description: 'Define tables and fields' },
+  { id: 'schema-select', label: 'Select Schema', description: 'Choose schema from Data Assets' },
+  { id: 'schema-review', label: 'Schema Review', description: 'Review schema structure' },
   { id: 'quality', label: 'Quality Rules', description: 'Add validation rules' },
   { id: 'sla', label: 'SLA', description: 'Service level agreement' },
-  { id: 'tags', label: 'Tags & Owner', description: 'Metadata and ownership' },
+  { id: 'tags', label: 'Ownership & Tags', description: 'Owner, reviewer, and tags' },
   { id: 'review', label: 'Review', description: 'Review and create' },
 ]
 
@@ -215,12 +217,38 @@ export default function ContractWizardPage() {
     mutationFn: async (data: ContractFormData) => {
       const odcsContract = transformToODCSContract(data)
       const response = await api.post<Contract>('/contracts', odcsContract)
-      return response
+      return { contract: response, formData: data }
     },
-    onSuccess: (data) => {
-      toast.success('Contract created', 'Your data contract has been created successfully')
+    onSuccess: async ({ contract, formData: data }) => {
+      // If contract is created as "proposed", send notification to reviewer
+      if (data.status === 'proposed' && data.reviewerId) {
+        try {
+          await api.post('/notifications', {
+            type: 'contract_review_request',
+            title: 'Contract Review Requested',
+            message: `You have been assigned to review the contract "${data.name}"`,
+            recipientType: data.reviewerType,
+            recipientId: data.reviewerId,
+            metadata: {
+              contractId: contract.id,
+              contractName: data.name,
+              requestedBy: 'current_user', // TODO: Get from auth context
+            },
+          })
+        } catch (notifyError) {
+          // Don't fail the contract creation if notification fails
+          console.error('Failed to send reviewer notification:', notifyError)
+        }
+        toast.success(
+          'Contract submitted for review',
+          `${data.reviewerName || 'Reviewer'} has been notified`
+        )
+      } else {
+        toast.success('Contract created', 'Your data contract has been created as a draft')
+      }
+
       queryClient.invalidateQueries({ queryKey: queryKeys.contracts.all })
-      router.push(`/studio/contracts/${data.id}`)
+      router.push(`/studio/contracts/${contract.id}`)
     },
     onError: (error: unknown) => {
       const message = error instanceof Error

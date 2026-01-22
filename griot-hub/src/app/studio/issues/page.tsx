@@ -17,6 +17,7 @@ import {
   adaptIssuesList,
   type RegistryIssueResponse,
   type RegistryListResponse,
+  type RegistryIssuesListResponse,
 } from '@/lib/api/adapters'
 import { cn } from '@/lib/utils'
 import { useDebounce } from '@/lib/hooks/useDebounce'
@@ -231,7 +232,8 @@ export default function IssuesPage() {
         params.set('status', 'resolved')
       }
       // Search not directly supported by registry API
-      const response = await api.get<RegistryListResponse<RegistryIssueResponse>>(
+      // Registry API returns RegistryIssuesListResponse with pagination and summary
+      const response = await api.get<RegistryIssuesListResponse | RegistryListResponse<RegistryIssueResponse>>(
         `/issues?${params.toString()}`
       )
       return adaptIssuesList(response)

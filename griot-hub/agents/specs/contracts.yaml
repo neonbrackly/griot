@@ -19,18 +19,23 @@ info:
     ## Missing Endpoints (Need Implementation)
 
     The endpoints below are needed for:
-    - **T-CON-002**: Reviewer assignment on contract creation
+    - **T-CON-002**: Reviewer assignment on contract creation (needs /users, /teams)
     - **T-CON-003**: Contract status workflow (submit, approve, reject)
     - **T-CON-004**: Quality rules, version history, audit trail
     - **T-CON-008/009/010**: Schema editing with re-approval workflow
 
     ## Implementation Priority
 
-    1. HIGH: Status workflow endpoints (submit, approve, reject)
-    2. HIGH: Quality rules endpoints (list, create, update, delete)
-    3. MEDIUM: Version history endpoint
-    4. MEDIUM: Tasks endpoint (for re-approval workflow)
-    5. LOW: Audit trail endpoint
+    1. HIGH: Status workflow endpoints (submit, approve, reject, deprecate)
+    2. HIGH: Extended Contract response with reviewer fields
+    3. MEDIUM: Quality rules endpoints (list, create, update, delete)
+    4. MEDIUM: Version history endpoint
+    5. MEDIUM: Tasks endpoint (for re-approval workflow)
+    6. LOW: Audit trail endpoint
+
+    ## Already Implemented (auth-admin-api.yaml)
+    - GET /users - List users (for reviewer dropdown)
+    - GET /teams - List teams (for reviewer dropdown)
 
   version: 1.0.0
   contact:
@@ -51,8 +56,27 @@ tags:
     description: Task management for approvals
   - name: Audit
     description: Audit trail and activity logging
+  - name: Issues
+    description: Data quality issue management (Platform Agent - REQ-006, REQ-007, REQ-008)
+  - name: Notifications
+    description: User notification management (Platform Agent - REQ-009, REQ-010, REQ-011)
+  - name: Search
+    description: Global search across entities (Platform Agent - REQ-012)
 
 paths:
+  # ===========================================================================
+  # NOTE: USER AND TEAM ENDPOINTS
+  # ===========================================================================
+  # GET /users and GET /teams are provided by the Auth/Admin API
+  # See: agents/specs/auth-admin-api.yaml
+  #
+  # The contracts frontend uses these endpoints for reviewer assignment:
+  # - GET /users - List users for reviewer dropdown
+  # - GET /teams - List teams for reviewer dropdown
+  #
+  # These are ALREADY IMPLEMENTED in auth-admin-api.yaml
+  # ===========================================================================
+
   # ===========================================================================
   # CONTRACT WORKFLOW ENDPOINTS (T-CON-003)
   # ===========================================================================
@@ -740,6 +764,328 @@ paths:
         '404':
           description: Contract not found
 
+  # ===========================================================================
+  # ISSUES ENDPOINTS (Platform Agent - REQ-006, REQ-007, REQ-008)
+  # ===========================================================================
+
+  /issues:
+    get:
+      tags:
+        - Issues
+      summary: List data quality issues
+      description: |
+        Returns all data quality issues with filtering, pagination, and sorting.
+
+        **Required for:** Platform Agent - Issues Management
+        **Request File:** REQ-006
+
+        Issues are detected when:
+        - Contracts violate quality rules
+        - Schema drift is detected
+        - SLA breaches occur
+        - PII exposure is identified
+      operationId: listIssues
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+        - name: severity
+          in: query
+          schema:
+            type: string
+            enum: [critical, warning, info]
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [open, in_progress, resolved, ignored]
+        - name: category
+          in: query
+          schema:
+            type: string
+            enum: [pii_exposure, schema_drift, sla_breach, quality_failure, other]
+        - name: contract_id
+          in: query
+          schema:
+            type: string
+        - name: assigned_team
+          in: query
+          schema:
+            type: string
+        - name: assigned_user
+          in: query
+          schema:
+            type: string
+        - name: search
+          in: query
+          description: Search in title, description, contract name
+          schema:
+            type: string
+        - name: detected_after
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: detected_before
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: sort_by
+          in: query
+          schema:
+            type: string
+            enum: [detected_at, severity, status]
+            default: detected_at
+        - name: sort_order
+          in: query
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+      responses:
+        '200':
+          description: List of issues with summary counts
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IssueListResponse'
+        '401':
+          description: Authentication required
+
+  /issues/{issueId}:
+    get:
+      tags:
+        - Issues
+      summary: Get issue details
+      description: |
+        Returns full details of a single issue including activity history.
+
+        **Required for:** Platform Agent - Issue Detail Page
+        **Request File:** REQ-007
+      operationId: getIssue
+      parameters:
+        - $ref: '#/components/parameters/issueId'
+      responses:
+        '200':
+          description: Issue details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IssueDetail'
+        '404':
+          description: Issue not found
+
+    patch:
+      tags:
+        - Issues
+      summary: Update issue
+      description: |
+        Updates issue status, assignment, or resolution.
+
+        **Required for:** Platform Agent - Issue Resolution Workflow
+        **Request File:** REQ-008
+
+        **Business Rules:**
+        - Resolution notes required when marking as resolved
+        - Status transitions must follow allowed flow
+        - Only assigned team/user or admin can update
+      operationId: updateIssue
+      parameters:
+        - $ref: '#/components/parameters/issueId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IssueUpdate'
+      responses:
+        '200':
+          description: Issue updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Issue'
+        '400':
+          description: Invalid status transition or missing required fields
+        '403':
+          description: Not authorized to update this issue
+        '404':
+          description: Issue not found
+
+  # ===========================================================================
+  # NOTIFICATIONS ENDPOINTS (Platform Agent - REQ-009, REQ-010, REQ-011)
+  # ===========================================================================
+
+  /notifications:
+    get:
+      tags:
+        - Notifications
+      summary: List user notifications
+      description: |
+        Returns notifications for the authenticated user.
+
+        **Required for:** Platform Agent - Notification Dropdown
+        **Request File:** REQ-009
+
+        Frontend polls every 30 seconds for real-time updates.
+      operationId: listNotifications
+      parameters:
+        - name: unread_only
+          in: query
+          schema:
+            type: boolean
+            default: false
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [contract_approved, contract_rejected, contract_submitted, issue_detected, issue_assigned, issue_resolved, sla_breach, schema_drift, comment_added, task_assigned]
+      responses:
+        '200':
+          description: List of notifications
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationListResponse'
+        '401':
+          description: Authentication required
+
+  /notifications/{notificationId}/read:
+    patch:
+      tags:
+        - Notifications
+      summary: Mark notification as read
+      description: |
+        Marks a single notification as read.
+
+        **Required for:** Platform Agent - Notification Interaction
+        **Request File:** REQ-010
+      operationId: markNotificationRead
+      parameters:
+        - $ref: '#/components/parameters/notificationId'
+      responses:
+        '200':
+          description: Notification marked as read
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Notification'
+        '403':
+          description: Can only mark own notifications
+        '404':
+          description: Notification not found
+
+  /notifications/read-all:
+    post:
+      tags:
+        - Notifications
+      summary: Mark all notifications as read
+      description: |
+        Marks all unread notifications as read for the authenticated user.
+
+        **Required for:** Platform Agent - Mark All Read Button
+        **Request File:** REQ-011
+      operationId: markAllNotificationsRead
+      responses:
+        '200':
+          description: All notifications marked as read
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "All notifications marked as read"
+                  marked_count:
+                    type: integer
+                    example: 7
+                  read_at:
+                    type: string
+                    format: date-time
+        '401':
+          description: Authentication required
+
+  # ===========================================================================
+  # SEARCH ENDPOINT (Platform Agent - REQ-012)
+  # ===========================================================================
+
+  /search:
+    get:
+      tags:
+        - Search
+      summary: Global search
+      description: |
+        Searches across all entity types and returns grouped, ranked results.
+
+        **Required for:** Platform Agent - Global Search (Cmd+K)
+        **Request File:** REQ-012
+
+        Features:
+        - Minimum 2 character query
+        - Results grouped by type
+        - Relevance scoring
+        - Permission-filtered results
+        - Quick actions based on context
+      operationId: globalSearch
+      parameters:
+        - name: q
+          in: query
+          required: true
+          description: Search query (minimum 2 characters)
+          schema:
+            type: string
+            minLength: 2
+        - name: types
+          in: query
+          description: Comma-separated types to search
+          schema:
+            type: string
+            default: "contracts,assets,issues,teams,users"
+        - name: limit
+          in: query
+          description: Max results per type
+          schema:
+            type: integer
+            default: 5
+            maximum: 20
+        - name: include_archived
+          in: query
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchResponse'
+        '400':
+          description: Query too short (minimum 2 characters)
+        '401':
+          description: Authentication required
+
 components:
   parameters:
     contractId:
@@ -763,8 +1109,27 @@ components:
       description: Task ID
       schema:
         type: string
+    issueId:
+      name: issueId
+      in: path
+      required: true
+      description: Issue ID
+      schema:
+        type: string
+    notificationId:
+      name: notificationId
+      in: path
+      required: true
+      description: Notification ID
+      schema:
+        type: string
 
   schemas:
+    # =========================================================================
+    # NOTE: User and Team schemas are defined in auth-admin-api.yaml
+    # The contracts API uses the auth-admin-api for user/team lookups
+    # =========================================================================
+
     # =========================================================================
     # CONTRACT SCHEMAS (Extensions to existing)
     # =========================================================================
@@ -1157,3 +1522,405 @@ components:
         details:
           type: object
           additionalProperties: true
+
+    # =========================================================================
+    # ISSUE SCHEMAS (Platform Agent - REQ-006, REQ-007, REQ-008)
+    # =========================================================================
+
+    Issue:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        severity:
+          type: string
+          enum: [critical, warning, info]
+        category:
+          type: string
+          enum: [pii_exposure, schema_drift, sla_breach, quality_failure, other]
+        status:
+          type: string
+          enum: [open, in_progress, resolved, ignored]
+        contract_id:
+          type: string
+        contract_name:
+          type: string
+        contract_version:
+          type: string
+        table:
+          type: string
+        field:
+          type: string
+        quality_rule_id:
+          type: string
+        assigned_team:
+          type: string
+        assigned_team_name:
+          type: string
+        assigned_user:
+          type: string
+        assigned_user_name:
+          type: string
+        detected_at:
+          type: string
+          format: date-time
+        acknowledged_at:
+          type: string
+          format: date-time
+        resolved_at:
+          type: string
+          format: date-time
+        resolution:
+          type: string
+          enum: [fixed, wont_fix, false_positive, deferred]
+        resolution_notes:
+          type: string
+        resolved_by:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    IssueDetail:
+      allOf:
+        - $ref: '#/components/schemas/Issue'
+        - type: object
+          properties:
+            contract:
+              type: object
+              properties:
+                id:
+                  type: string
+                name:
+                  type: string
+                version:
+                  type: string
+                status:
+                  type: string
+                owner_team:
+                  type: string
+                owner_team_name:
+                  type: string
+            location:
+              type: object
+              properties:
+                table:
+                  type: string
+                field:
+                  type: string
+                physical_table:
+                  type: string
+                physical_column:
+                  type: string
+            quality_rule:
+              type: object
+              properties:
+                id:
+                  type: string
+                name:
+                  type: string
+                type:
+                  type: string
+                threshold:
+                  type: number
+                actual_value:
+                  type: number
+                last_run_at:
+                  type: string
+                  format: date-time
+            assignment:
+              type: object
+              properties:
+                team_id:
+                  type: string
+                team_name:
+                  type: string
+                user_id:
+                  type: string
+                user_name:
+                  type: string
+                assigned_at:
+                  type: string
+                  format: date-time
+                assigned_by:
+                  type: string
+            timeline:
+              type: object
+              properties:
+                detected_at:
+                  type: string
+                  format: date-time
+                acknowledged_at:
+                  type: string
+                  format: date-time
+                in_progress_at:
+                  type: string
+                  format: date-time
+                resolved_at:
+                  type: string
+                  format: date-time
+                resolution:
+                  type: string
+                resolution_notes:
+                  type: string
+                resolved_by:
+                  type: string
+            activity:
+              type: array
+              items:
+                $ref: '#/components/schemas/IssueActivity'
+            comments:
+              type: array
+              items:
+                $ref: '#/components/schemas/IssueComment'
+
+    IssueActivity:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+          enum: [issue_created, issue_assigned, status_changed, comment_added, resolution_set]
+        description:
+          type: string
+        actor_id:
+          type: string
+        actor_name:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    IssueComment:
+      type: object
+      properties:
+        id:
+          type: string
+        content:
+          type: string
+        author_id:
+          type: string
+        author_name:
+          type: string
+        author_avatar:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    IssueUpdate:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [open, in_progress, resolved, ignored]
+        assigned_team:
+          type: string
+        assigned_user:
+          type: string
+        resolution:
+          type: string
+          enum: [fixed, wont_fix, false_positive, deferred]
+        resolution_notes:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+
+    IssueListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Issue'
+        pagination:
+          type: object
+          properties:
+            page:
+              type: integer
+            limit:
+              type: integer
+            total:
+              type: integer
+            total_pages:
+              type: integer
+        summary:
+          type: object
+          properties:
+            critical:
+              type: integer
+            warning:
+              type: integer
+            info:
+              type: integer
+            open:
+              type: integer
+            in_progress:
+              type: integer
+            resolved:
+              type: integer
+            ignored:
+              type: integer
+
+    # =========================================================================
+    # NOTIFICATION SCHEMAS (Platform Agent - REQ-009, REQ-010, REQ-011)
+    # =========================================================================
+
+    Notification:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+          enum: [contract_approved, contract_rejected, contract_submitted, issue_detected, issue_assigned, issue_resolved, sla_breach, schema_drift, comment_added, task_assigned]
+        title:
+          type: string
+        description:
+          type: string
+        read:
+          type: boolean
+        read_at:
+          type: string
+          format: date-time
+        href:
+          type: string
+          description: URL to navigate when clicked
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Type-specific metadata
+        created_at:
+          type: string
+          format: date-time
+
+    NotificationListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Notification'
+        pagination:
+          type: object
+          properties:
+            total:
+              type: integer
+            unread_count:
+              type: integer
+            limit:
+              type: integer
+            offset:
+              type: integer
+
+    # =========================================================================
+    # SEARCH SCHEMAS (Platform Agent - REQ-012)
+    # =========================================================================
+
+    SearchResult:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+          enum: [contract, asset, issue, team, user]
+        title:
+          type: string
+        subtitle:
+          type: string
+        description:
+          type: string
+        href:
+          type: string
+        icon:
+          type: string
+        status:
+          type: string
+        metadata:
+          type: object
+          additionalProperties: true
+        score:
+          type: number
+          description: Relevance score (0-1)
+        highlights:
+          type: array
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+              snippet:
+                type: string
+                description: Highlighted text with <mark> tags
+
+    SearchResultGroup:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/SearchResult'
+        total:
+          type: integer
+        has_more:
+          type: boolean
+
+    QuickAction:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        subtitle:
+          type: string
+        href:
+          type: string
+        icon:
+          type: string
+        keywords:
+          type: array
+          items:
+            type: string
+
+    SearchResponse:
+      type: object
+      properties:
+        query:
+          type: string
+        results:
+          type: object
+          properties:
+            contracts:
+              $ref: '#/components/schemas/SearchResultGroup'
+            assets:
+              $ref: '#/components/schemas/SearchResultGroup'
+            issues:
+              $ref: '#/components/schemas/SearchResultGroup'
+            teams:
+              $ref: '#/components/schemas/SearchResultGroup'
+            users:
+              $ref: '#/components/schemas/SearchResultGroup'
+        quick_actions:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuickAction'
+        total_results:
+          type: integer
+        search_time_ms:
+          type: integer

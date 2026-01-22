@@ -1,219 +1,200 @@
 # Platform Agent - Exit Notes
 
-> **Last Updated:** 2026-01-21 (Historical summary of Phase 1)
+> **Last Updated:** 2026-01-22
+> **Session Focus:** Registry API Integration and Testing
 
 ---
 
-## Session Summary: Phase 1 - Platform Infrastructure Features
+## Session Summary: API Integration from Registry Responses
 
 ### What Was Accomplished
 
-#### My Tasks Page (`/studio/tasks`)
-- Three-tab layout with badge counts
+#### 1. Registry Response Files Reviewed
 
-**Pending Authorizations Tab:**
-- Authorization cards with:
-  - Contract name and version
-  - Domain badge
-  - Requested by (with avatar)
-  - Time since request
-  - Priority indicator (high/normal/low)
-  - Change type (new/update/deprecate)
-- Approve button (with confirmation dialog)
-- Request Changes button (opens comment form)
+Reviewed all 20 response files from the registry agent to understand the implemented APIs:
 
-**Comments to Review Tab:**
-- Comment cards with:
-  - Contract name link
-  - Author (with avatar)
-  - Comment preview
-  - Comment type badge (question/suggestion/concern)
-  - Timestamp
-- Reply button opens response form
-- Mark as Reviewed option
+**Authentication (RES-registry-014 to RES-registry-019):**
+- `POST /api/v1/auth/login` - Returns `{user, token, expiresAt}`
+- `POST /api/v1/auth/signup` - Returns 201 with `{user, token, expiresAt}`
+- `POST /api/v1/auth/logout` - Returns 204 No Content (stateless JWT)
+- `GET /api/v1/auth/me` - Returns user profile (no permissions array in role)
+- `POST /api/v1/auth/forgot-password` - Generates reset token (email not sent)
+- `POST /api/v1/auth/reset-password` - Resets password with token
 
-**My Drafts Tab:**
-- Draft cards with:
-  - Draft name and type (contract/asset)
-  - Domain badge
-  - Completion percentage bar
-  - Last edited timestamp
-- Continue Editing button
-- Delete draft button (with confirmation)
+**Platform Features (RES-registry-006 to RES-registry-013):**
+- `GET /api/v1/issues` - List with pagination.summary format
+- `GET /api/v1/issues/{issue_id}` - Detail with nested contract/assignment/timeline
+- `PATCH /api/v1/issues/{issue_id}` - Update with camelCase fields
+- `GET /api/v1/notifications` - List with pagination.unread_count
+- `PATCH /api/v1/notifications/{id}/read` - Mark as read
+- `POST /api/v1/notifications/read-all` - Mark all read
+- `GET /api/v1/search/global` - Search with results.{type}.items format
+- `GET /api/v1/tasks` - Tasks with pendingAuthorizations/commentsToReview/drafts
 
-#### Issues List Page (`/studio/issues`)
-- Severity tabs: All, Critical, Warning, Info, Resolved
-- Tab counts updated dynamically
-- Search by issue title or contract name
-- Category filter: PII, Schema Drift, SLA, Quality
-- Export to CSV button
+#### 2. Frontend Integration Changes
 
-**Issues Table:**
-- Columns: Issue, Severity, Category, Contract, Detected, Status
-- Severity badges (color-coded)
-- Category badges
-- Click navigates to issue detail
+**AuthProvider.tsx:**
+- Updated to use `API_BASE_URL` from client for all auth endpoints
+- Added handling for 204 No Content response from logout
+- Updated `useHasPermission` hook to handle missing permissions array
 
-#### Issue Detail Page (`/studio/issues/[issueId]`)
-- Issue header with severity badge
-- Full description
-- Detection details (when, what rule)
-- Contract and field attribution
-- Assignment panel (team/user)
-- Resolution form:
-  - Status dropdown (open, acknowledged, in progress, resolved)
-  - Resolution notes textarea
-  - Save button
-- Activity timeline
+**types/auth.ts:**
+- Made `permissions` optional in `AuthRole` interface
 
-#### Admin Overview (`/admin`)
-- Metric cards:
-  - Total Users count
-  - Total Teams count
-  - Roles (4 types)
-  - Active Sessions
-- Recent Activity feed
-- Quick links to management pages
+**lib/api/adapters.ts:**
+- Added `RegistryIssuesListResponse` interface for new pagination format
+- Updated `adaptIssue()` to handle nested objects (contract, location, assignment, timeline)
+- Updated `adaptIssuesList()` to handle both old and new response formats
 
-#### User Management (`/admin/users`)
-- Users DataTable with search
-- Columns: User (avatar + name + email), Role, Team, Status, Last Login
-- Role badge (color by role)
-- Status badge (active/pending/deactivated)
-- Actions dropdown:
-  - Edit User
-  - Change Role
-  - Reset Password
-  - Deactivate
-- Invite User button opens modal
+**Issues Detail Page (studio/issues/[issueId]/page.tsx):**
+- Added adapter import and usage for registry response transformation
+- Updated mutation to use correct registry field names (`assignedTeam` not `assignedTeamId`)
 
-**Invite User Modal:**
-- Email input
-- Role selection
-- Team selection
-- Send Invite button
+**NotificationDropdown.tsx:**
+- Added `RegistryNotificationResponse` interface
+- Updated query to handle both registry format (items + pagination.unread_count) and legacy format
 
-#### Team Management (`/admin/teams`)
-- Teams DataTable with search
-- Columns: Team Name, Members, Domains, Assets, Contracts
-- Click row to expand team details
-- Create Team button opens modal
+**GlobalSearch.tsx:**
+- Added `RegistrySearchResponse` interface for registry format
+- Updated endpoint from `/search` to `/search/global`
+- Added adapter to transform registry response to frontend format
 
-**Create Team Modal:**
-- Team name
-- Description
-- Initial domain assignment
-- Create button
+**Tasks Page (studio/tasks/page.tsx):**
+- Added `RegistryTasksResponse` interface with all task categories
+- Added `adaptTasksResponse()` function to transform registry format
+- Updated endpoint from `/tasks/my` to `/tasks`
 
-#### Roles & Permissions (`/admin/roles`)
-- Roles list with descriptions:
-  - Admin - Full system access
-  - Manager - Manage team contracts and assets
-  - Member - Create and edit, request approval
-  - Viewer - Read-only access
-- Permissions matrix grid
-- View permissions for each role
+#### 3. Environment Configuration
 
-#### Settings Overview (`/settings`)
-- Settings cards linking to:
-  - Profile
-  - Notifications
-  - API & Integrations
+**.env.local:**
+- Configured for real API: `NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1`
+- Set `NEXT_PUBLIC_USE_MOCKS=false` for real API usage
+- Added comments explaining mock vs real API usage
 
-#### Profile Settings (`/settings/profile`)
-- Profile form:
-  - Avatar upload
-  - Display name
-  - Email (read-only)
-  - Team display
-  - Role display
-- Save Changes button
+#### 4. Testing
 
-#### Notification Preferences (`/settings/notifications`)
-- Toggle switches for:
-  - Contract approvals
-  - Contract rejections
-  - Issue detections
-  - SLA breaches
-  - Schema drift alerts
-  - Comments on your contracts
-  - Task assignments
-- Email vs In-app toggles
-- Save Preferences button
+- Build passes with all TypeScript changes
+- Playwright tests pass with MSW mocks enabled
+- Full end-to-end testing requires registry backend to be running
 
-#### API & Integrations (`/settings/integrations`)
-- API Keys section:
-  - Create API Key button
-  - Keys table (name, created, last used, actions)
-  - Regenerate/Delete options
-- Integrations section (future):
-  - Slack integration card
-  - Webhook configuration
+---
 
-#### Global Search (Cmd+K)
-- Opens on keyboard shortcut
-- Search input with placeholder
-- Instant search as you type (debounced)
-- Grouped results:
-  - Contracts (icon, name, domain, status)
-  - Assets (icon, name, domain)
-  - Issues (icon, title, severity)
-- Keyboard navigation (arrows + enter)
-- ESC to close
-- Click result navigates
+## Key Differences Handled
 
-#### Notification Dropdown
-- Bell icon in TopNav
-- Unread indicator dot
-- Dropdown on click:
-  - Notification list (scrollable)
-  - Each notification: icon, title, description, time ago
-  - Unread styling
-  - Click marks as read and navigates
-- Mark All as Read button
-- Link to notification settings
+| Frontend Expectation | Registry Implementation | Adapter Solution |
+|---------------------|------------------------|------------------|
+| `/auth/logout` returns 200 | Returns 204 No Content | Handle silently, clear local state |
+| `/auth/me` includes permissions | No permissions in role | Fall back to role name check for admin |
+| Issues list: `{data, meta}` | `{items, pagination, summary}` | Adapter extracts and transforms |
+| Issue detail: flat fields | Nested objects (contract, location) | Adapter extracts from nested objects |
+| Issue update: `assignedTeamId` | `assignedTeam` | Use registry field names |
+| Notifications: `{data, unreadCount}` | `{items, pagination.unread_count}` | Adapter extracts from pagination |
+| Search: `/search?q=` | `/search/global?q=` | Changed endpoint path |
+| Search: flat arrays | `{results: {type: {items}}}` | Adapter extracts items per type |
+| Tasks: `/tasks/my` | `/tasks` | Changed endpoint path |
+| Tasks: `{authorizations, comments, drafts}` | `{pendingAuthorizations, ...}` | Adapter transforms field names |
 
-#### Mock Data
-- 10 mock users with various roles
-- 5 mock teams with domains
-- 15 mock issues across severities
-- Tasks data (authorizations, comments, drafts)
-- Notifications data
-- Activity feed data
+---
 
-### Files Created/Modified
-- `src/app/studio/tasks/page.tsx`
-- `src/app/studio/issues/page.tsx`
-- `src/app/studio/issues/[issueId]/page.tsx`
-- `src/app/admin/page.tsx`
-- `src/app/admin/users/page.tsx`
-- `src/app/admin/teams/page.tsx`
-- `src/app/admin/roles/page.tsx`
-- `src/app/settings/page.tsx`
-- `src/app/settings/profile/page.tsx`
-- `src/app/settings/notifications/page.tsx`
-- `src/app/settings/integrations/page.tsx`
-- `src/components/layout/GlobalSearch.tsx`
-- `src/components/layout/NotificationDropdown.tsx`
-- `src/lib/mocks/handlers/tasks.ts`
-- `src/lib/mocks/handlers/issues.ts`
-- `src/lib/mocks/handlers/users.ts`
-- `src/lib/mocks/handlers/notifications.ts`
-- `src/lib/mocks/handlers/search.ts`
-- `src/lib/mocks/data/tasks.ts`
-- `src/lib/mocks/data/issues.ts`
-- `src/lib/mocks/data/users.ts`
-- `src/lib/mocks/data/notifications.ts`
+## Current Implementation Status
 
-### What's Pending
-- Issue resolution workflow (T-HUB-013)
-- User invitation flow with email (T-HUB-014)
-- Keyboard shortcuts help modal (T-HUB-022)
+### Fully Integrated (Ready for Real API)
+- [x] Authentication flow (login, signup, logout, me, password reset)
+- [x] Issues list with filtering and pagination
+- [x] Issue detail with status/assignment updates
+- [x] Notifications with read marking
+- [x] Global search
+- [x] User tasks
 
-### Blockers
-- None currently
+### Requires Registry Backend Running
+- [ ] End-to-end testing with real API (set `NEXT_PUBLIC_USE_MOCKS=false`)
+- [ ] Verification of all integrated endpoints
 
-### Notes for Next Session
-- User invitation needs email service integration
-- Consider real-time notifications with WebSocket
-- Global search could benefit from Algolia or similar
+---
+
+## Files Modified This Session
+
+### Source Files
+- `src/components/providers/AuthProvider.tsx` - API_BASE_URL, logout handling, permissions
+- `src/types/auth.ts` - Optional permissions
+- `src/lib/api/adapters.ts` - Registry response interfaces and adapters
+- `src/app/studio/issues/[issueId]/page.tsx` - Registry adapter usage
+- `src/app/studio/issues/page.tsx` - Registry response type
+- `src/components/layout/NotificationDropdown.tsx` - Registry format handling
+- `src/components/layout/GlobalSearch.tsx` - Registry search endpoint and format
+- `src/app/studio/tasks/page.tsx` - Registry tasks format
+
+### Environment Files
+- `.env.local` - API URL and mock configuration
+
+---
+
+## Testing Instructions
+
+### With MSW Mocks (Development)
+```bash
+# Set NEXT_PUBLIC_USE_MOCKS=true in .env.local
+npm run dev
+npm run test:e2e
+```
+
+### With Real Registry API
+```bash
+# 1. Start the registry backend
+cd ../griot-registry
+uvicorn griot_registry.main:app --reload --port 8000
+
+# 2. Set NEXT_PUBLIC_USE_MOCKS=false in .env.local
+# 3. Start the frontend
+cd ../griot-hub
+npm run dev
+
+# 4. Test manually or run Playwright tests
+npm run test:e2e
+```
+
+---
+
+## Registry Request/Response Status
+
+All registry requests have been implemented and responses received. After verification with running registry:
+
+| Request | Response | Integration | Status |
+|---------|----------|-------------|--------|
+| REQ-registry-006 | RES-registry-006 | Issues List | Integrated |
+| REQ-registry-007 | RES-registry-007 | Issue Detail | Integrated |
+| REQ-registry-008 | RES-registry-008 | Issue Update | Integrated |
+| REQ-registry-009 | RES-registry-009 | Notifications List | Integrated |
+| REQ-registry-010 | RES-registry-010 | Mark Notification Read | Integrated |
+| REQ-registry-011 | RES-registry-011 | Mark All Read | Integrated |
+| REQ-registry-012 | RES-registry-012 | Global Search | Integrated |
+| REQ-registry-013 | RES-registry-013 | User Tasks | Integrated |
+| REQ-registry-014 | RES-registry-014 | Login | Integrated |
+| REQ-registry-015 | RES-registry-015 | Signup | Integrated |
+| REQ-registry-016 | RES-registry-016 | Logout | Integrated |
+| REQ-registry-017 | RES-registry-017 | Get Me | Integrated |
+| REQ-registry-018 | RES-registry-018 | Forgot Password | Integrated |
+| REQ-registry-019 | RES-registry-019 | Reset Password | Integrated |
+
+---
+
+## Notes for Verification
+
+To verify the integrations work with the real API:
+
+1. Start the registry backend on port 8000
+2. Ensure `.env.local` has `NEXT_PUBLIC_USE_MOCKS=false`
+3. Start the frontend on port 3000
+4. Test each flow:
+   - Login with `brackly@griot.com` / `melly`
+   - Navigate to Issues, Tasks, use Global Search
+   - Check Notifications dropdown
+   - Logout and verify session cleared
+
+After successful verification, the request and response files can be deleted to close the issues.
+
+---
+
+## Blocking Issues
+
+None. All integrations complete. Waiting for verification with running registry backend.

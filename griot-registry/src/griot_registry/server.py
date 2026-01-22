@@ -20,6 +20,11 @@ from griot_registry.api import (
     comments,
     approvals,
     search,
+    users,
+    teams,
+    roles,
+    notifications,
+    tasks,
 )
 from griot_registry.config import Settings, get_settings
 from griot_registry.services import ContractService, ValidationService
@@ -133,6 +138,21 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     # Search
     app.include_router(search.router, prefix=api_prefix, tags=["search"])
+
+    # User management
+    app.include_router(users.router, prefix=api_prefix, tags=["users"])
+
+    # Team management
+    app.include_router(teams.router, prefix=api_prefix, tags=["teams"])
+
+    # Role management
+    app.include_router(roles.router, prefix=api_prefix, tags=["roles"])
+
+    # Notifications
+    app.include_router(notifications.router, prefix=api_prefix, tags=["notifications"])
+
+    # Tasks
+    app.include_router(tasks.router, prefix=api_prefix, tags=["tasks"])
 
     return app
 

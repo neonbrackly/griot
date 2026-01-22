@@ -4,6 +4,181 @@
 
 ---
 
+## Session: 2026-01-22 (Standalone Schema Management & API Completion)
+
+### Summary
+Implemented comprehensive standalone schema management system and completed all pending API endpoints from the platform team's requests (REQ-001 through REQ-020).
+
+### Major Features Implemented
+
+#### 1. Standalone Schema Management (REQ-020)
+Complete implementation of first-class schema entities that can be:
+- Created manually or discovered from connections
+- Referenced by contracts via schemaId + version
+- Versioned using semantic versioning (1.0.0)
+- Managed through lifecycle (draft → active → deprecated)
+
+**API Endpoints Added:**
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/schemas` | Create new schema (draft) |
+| GET | `/schemas` | List schemas with filtering |
+| GET | `/schemas/{schema_id}` | Get schema by ID |
+| PUT | `/schemas/{schema_id}` | Update schema |
+| DELETE | `/schemas/{schema_id}` | Delete schema |
+| POST | `/schemas/{schema_id}/publish` | Publish draft → active |
+| POST | `/schemas/{schema_id}/deprecate` | Deprecate schema |
+| POST | `/schemas/{schema_id}/clone` | Clone for new version |
+| GET | `/schemas/{schema_id}/versions` | List version history |
+
+**Key Features:**
+- Ownership model (creator + optional team)
+- Only owner/team members can edit/delete
+- Breaking change detection (column removal, type changes, nullable→required)
+- PII change notifications cascade to contract owners
+- Deprecation notifications to all affected contracts
+
+#### 2. Global Search Endpoint (REQ-012)
+Multi-entity search for Cmd+K modal:
+- Searches contracts, issues, teams, users
+- Returns grouped, ranked results with relevance scores
+- Text highlighting with `<mark>` tags
+- Quick actions based on query keywords
+- Search time metrics
+
+**Endpoint:** `GET /api/v1/search/global`
+
+#### 3. Contract Workflow Endpoints (REQ-001 to REQ-005)
+| Endpoint | Description |
+|----------|-------------|
+| POST `/contracts/{id}/submit` | Submit for review |
+| POST `/contracts/{id}/approve` | Approve contract |
+| POST `/contracts/{id}/reject` | Reject with feedback |
+| POST `/contracts/{id}/deprecate` | Deprecate with reason |
+| POST `/contracts/{id}/reviewer` | Assign reviewer |
+
+#### 4. Issues Enhancement (REQ-006 to REQ-008)
+- Extended filtering (category, assigned_team, assigned_user, search, date range)
+- Summary counts in list response
+- Detailed issue response with activity, comments, quality rule info
+- PATCH endpoint with status transition validation
+
+#### 5. Notifications System (REQ-009 to REQ-011)
+- GET `/notifications` - List with filtering
+- PATCH `/notifications/{id}/read` - Mark as read
+- POST `/notifications/read-all` - Mark all as read
+
+#### 6. My Tasks Endpoint (REQ-013)
+Aggregated task view returning:
+- Pending authorizations (contracts awaiting review)
+- Comments to review (on user's contracts)
+- Drafts (user's incomplete contracts)
+- Reapproval tasks (placeholder for future)
+
+### Storage Layer Updates
+
+**Added `SchemaRepository` to `base.py`:**
+```python
+class SchemaRepository(ABC):
+    async def create(self, schema: dict) -> dict
+    async def get(self, schema_id: str) -> dict | None
+    async def get_version(self, schema_id: str, version: str) -> dict | None
+    async def update(self, schema_id: str, updates: dict, updated_by: str) -> dict
+    async def delete(self, schema_id: str) -> bool
+    async def list(...) -> tuple[list, int]
+    async def update_status(self, schema_id: str, new_status: str, updated_by: str) -> dict
+    async def list_versions(self, schema_id: str, ...) -> tuple[list, int]
+    async def get_contracts_using_schema(self, schema_id: str, version: str | None) -> list
+    async def can_delete(self, schema_id: str) -> tuple[bool, list]
+```
+
+### Files Changed
+
+| File | Change |
+|------|--------|
+| `storage/base.py` | Added `SchemaRepository` interface |
+| `storage/__init__.py` | Export `SchemaRepository` |
+| `api/schemas.py` | Complete rewrite with CRUD + lifecycle |
+| `api/search.py` | Added global search endpoint |
+| `api/contracts.py` | Added workflow endpoints (previously) |
+| `api/issues.py` | Enhanced filtering and detail (previously) |
+| `api/notifications.py` | New file (previously) |
+| `api/tasks.py` | New file (previously) |
+| `api/users.py` | New file (previously) |
+| `api/teams.py` | New file (previously) |
+| `api/roles.py` | New file (previously) |
+| `api/auth.py` | Enhanced with login/signup/reset (previously) |
+
+### Response Files Created
+
+All REQ files have corresponding RES files in `griot-hub/agents/status/responses/`:
+- RES-registry-001 through RES-registry-020
+
+### Architecture Decisions
+
+**Schema = Single Table**
+- Each schema represents ONE table/asset/topic
+- Contracts reference multiple schemas by ID + version
+- No duplication - schemas are reused
+
+**Versioning Strategy**
+- Semantic versioning (MAJOR.MINOR.PATCH)
+- Clone creates new schema with incremented minor version
+- Breaking changes blocked on active schemas (must clone)
+
+**Lifecycle**
+```
+draft → (publish) → active → (deprecate) → deprecated
+                      ↑
+                      └── (clone) creates new draft
+```
+
+### Completed Work (Session Update)
+
+All remaining items have been implemented and tested:
+
+1. **MongoDB Implementation**: ✅ `MongoSchemaRepository` fully implemented in `mongodb.py`
+   - All SchemaRepository methods implemented
+   - Indexes created for schemas and schema_versions collections
+   - Contract schema refs index added
+
+2. **Contract Schema Refs**: ✅ Schema hydration implemented in `contracts.py`
+   - `_hydrate_schemas()` function fetches full schema data from refs
+   - `GET /contracts/{id}?hydrateSchemas=true` returns hydrated schemas
+   - `GET /contracts?hydrateSchemas=true` supported for list endpoint
+
+3. **Tests**: ✅ 19 comprehensive tests added in `test_e2e_schemas.py`
+   - Schema CRUD tests (7 tests)
+   - Schema lifecycle tests (4 tests)
+   - Schema catalog tests (2 tests)
+   - Contract hydration tests (1 test)
+   - Error handling tests (5 tests)
+   - All 19 tests passing
+
+### Test Results
+
+```
+============================= 19 passed in 13.40s =============================
+```
+
+### Additional Fixes
+
+- Fixed route ordering: `/schemas/catalog` now routes before `/schemas/{schema_id}`
+- Added schema repository mocks to `conftest.py` for test fixtures
+
+### API Summary
+
+**Total New Endpoints This Session:**
+- Schema CRUD: 5 endpoints
+- Schema Lifecycle: 3 endpoints
+- Schema Versions: 1 endpoint
+- Global Search: 1 endpoint
+- Legacy Catalog: 2 endpoints (moved)
+
+**Total Registry Endpoints: 50+**
+
+---
+
 ## Session: 2026-01-20 (API Testing & Documentation Revamp)
 
 ### Summary
